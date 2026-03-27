@@ -1,6 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import db from "@/lib/db";
-import { BUILD_STAGE_SEQUENCE } from "@/lib/templates/genreTemplates";
+import { getBuildStageSequence } from "@/lib/templates/genreTemplates";
 import type { BuildStage, BuildStageKey, BuildStageStatus } from "@/types";
 
 interface CreateBuildStageInput {
@@ -14,9 +14,10 @@ interface CreateBuildStageInput {
 }
 
 const getFallbackStageKey = (stageNumber: number): BuildStageKey => {
+  const defaultSequence = getBuildStageSequence("small");
   return (
-    BUILD_STAGE_SEQUENCE[stageNumber - 1]?.key ??
-    BUILD_STAGE_SEQUENCE[BUILD_STAGE_SEQUENCE.length - 1].key
+    defaultSequence[stageNumber - 1]?.key ??
+    defaultSequence[defaultSequence.length - 1].key
   );
 };
 

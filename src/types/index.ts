@@ -116,18 +116,24 @@ export type BuildStageStatus =
   | "complete";
 
 export type BuildStageKey =
+  | "scope-lock"
   | "foundation"
   | "first-playable"
   | "core-controls"
   | "camera-movement"
   | "combat-feel"
+  | "systems-foundation"
   | "enemy-behavior"
   | "encounter-scripting"
   | "hud-feedback"
   | "progression-meta"
+  | "content-pipeline"
+  | "content-production"
   | "content-slice"
+  | "vertical-slice-integration"
   | "polish"
-  | "packaging-release-prep";
+  | "packaging-release-prep"
+  | "qa-release-prep";
 
 export type CredentialCategory = "api_key" | "database" | "oauth" | "other";
 

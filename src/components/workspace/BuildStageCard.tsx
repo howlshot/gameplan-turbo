@@ -1,12 +1,12 @@
 import { memo, useState } from "react";
 import { CopyButton } from "@/components/shared/CopyButton";
-import { BUILD_STAGE_SEQUENCE } from "@/lib/templates/genreTemplates";
 import { cn } from "@/lib/utils";
 import type { BuildStage } from "@/types";
 
 interface BuildStageCardProps {
   onStatusChange: (stage: BuildStage) => void;
   stage: BuildStage;
+  totalStages: number;
 }
 
 const STATUS_LABELS: Record<BuildStage["status"], string> = {
@@ -25,17 +25,18 @@ const STATUS_TONES: Record<BuildStage["status"], string> = {
 
 const BuildStageCardComponent = ({
   onStatusChange,
-  stage
+  stage,
+  totalStages
 }: BuildStageCardProps): JSX.Element => {
   const [isExpanded, setIsExpanded] = useState(stage.status === "in-progress");
   const isLocked = stage.status === "locked";
+  const stageProgress = totalStages === 0 ? 0 : stage.stageNumber / totalStages;
   const stageTone =
-    stage.stageNumber <= 2
+    stageProgress <= 0.33
       ? "bg-primary/20 text-primary"
-      : stage.stageNumber <= 4
+      : stageProgress <= 0.66
         ? "bg-secondary/20 text-secondary"
         : "bg-outline-variant/20 text-on-surface";
-  const totalStages = BUILD_STAGE_SEQUENCE.length;
 
   return (
     <article
@@ -83,6 +84,7 @@ const BuildStageCardComponent = ({
             {Array.from({ length: totalStages }).map((_, index) => (
               <span
                 key={index}
+                data-testid="stage-progress-dot"
                 className={cn(
                   "h-2.5 w-2.5 rounded-full",
                   index < stage.stageNumber

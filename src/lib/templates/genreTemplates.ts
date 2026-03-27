@@ -160,11 +160,13 @@ export const GAME_PLATFORM_OPTIONS: GamePlatformTarget[] = [
   "console"
 ];
 
-export const BUILD_STAGE_SEQUENCE: Array<{
+export interface BuildStageDefinition {
   key: BuildStageKey;
   label: string;
   description: string;
-}> = [
+}
+
+const STANDARD_BUILD_STAGE_SEQUENCE: BuildStageDefinition[] = [
   {
     key: "foundation",
     label: "Foundation",
@@ -226,6 +228,94 @@ export const BUILD_STAGE_SEQUENCE: Array<{
     description: "Performance passes, platform packaging, QA checks, and release metadata."
   }
 ];
+
+const LARGE_BUILD_STAGE_SEQUENCE: BuildStageDefinition[] = [
+  {
+    key: "scope-lock",
+    label: "Scope Lock",
+    description: "Lock the v1 promise, content ceilings, staffing assumptions, and explicit cut boundaries before production expands."
+  },
+  {
+    key: "foundation",
+    label: "Foundation",
+    description: "Project bootstrap, naming, repository conventions, and the technical skeleton for a broader production run."
+  },
+  {
+    key: "first-playable",
+    label: "First Playable",
+    description: "Reach a loop-complete build that proves the game can be played end to end with placeholder-friendly content."
+  },
+  {
+    key: "core-controls",
+    label: "Core Controls",
+    description: "Lock the input model, interaction cadence, and low-level responsiveness standards."
+  },
+  {
+    key: "camera-movement",
+    label: "Camera / Movement",
+    description: "Stabilize traversal, staging, rails or locomotion grammar, and readability under pressure."
+  },
+  {
+    key: "combat-feel",
+    label: "Combat / Interaction Feel",
+    description: "Tune hit timing, action clarity, damage language, and player feedback until the core interaction loop feels right."
+  },
+  {
+    key: "systems-foundation",
+    label: "Systems Foundation",
+    description: "Establish reusable gameplay systems, progression plumbing, and integration boundaries before content ramps up."
+  },
+  {
+    key: "enemy-behavior",
+    label: "Enemy / Encounter Foundations",
+    description: "Define enemy roles, threat readability, encounter rules, and reusable behavior building blocks."
+  },
+  {
+    key: "hud-feedback",
+    label: "HUD / Feedback",
+    description: "Lock clarity rules for HUD, alerts, score language, and response timing across the larger project surface."
+  },
+  {
+    key: "progression-meta",
+    label: "Progression / Meta",
+    description: "Build the progression spine, persistence, unlock structure, and repeat-session motivation without overcommitting content."
+  },
+  {
+    key: "content-pipeline",
+    label: "Content Pipeline",
+    description: "Prove that content authoring, asset ingest, naming, and testing pipelines can support broader production."
+  },
+  {
+    key: "content-production",
+    label: "Content Production",
+    description: "Produce the planned content set within agreed budgets and dependency boundaries."
+  },
+  {
+    key: "vertical-slice-integration",
+    label: "Vertical Slice Integration",
+    description: "Integrate gameplay, content, pipeline, and presentation into one representative slice that proves the production model works."
+  },
+  {
+    key: "polish",
+    label: "Polish / Optimization",
+    description: "Refine balance, pacing, feedback, and performance without reopening fundamental design decisions."
+  },
+  {
+    key: "qa-release-prep",
+    label: "QA / Release Prep",
+    description: "Run QA gates, packaging checks, compatibility passes, and release-readiness verification."
+  }
+];
+
+export const BUILD_STAGE_SEQUENCE: BuildStageDefinition[] =
+  STANDARD_BUILD_STAGE_SEQUENCE;
+
+export const getBuildStageSequence = (
+  scopeCategory: ScopeCategory
+): BuildStageDefinition[] =>
+  scopeCategory === "large"
+    ? LARGE_BUILD_STAGE_SEQUENCE
+    : STANDARD_BUILD_STAGE_SEQUENCE;
 
 export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
   "blank-game-project": {

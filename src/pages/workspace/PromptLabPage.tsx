@@ -11,6 +11,7 @@ import { useBuildStages } from "@/hooks/useBuildStages";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
 import { useToast } from "@/hooks/useToast";
+import { isLegacyLargeBuildPlan } from "@/lib/buildPlanUtils";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
 import { getOutputDefinition, PROMPT_LAB_OUTPUTS } from "@/services/generation/outputDefinitions";
 import { generatePromptLabOutput } from "@/services/generation/promptLabGeneration";
@@ -102,12 +103,35 @@ export const PromptLabPage = (): JSX.Element => {
     );
   }
 
+  const isLargeMode = project.scopeCategory === "large";
+  const legacyLargePlan = isLegacyLargeBuildPlan(project.scopeCategory, stages);
+
   return (
     <GameSectionLayout
       eyebrow="Output Engine"
       title="Prompt Lab"
       description="Generate copy-ready outputs for planning, pitching, staging AI implementation, art direction, playtests, and scope control. The lab works with AI providers when configured and falls back to deterministic local outputs when they are not."
     >
+      {isLargeMode ? (
+        <div className="rounded-3xl border border-amber-300/15 bg-amber-500/5 px-5 py-4">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-amber-100">
+            Large Project Mode
+          </p>
+          <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+            Prompt Lab will generate more prescriptive production guidance for
+            this project, including milestone gates, content budgets, dependency
+            boundaries, and cut-discipline framing.
+          </p>
+          {legacyLargePlan ? (
+            <p className="mt-2 text-sm leading-6 text-amber-100/90">
+              This project still has the older 12-stage build plan. Regenerating
+              Build Plan will align staged implementation prompts with Large
+              Project Mode.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="grid gap-6 rounded-3xl border border-outline-variant/10 bg-surface p-5 lg:grid-cols-[minmax(0,1fr)_260px]">
         <div>
           <p className="text-sm leading-6 text-on-surface-variant">

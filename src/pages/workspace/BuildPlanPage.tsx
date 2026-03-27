@@ -10,6 +10,7 @@ import { useBuildStages } from "@/hooks/useBuildStages";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
 import { useToast } from "@/hooks/useToast";
+import { isLegacyLargeBuildPlan } from "@/lib/buildPlanUtils";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
 import { generateBuildStages, exportAllPrompts } from "@/services/generation/buildGeneration";
 import type { BuildStage } from "@/types";
@@ -73,12 +74,43 @@ export const BuildPlanPage = (): JSX.Element => {
     );
   }
 
+  const isLargeMode = project.scopeCategory === "large";
+  const legacyLargePlan = isLegacyLargeBuildPlan(project.scopeCategory, stages);
+  const totalStages = stages.reduce(
+    (max, stage) => Math.max(max, stage.stageNumber),
+    0
+  );
+
   return (
     <GameSectionLayout
       eyebrow="Implementation Flow"
       title="Build Plan"
       description="Turn the design doc into an ordered sequence of implementation passes. The prompts here are intentionally staged so Codex, Cursor, Claude Code, and similar tools stay aligned."
     >
+      {isLargeMode ? (
+        <div
+          className={`rounded-3xl border px-5 py-4 ${
+            legacyLargePlan
+              ? "border-amber-300/25 bg-amber-500/10"
+              : "border-amber-300/15 bg-amber-500/5"
+          }`}
+        >
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-amber-100">
+            Large Project Mode
+          </p>
+          <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+            Build Plan is using the expanded indie-studio production model with
+            milestone gates, content-budget discipline, and integration-focused stages.
+          </p>
+          {legacyLargePlan ? (
+            <p className="mt-2 text-sm leading-6 text-amber-100/90">
+              This project still has the older 12-stage plan. Regenerate Build Plan
+              to upgrade it to the 15-stage large-project sequence.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="grid gap-6 rounded-3xl border border-outline-variant/10 bg-surface p-5 lg:grid-cols-[minmax(0,1fr)_260px]">
         <div>
           <p className="text-sm leading-6 text-on-surface-variant">
@@ -103,7 +135,7 @@ export const BuildPlanPage = (): JSX.Element => {
             onClick={() => void handleGenerate()}
             className="gradient-cta glow-primary w-full rounded-2xl px-4 py-3 text-sm font-semibold text-on-primary"
           >
-            Generate Build Plan
+            {stages.length > 0 ? "Regenerate Build Plan" : "Generate Build Plan"}
           </button>
           <button
             type="button"
@@ -122,6 +154,7 @@ export const BuildPlanPage = (): JSX.Element => {
             <BuildStageCard
               key={stage.id}
               stage={stage}
+              totalStages={totalStages}
               onStatusChange={(nextStage) => void cycleStatus(nextStage)}
             />
           ))
