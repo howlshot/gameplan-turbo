@@ -76,7 +76,7 @@ export const SettingsPage = (): JSX.Element => {
 
   const handleClearAllData = async (): Promise<void> => {
     const confirmed = window.confirm(
-      "Clear all local Preflight data? This will remove projects, vault files, prompts, and settings."
+      "Clear all local Preflight Game OS data? This will remove projects, design docs, vault files, prompts, and settings."
     );
 
     if (!confirmed) {
@@ -95,7 +95,7 @@ export const SettingsPage = (): JSX.Element => {
             Workspace Settings
           </h1>
           <p className="mt-2 font-mono text-label-sm uppercase tracking-[0.24em] text-on-surface-variant">
-            Engine configuration & authentication
+            Providers, prompts, storage, and launch targets
           </p>
         </header>
 
@@ -176,7 +176,7 @@ export const SettingsPage = (): JSX.Element => {
               onExportJson={() =>
                 void (async () => {
                   const payload = await exportAppData();
-                  downloadJsonFile(payload, "preflight-export.json");
+                  downloadJsonFile(payload, "preflight-game-os-export.json");
                   toast.success("Workspace JSON exported.");
                 })()
               }

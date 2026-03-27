@@ -87,11 +87,10 @@ export const PROVIDER_CATALOG: Record<AIProvider, ProviderCatalogEntry> = {
 };
 
 export const PLATFORM_TOGGLE_OPTIONS = [
-  { id: "lovable", label: "Lovable", icon: "favorite" },
-  { id: "bolt", label: "Bolt", icon: "bolt" },
+  { id: "codex", label: "Codex", icon: "terminal" },
   { id: "cursor", label: "Cursor", icon: "arrow_right_alt" },
+  { id: "claude-code", label: "Claude Code", icon: "code" },
   { id: "qwen-code", label: "Qwen Code", icon: "code" },
-  { id: "v0", label: "v0", icon: "deployed_code" },
   { id: "replit", label: "Replit", icon: "terminal" },
   { id: "perplexity", label: "Perplexity", icon: "help" },
   { id: "gemini", label: "Gemini", icon: "auto_awesome" },

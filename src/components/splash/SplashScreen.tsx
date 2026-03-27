@@ -56,14 +56,14 @@ export const SplashScreen = ({
 
         <div className="mt-8">
           <h1 className="font-headline text-[32px] font-bold tracking-tighter text-on-surface">
-            Preflight
+            Preflight Game OS
           </h1>
           <p
             className={`mt-2 font-mono text-[11px] uppercase tracking-[0.28em] text-outline transition-opacity duration-500 ${
               showTagline ? "opacity-100" : "opacity-0"
             }`}
           >
-            Your launchpad. Every build.
+            Game design. Build order. Agent-ready prompts.
           </p>
         </div>
 
@@ -83,7 +83,7 @@ export const SplashScreen = ({
             </span>
             <span className="flex items-center gap-2 font-mono text-primary/60">
               <span className="h-1.5 w-1.5 rounded-full bg-primary/40" />
-              Syncing Vault
+              Syncing Design Vault
             </span>
           </div>
         </div>
@@ -92,7 +92,7 @@ export const SplashScreen = ({
       <div className="absolute bottom-8 left-8">
         <div className="mb-2 h-px w-24 bg-outline-variant/20" />
         <p className="font-mono text-[9px] uppercase tracking-[0.3em] text-outline/40">
-          Ready for ignition
+          Ready for first playable
         </p>
       </div>
 
@@ -114,7 +114,7 @@ export const SplashScreen = ({
           </span>
         </div>
         <p className="mt-3 font-headline text-[11px] font-bold uppercase tracking-[0.25em] text-outline">
-          v0.1.0
+          v1 game os
         </p>
       </div>
     </div>

@@ -13,10 +13,10 @@ export const OnboardingNameStep = ({
     <div className="p-10">
       <div className="text-center">
         <h1 className="font-headline text-4xl font-bold tracking-tight text-on-surface">
-          Welcome to Preflight
+          Welcome to Preflight Game OS
         </h1>
         <p className="mt-3 text-on-surface-variant">
-          Let's set up your workspace in 2 minutes.
+          Let’s set up your local-first game design workspace.
         </p>
       </div>
 

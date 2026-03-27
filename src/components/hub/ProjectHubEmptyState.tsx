@@ -8,27 +8,27 @@ export const ProjectHubEmptyState = ({
   return (
     <div className="py-24 text-center">
       <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary/40">
-        <span className="material-symbols-outlined text-5xl">rocket_launch</span>
+        <span className="material-symbols-outlined text-5xl">stadia_controller</span>
       </div>
       <h2 className="mt-6 font-headline text-[28px] font-bold text-on-surface">
-        No projects yet.
+        No game projects yet.
       </h2>
       <p className="mt-3 text-outline">
-        Start with an idea. Preflight handles the rest.
+        Capture the concept, lock the pillars, and build from a real first-playable plan.
       </p>
       <button
         type="button"
         onClick={onCreateProject}
         className="gradient-cta glow-primary mt-8 rounded-xl px-5 py-3 text-sm font-semibold text-on-primary"
       >
-        Create your first project
+        Create your first game project
       </button>
 
       <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
-          ["Guided Setup", "Bootstrap a project shell in minutes."],
-          ["Templates", "Turn repeated project patterns into momentum."],
-          ["Vault Training", "Collect the research and files your build needs."]
+          ["Concept to GDD", "Turn a vague idea into a pitch, mini GDD, or full GDD."],
+          ["Stage-by-Stage Build", "Generate a sane order of work for first playable, content slice, and polish."],
+          ["Prompt-Ready Outputs", "Export copy-ready prompts for Codex, Cursor, Claude Code, and Qwen Code."]
         ].map(([title, description]) => (
           <div
             key={title}

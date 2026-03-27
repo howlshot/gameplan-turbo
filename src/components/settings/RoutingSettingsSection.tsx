@@ -20,7 +20,7 @@ export const RoutingSettingsSection = ({
       <div className="flex items-center gap-3">
         <span className="material-symbols-outlined text-primary">psychology</span>
         <h2 className="font-headline text-2xl font-semibold text-on-surface">
-          Intelligence Routing
+          Generation Routing
         </h2>
       </div>
 
@@ -28,10 +28,10 @@ export const RoutingSettingsSection = ({
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
-              Default Workspace Model
+              Default Generation Model
             </p>
             <p className="mt-2 text-sm text-on-surface-variant">
-              Select the primary model for new generation tasks.
+              Select the primary model for prompt lab and agent-output generation.
             </p>
           </div>
           <select
@@ -55,7 +55,7 @@ export const RoutingSettingsSection = ({
                 Streaming Response
               </p>
               <p className="mt-2 text-sm text-on-surface-variant">
-                Visualize the model thinking in real-time.
+                Stream long prompt outputs while they are being generated.
               </p>
             </div>
             <button

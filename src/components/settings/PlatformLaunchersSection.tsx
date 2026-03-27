@@ -14,7 +14,7 @@ export const PlatformLaunchersSection = ({
       <div className="flex items-center gap-3">
         <span className="material-symbols-outlined text-primary">rocket_launch</span>
         <h2 className="font-headline text-2xl font-semibold text-on-surface">
-          Platform Launchers
+          Tool Launchers
         </h2>
       </div>
 

@@ -20,7 +20,7 @@ export const OnboardingCompleteStep = ({
         You're all set.
       </h1>
       <p className="mt-3 text-on-surface-variant">
-        Create your first project, or explore the interface.
+        Create your first game project, or explore the workspace.
       </p>
 
       <button
@@ -28,7 +28,7 @@ export const OnboardingCompleteStep = ({
         onClick={onComplete}
         className="gradient-cta glow-primary mt-10 flex w-full items-center justify-center gap-2 rounded-xl px-5 py-4 font-semibold text-on-primary"
       >
-        <span>Open Preflight</span>
+        <span>Open Preflight Game OS</span>
         <span className="material-symbols-outlined text-base">arrow_forward</span>
       </button>
     </div>

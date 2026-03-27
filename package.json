@@ -1,9 +1,9 @@
 {
-  "name": "preflight",
+  "name": "preflight-game-os",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "Open-source project OS for vibe coders",
+  "description": "Local-first game design operating system for AI-assisted builders",
   "license": "MIT",
   "packageManager": "pnpm@10.0.0",
   "engines": {
@@ -14,9 +14,10 @@
     "url": "https://github.com/Meykiio/preflight.git"
   },
   "keywords": [
-    "vibe-coding",
+    "game-design",
+    "preproduction",
     "ai",
-    "project-management",
+    "game-development",
     "open-source",
     "developer-tools"
   ],

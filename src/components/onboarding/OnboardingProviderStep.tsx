@@ -29,9 +29,9 @@ export const OnboardingProviderStep = ({
     <div className="p-10">
       <div className="text-center">
         <h1 className="font-headline text-4xl font-bold tracking-tight text-on-surface">
-          Connect your AI
+          Connect your AI provider
         </h1>
-        <p className="mt-3 text-on-surface-variant">Bring your own key - free forever.</p>
+        <p className="mt-3 text-on-surface-variant">Bring your own key. Prompt generation is optional but supported everywhere.</p>
       </div>
 
       <div className="mt-10">
@@ -148,8 +148,8 @@ export const OnboardingProviderStep = ({
       </div>
 
       <div className="pointer-events-none absolute right-8 top-8 hidden text-right font-mono text-[10px] uppercase tracking-[0.24em] text-primary/40 md:block">
-        <p>Preflight v0.1.0</p>
-        <p className="mt-1">Alpha Access</p>
+        <p>Preflight Game OS</p>
+        <p className="mt-1">Local-First</p>
       </div>
     </div>
   );

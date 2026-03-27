@@ -6,34 +6,34 @@ interface OnboardingTutorialStepProps {
 
 const FEATURES = [
   {
-    icon: "description",
-    title: "Structured Briefs",
-    description: "Capture your idea with problem, users, and features"
+    icon: "theater_comedy",
+    title: "Game Concept",
+    description: "Capture the title, fantasy, audience, scope, and comparable games."
   },
   {
-    icon: "search",
-    title: "AI Research",
-    description: "Generate deep research prompts for Perplexity, Gemini, ChatGPT"
+    icon: "diamond",
+    title: "Design Pillars",
+    description: "Lock the feel targets, anti-goals, and readability rules."
   },
   {
-    icon: "palette",
-    title: "Design Prompts",
-    description: "Create design specs for Stitch, v0, Figma AI"
+    icon: "sports_esports",
+    title: "Controls & Feel",
+    description: "Define controls, camera grammar, responsiveness, and touch constraints."
   },
   {
     icon: "article",
-    title: "PRD Generation",
-    description: "Complete product requirements with TypeScript types"
+    title: "Prompt Lab",
+    description: "Generate pitches, GDDs, system prompts, cut lists, and playtest docs."
   },
   {
-    icon: "build",
-    title: "Sequential Build",
-    description: "5-stage workflow from foundation to deployment"
+    icon: "terminal",
+    title: "Build Plan",
+    description: "Stage first playable, combat feel, encounters, HUD, and polish."
   },
   {
     icon: "folder",
-    title: "Project Vault",
-    description: "Store files and inject context into generations"
+    title: "Design Vault",
+    description: "Store screenshots, moodboards, mechanic notes, mockups, and playtest files."
   }
 ] as const;
 
@@ -63,7 +63,7 @@ export const OnboardingTutorialStep = ({
           Quick Tour
         </h1>
         <p className="mt-3 text-on-surface-variant">
-          Here's what Preflight can do for you.
+          Here’s what Preflight Game OS is built to do.
         </p>
       </div>
 

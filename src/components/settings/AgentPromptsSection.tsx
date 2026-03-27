@@ -10,12 +10,25 @@ interface AgentPromptsSectionProps {
   onSave: (promptId: string, content: string) => Promise<void>;
 }
 
-const GENERATION_AGENTS = ["research", "design", "prd", "system-instructions", "rules-file"];
-const BUILD_AGENTS = ["build-foundation", "build-database", "build-feature", "build-audit", "build-deployment"];
+const OUTPUT_AGENTS = [
+  "game-pitch",
+  "mini-gdd",
+  "full-gdd",
+  "vertical-slice-plan",
+  "milestone-roadmap",
+  "agent-system-prompt",
+  "art-prompt-packet",
+  "asset-grocery-list",
+  "playtest-checklist",
+  "risk-register",
+  "cut-list",
+  "reference-research"
+];
+const IMPLEMENTATION_AGENTS = ["implementation-stage"];
 
 const formatCategoryLabel = (category: string): string => {
-  if (category === "generation") return "Generation Agents";
-  if (category === "build") return "Build Agents";
+  if (category === "output") return "Output Prompts";
+  if (category === "implementation") return "Implementation Prompts";
   return category;
 };
 
@@ -25,14 +38,26 @@ export const AgentPromptsSection = ({
   onReset,
   onSave
 }: AgentPromptsSectionProps): JSX.Element => {
-  const [expandedCategory, setExpandedCategory] = useState<string | null>("generation");
+  const [expandedCategory, setExpandedCategory] = useState<string | null>("output");
 
-  const generationPrompts = prompts.filter((p) => GENERATION_AGENTS.includes(p.agentType));
-  const buildPrompts = prompts.filter((p) => BUILD_AGENTS.includes(p.agentType));
+  const outputPrompts = prompts.filter((prompt) => OUTPUT_AGENTS.includes(prompt.agentType));
+  const implementationPrompts = prompts.filter((prompt) =>
+    IMPLEMENTATION_AGENTS.includes(prompt.agentType)
+  );
+  const legacyPrompts = prompts.filter(
+    (prompt) =>
+      !OUTPUT_AGENTS.includes(prompt.agentType) &&
+      !IMPLEMENTATION_AGENTS.includes(prompt.agentType)
+  );
 
   const categories = [
-    { id: "generation", prompts: generationPrompts, count: generationPrompts.length },
-    { id: "build", prompts: buildPrompts, count: buildPrompts.length }
+    { id: "output", prompts: outputPrompts, count: outputPrompts.length },
+    {
+      id: "implementation",
+      prompts: implementationPrompts,
+      count: implementationPrompts.length
+    },
+    { id: "legacy", prompts: legacyPrompts, count: legacyPrompts.length }
   ];
 
   return (
@@ -40,7 +65,7 @@ export const AgentPromptsSection = ({
       <div className="flex items-center gap-3">
         <span className="material-symbols-outlined text-primary">tune</span>
         <h2 className="font-headline text-2xl font-semibold text-on-surface">
-          Agent Prompts
+          Prompt Templates
         </h2>
       </div>
 
