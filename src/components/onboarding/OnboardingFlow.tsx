@@ -10,7 +10,8 @@ import { useSettings } from "@/hooks/useSettings";
 import {
   fetchCodexBridgeStatus,
   getCodexBridgeStartCommand,
-  getCodexLoginCommand
+  getCodexLoginCommand,
+  openCodexLoginFlow
 } from "@/lib/codexBridge";
 import { getGenerationErrorState } from "@/lib/generationErrors";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
@@ -34,6 +35,7 @@ export const OnboardingFlow = ({
   const [name, setName] = useState(settings?.userName ?? "");
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>("anthropic");
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isStartingCodexLogin, setIsStartingCodexLogin] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [validationAttempts, setValidationAttempts] = useState(0);
@@ -129,6 +131,24 @@ export const OnboardingFlow = ({
     }
   };
 
+  const handleStartCodexLogin = async (): Promise<void> => {
+    setErrorMessage("");
+    setIsStartingCodexLogin(true);
+
+    try {
+      await openCodexLoginFlow();
+      toast.success("Opened the Codex login flow in Terminal.");
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error
+          ? error.message
+          : `Could not open the Codex login flow. Run \`${getCodexLoginCommand()}\` manually.`
+      );
+    } finally {
+      setIsStartingCodexLogin(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface-dim/80 px-4 backdrop-blur-sm">
       <div
@@ -152,7 +172,9 @@ export const OnboardingFlow = ({
           <OnboardingProviderStep
             apiKeyRef={apiKeyRef}
             errorMessage={errorMessage}
+            isStartingCodexLogin={isStartingCodexLogin}
             isVerifying={isVerifying}
+            onStartCodexLogin={() => void handleStartCodexLogin()}
             onSelectProvider={setSelectedProvider}
             onToggleApiVisibility={() => setShowApiKey((current) => !current)}
             onVerify={() => void handleVerifyProvider()}

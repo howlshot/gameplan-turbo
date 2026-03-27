@@ -34,3 +34,27 @@ export const fetchCodexBridgeStatus = async (): Promise<CodexBridgeStatus> => {
 
   return (await response.json()) as CodexBridgeStatus;
 };
+
+export const openCodexLoginFlow = async (): Promise<void> => {
+  const response = await fetch(`${getCodexBridgeUrl()}/auth/open-login`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json"
+    }
+  });
+
+  if (!response.ok) {
+    let message = "Could not open the Codex login flow.";
+
+    try {
+      const payload = (await response.json()) as { error?: string };
+      if (payload.error) {
+        message = payload.error;
+      }
+    } catch {
+      // Ignore JSON parse failures and use the fallback message.
+    }
+
+    throw new Error(message);
+  }
+};

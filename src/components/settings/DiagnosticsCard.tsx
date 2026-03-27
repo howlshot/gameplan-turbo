@@ -3,8 +3,10 @@ import {
   fetchCodexBridgeStatus,
   getCodexBridgeStartCommand,
   getCodexLoginCommand,
+  openCodexLoginFlow,
   type CodexBridgeStatus
 } from "@/lib/codexBridge";
+import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 
 const REFRESH_INTERVAL_MS = 15000;
@@ -57,9 +59,11 @@ const statusTone = (
 };
 
 export const DiagnosticsCard = (): JSX.Element => {
+  const toast = useToast();
   const [status, setStatus] = useState<CodexBridgeStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isOpeningLogin, setIsOpeningLogin] = useState(false);
 
   const loadStatus = useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -79,6 +83,24 @@ export const DiagnosticsCard = (): JSX.Element => {
       setIsLoading(false);
     }
   }, []);
+
+  const handleOpenLogin = useCallback(async (): Promise<void> => {
+    setIsOpeningLogin(true);
+
+    try {
+      await openCodexLoginFlow();
+      toast.success("Opened the Codex login flow in Terminal.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not open the Codex login flow.";
+      setErrorMessage(message);
+      toast.error(message);
+    } finally {
+      setIsOpeningLogin(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
     void loadStatus();
@@ -156,6 +178,16 @@ export const DiagnosticsCard = (): JSX.Element => {
           <p className="text-sm text-on-surface-variant">
             3. Keep that Terminal window open while using Preflight Game OS
           </p>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => void handleOpenLogin()}
+              disabled={isOpeningLogin}
+              className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+            >
+              {isOpeningLogin ? "Opening..." : "Open ChatGPT Sign-In"}
+            </button>
+          </div>
         </div>
 
         <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">

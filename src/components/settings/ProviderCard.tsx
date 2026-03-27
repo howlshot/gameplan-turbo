@@ -3,10 +3,12 @@ import {
   fetchCodexBridgeStatus,
   getCodexBridgeStartCommand,
   getCodexLoginCommand,
+  openCodexLoginFlow,
   type CodexBridgeStatus
 } from "@/lib/codexBridge";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/useToast";
 import type { AIProvider } from "@/types";
 
 export interface ProviderCardValue {
@@ -29,11 +31,13 @@ export const ProviderCard = ({
   onSave,
   onSetDefault
 }: ProviderCardProps): JSX.Element => {
+  const toast = useToast();
   const config = PROVIDER_CATALOG[provider.provider];
   const providerId = provider.id;
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isStartingLogin, setIsStartingLogin] = useState(false);
   const [bridgeStatusMessage, setBridgeStatusMessage] = useState("");
   const [isCheckingBridge, setIsCheckingBridge] = useState(false);
   const [isBridgeReady, setIsBridgeReady] = useState<boolean | null>(null);
@@ -115,6 +119,27 @@ export const ProviderCard = ({
     }
   }, [checkBridgeStatus, onSave, provider.provider]);
 
+  const handleOpenLogin = useCallback(async (): Promise<void> => {
+    setIsStartingLogin(true);
+
+    try {
+      await openCodexLoginFlow();
+      setBridgeStatusMessage(
+        "Codex login flow opened. Finish sign-in in the Terminal/browser window, then click Check Status."
+      );
+      toast.success("Opened the Codex login flow.");
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not open the Codex login flow.";
+      setBridgeStatusMessage(message);
+      toast.error(message);
+    } finally {
+      setIsStartingLogin(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
     if (isLocalBridgeProvider) {
       void checkBridgeStatus();
@@ -191,6 +216,14 @@ export const ProviderCard = ({
               <p>6. Leave that Terminal window open.</p>
             </div>
             <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={isStartingLogin}
+                onClick={() => void handleOpenLogin()}
+                className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
+              >
+                {isStartingLogin ? "Opening..." : "Open Sign-In"}
+              </button>
               <button
                 type="button"
                 disabled={isSaving || isCheckingBridge}

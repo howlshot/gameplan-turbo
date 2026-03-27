@@ -9,7 +9,9 @@ import type { AIProvider } from "@/types";
 interface OnboardingProviderStepProps {
   apiKeyRef: RefObject<HTMLInputElement>;
   errorMessage: string;
+  isStartingCodexLogin: boolean;
   isVerifying: boolean;
+  onStartCodexLogin: () => void;
   onSelectProvider: (provider: AIProvider) => void;
   onToggleApiVisibility: () => void;
   onVerify: () => void;
@@ -20,7 +22,9 @@ interface OnboardingProviderStepProps {
 export const OnboardingProviderStep = ({
   apiKeyRef,
   errorMessage,
+  isStartingCodexLogin,
   isVerifying,
+  onStartCodexLogin,
   onSelectProvider,
   onToggleApiVisibility,
   onVerify,
@@ -114,6 +118,16 @@ export const OnboardingProviderStep = ({
               </p>
               <p>6. Leave that Terminal window open while you use the app.</p>
               <p>7. Come back here and click <strong>Continue with Codex</strong>.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={onStartCodexLogin}
+                disabled={isStartingCodexLogin}
+                className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+              >
+                {isStartingCodexLogin ? "Opening..." : "Open ChatGPT Sign-In"}
+              </button>
             </div>
             <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3">
               <p className="font-semibold text-on-surface">What success looks like</p>

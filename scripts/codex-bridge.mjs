@@ -9,13 +9,26 @@ const MAX_BODY_BYTES = 1024 * 1024;
 const BRIDGE_VERSION = "0.1.0";
 const ALLOWED_ORIGIN = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/;
 
+const isAllowedOrigin = (origin) =>
+  typeof origin === "string" && ALLOWED_ORIGIN.test(origin);
+
 const createCorsHeaders = (origin) => ({
-  "Access-Control-Allow-Origin":
-    origin && ALLOWED_ORIGIN.test(origin) ? origin : "*",
+  "Access-Control-Allow-Origin": isAllowedOrigin(origin) ? origin : "null",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type,Accept",
   Vary: "Origin"
 });
+
+const rejectDisallowedOrigin = (req, res) => {
+  if (!req.headers.origin || isAllowedOrigin(req.headers.origin)) {
+    return false;
+  }
+
+  sendJson(req, res, 403, {
+    error: "This bridge only accepts requests from localhost origins."
+  });
+  return true;
+};
 
 const sendJson = (req, res, statusCode, payload) => {
   const corsHeaders = createCorsHeaders(req.headers.origin);
@@ -124,6 +137,31 @@ const buildExecArgs = ({ model }) => {
   return args;
 };
 
+const detectTerminalLauncher = () => {
+  switch (process.platform) {
+    case "darwin":
+      return {
+        command: "osascript",
+        args: [
+          "-e",
+          'tell application "Terminal" to activate',
+          "-e",
+          'tell application "Terminal" to do script "codex login"'
+        ]
+      };
+    case "linux":
+      return {
+        command: "sh",
+        args: [
+          "-lc",
+          '(command -v x-terminal-emulator >/dev/null 2>&1 && exec x-terminal-emulator -e sh -lc "codex login; exec $SHELL") || (command -v gnome-terminal >/dev/null 2>&1 && exec gnome-terminal -- sh -lc "codex login; exec $SHELL") || (command -v konsole >/dev/null 2>&1 && exec konsole -e sh -lc "codex login; exec $SHELL")'
+        ]
+      };
+    default:
+      return null;
+  }
+};
+
 const extractAgentMessage = (stdout) => {
   const lines = stdout
     .split("\n")
@@ -181,6 +219,10 @@ const readJsonBody = (req) =>
 const server = http.createServer(async (req, res) => {
   if (!req.url || !req.method) {
     sendJson(req, res, 400, { error: "Malformed request." });
+    return;
+  }
+
+  if (rejectDisallowedOrigin(req, res)) {
     return;
   }
 
@@ -256,6 +298,67 @@ const server = http.createServer(async (req, res) => {
           error instanceof Error
             ? error.message
             : "Unexpected Codex bridge error."
+      });
+      return;
+    }
+  }
+
+  if (req.method === "POST" && req.url === "/auth/open-login") {
+    try {
+      const status = await getCodexAuthStatus();
+
+      if (!status.cliAvailable) {
+        sendJson(req, res, 503, {
+          error: "Codex CLI is not installed on this machine."
+        });
+        return;
+      }
+
+      const body = await readJsonBody(req).catch(() => ({}));
+      const dryRun =
+        typeof body === "object" &&
+        body !== null &&
+        "dryRun" in body &&
+        body.dryRun === true;
+
+      const launcher = detectTerminalLauncher();
+
+      if (!launcher) {
+        sendJson(req, res, 501, {
+          error:
+            "Automatic login launch is not supported on this operating system yet. Run `codex login` manually."
+        });
+        return;
+      }
+
+      if (dryRun) {
+        sendJson(req, res, 200, {
+          ok: true,
+          command: launcher.command,
+          args: launcher.args
+        });
+        return;
+      }
+
+      const child = spawn(launcher.command, launcher.args, {
+        cwd: process.cwd(),
+        env: process.env,
+        detached: true,
+        stdio: "ignore"
+      });
+      child.unref();
+
+      sendJson(req, res, 200, {
+        ok: true,
+        message: "Codex login flow opened in a local terminal window."
+      });
+      return;
+    } catch (error) {
+      sendJson(req, res, 500, {
+        error:
+          error instanceof Error
+            ? error.message
+            : "Could not launch the Codex login flow."
       });
       return;
     }
