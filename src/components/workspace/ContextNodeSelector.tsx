@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useArtifacts } from "@/hooks/useArtifacts";
-import { useBrief } from "@/hooks/useBrief";
+import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
 import { cn } from "@/lib/utils";
 
@@ -24,62 +24,58 @@ export const ContextNodeSelector = ({
   projectId,
   selectedNodes
 }: ContextNodeSelectorProps): JSX.Element => {
-  const { brief } = useBrief(projectId);
+  const { gameDesignDoc } = useGameDesignDoc(projectId);
   const { artifacts } = useArtifacts(projectId);
   const { files, setAllFilesAsContext } = useVaultFiles(projectId);
 
-  const hasBriefContent = Boolean(
-    brief?.problem ||
-      brief?.targetUser ||
-      brief?.notes ||
-      brief?.coreFeatures.length ||
-      brief?.inspirations.length
+  const hasConceptContent = Boolean(
+    gameDesignDoc?.concept.gameTitle ||
+      gameDesignDoc?.concept.oneLinePitch ||
+      gameDesignDoc?.concept.playerFantasy ||
+      gameDesignDoc?.designPillars.pillars.length ||
+      gameDesignDoc?.coreLoop.secondToSecond
   );
-  const researchFiles = files.filter((file) => file.category === "research");
-  const designFiles = files.filter((file) => file.category === "design");
+
   const activeContextFiles = files.filter((file) => file.isActiveContext);
   const artifactTypes = new Set(artifacts.map((artifact) => artifact.type));
 
-  // Auto-select all active context files when selector opens
   useEffect(() => {
     if (isOpen && activeContextFiles.length > 0 && selectedNodes.length === 0) {
-      const activeNodeIds = activeContextFiles.map(f => f.id);
-      onChangeNodes(activeNodeIds);
+      onChangeNodes(activeContextFiles.map((file) => `vault:${file.id}`));
     }
-  }, [isOpen]);
+  }, [activeContextFiles, isOpen, onChangeNodes, selectedNodes.length]);
 
-  // Auto-select all files as context on first open if none selected
   useEffect(() => {
     if (isOpen && files.length > 0 && activeContextFiles.length === 0) {
-      setAllFilesAsContext();
+      void setAllFilesAsContext();
     }
-  }, [isOpen, files.length]);
+  }, [activeContextFiles.length, files.length, isOpen, setAllFilesAsContext]);
 
   const rows: ContextNodeRow[] = [
-    { id: "brief", icon: "description", label: "Brief", available: hasBriefContent },
+    { id: "concept", icon: "theater_comedy", label: "Concept", available: hasConceptContent },
     {
-      id: "research",
-      icon: "analytics",
-      label: "Research results",
-      available: researchFiles.length > 0
+      id: "design-pillars",
+      icon: "diamond",
+      label: "Design Pillars",
+      available: Boolean(gameDesignDoc?.designPillars.pillars.length)
     },
     {
-      id: "design",
-      icon: "architecture",
-      label: "Design files",
-      available: designFiles.length > 0
+      id: "core-loop",
+      icon: "cycle",
+      label: "Core Loop",
+      available: Boolean(gameDesignDoc?.coreLoop.secondToSecond)
     },
     {
-      id: "prd",
-      icon: "article",
-      label: "PRD",
-      available: artifactTypes.has("prd")
-    },
-    {
-      id: "system_instructions",
+      id: "build-plan",
       icon: "terminal",
-      label: "System Instructions",
-      available: artifactTypes.has("system_instructions")
+      label: "Build Plan",
+      available: artifactTypes.has("staged_implementation_prompts")
+    },
+    {
+      id: "full-gdd",
+      icon: "article",
+      label: "Full GDD",
+      available: artifactTypes.has("full_gdd")
     }
   ];
 
@@ -94,8 +90,7 @@ export const ContextNodeSelector = ({
   return (
     <aside
       className={cn(
-        "absolute right-0 top-0 z-20 h-full w-72 border-l border-outline-variant/15 bg-surface-container shadow-2xl transition-transform duration-200",
-        "glass-panel",
+        "glass-panel absolute right-0 top-0 z-20 h-full w-72 border-l border-outline-variant/15 bg-surface-container shadow-2xl transition-transform duration-200",
         isOpen ? "translate-x-0" : "translate-x-full"
       )}
     >
@@ -104,7 +99,7 @@ export const ContextNodeSelector = ({
           Context Nodes
         </p>
         <h2 className="mt-2 font-headline text-xl font-semibold text-on-surface">
-          Inject available context
+          Inject design context
         </h2>
       </div>
 
@@ -141,7 +136,7 @@ export const ContextNodeSelector = ({
                     : "bg-surface-container-high text-outline"
                 )}
               >
-                {row.available ? "Available" : "Missing data"}
+                {row.available ? "Available" : "Missing"}
               </span>
             </label>
           ))}

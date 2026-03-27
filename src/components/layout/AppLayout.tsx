@@ -49,7 +49,7 @@ export const AppLayout = (): JSX.Element => {
     }
 
     if (projectMatch && activeTab === "projects") {
-      setActiveTab("brief");
+      setActiveTab("concept");
     }
   }, [activeTab, location.pathname, projectMatch, setActiveTab]);
 

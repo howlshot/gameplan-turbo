@@ -39,11 +39,22 @@ export const Sidebar = (): JSX.Element => {
         sidebarCollapsed ? "w-16" : "w-60"
       )}
     >
+      {!sidebarCollapsed ? (
+        <div className="mb-4 px-4">
+          <p className="font-headline text-lg font-bold tracking-tight text-on-surface">
+            Preflight Game OS
+          </p>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">
+            Idea to first playable
+          </p>
+        </div>
+      ) : null}
+
       {/* Project Info Card - Only when expanded */}
       {!sidebarCollapsed && project && (
         <div className="mb-6 overflow-hidden rounded-xl bg-surface px-3 py-3 mx-2">
           <p className="truncate font-headline text-sm font-semibold text-on-surface">
-            {project.name}
+            {project.title}
           </p>
           <span
             className={cn(
@@ -70,7 +81,7 @@ export const Sidebar = (): JSX.Element => {
             )}
           >
             <span className={cn("material-symbols-outlined text-lg", isProjectsView && "fill-1")}>apps</span>
-            {!sidebarCollapsed ? <span className="truncate">Projects</span> : null}
+            {!sidebarCollapsed ? <span className="truncate">Game Hub</span> : null}
           </button>
 
           {selectedProjectId

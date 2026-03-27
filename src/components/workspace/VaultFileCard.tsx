@@ -118,7 +118,7 @@ export const VaultFileCard = ({
               Inject Context
             </p>
             <p className="mt-1 text-xs text-on-surface-variant">
-              Include in future generations.
+              Include in future prompt generation.
             </p>
           </div>
           <button

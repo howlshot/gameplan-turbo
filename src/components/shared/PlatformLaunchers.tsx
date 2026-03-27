@@ -9,25 +9,25 @@ interface LauncherDefinition {
 }
 
 const PLATFORM_MAP: Record<string, LauncherDefinition> = {
-  lovable: {
-    icon: "favorite",
-    label: "Lovable",
-    url: "https://lovable.dev"
-  },
-  bolt: {
-    icon: "bolt",
-    label: "Bolt",
-    url: "https://bolt.new"
+  codex: {
+    icon: "terminal",
+    label: "Codex",
+    url: "https://platform.openai.com"
   },
   cursor: {
     icon: "arrow_right_alt",
     label: "Cursor",
-    url: "https://cursor.sh"
+    url: "https://cursor.com"
   },
-  "claude code": {
+  "claude-code": {
     icon: "code",
     label: "Claude Code",
     url: "https://claude.ai"
+  },
+  "qwen-code": {
+    icon: "memory",
+    label: "Qwen Code",
+    url: "https://chat.qwen.ai"
   },
   perplexity: {
     icon: "help",
@@ -44,30 +44,25 @@ const PLATFORM_MAP: Record<string, LauncherDefinition> = {
     label: "ChatGPT",
     url: "https://chat.openai.com"
   },
-  v0: {
-    icon: "deployed_code",
-    label: "v0",
-    url: "https://v0.dev"
-  },
-  stitch: {
-    icon: "dashboard",
-    label: "Stitch",
-    url: "https://stitch.withgoogle.com"
-  },
-  "figma ai": {
-    icon: "gesture",
-    label: "Figma AI",
-    url: "https://www.figma.com"
-  },
-  locofy: {
-    icon: "web",
-    label: "Locofy",
-    url: "https://www.locofy.ai"
-  },
   replit: {
-    icon: "terminal",
+    icon: "deployed_code",
     label: "Replit",
     url: "https://replit.com"
+  },
+  lovable: {
+    icon: "favorite",
+    label: "Lovable",
+    url: "https://lovable.dev"
+  },
+  bolt: {
+    icon: "bolt",
+    label: "Bolt",
+    url: "https://bolt.new"
+  },
+  v0: {
+    icon: "web",
+    label: "v0",
+    url: "https://v0.dev"
   }
 };
 

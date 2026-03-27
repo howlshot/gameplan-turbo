@@ -11,7 +11,16 @@ import { downloadFileData, validateUploadFile } from "@/lib/fileUpload";
 import { estimateTokens, formatFileSize } from "@/lib/utils";
 import type { VaultCategory } from "@/types";
 
-type VaultFilter = "all" | "research" | "design" | "export";
+type VaultFilter =
+  | "all"
+  | "reference-screenshot"
+  | "moodboard"
+  | "design-note"
+  | "mechanic-writeup"
+  | "mockup"
+  | "playtest-note"
+  | "tech-constraint"
+  | "asset-list";
 
 interface UploadingFile {
   id: string;
@@ -20,9 +29,14 @@ interface UploadingFile {
 
 const FILTER_OPTIONS: Array<{ label: string; value: VaultFilter }> = [
   { label: "All", value: "all" },
-  { label: "Research", value: "research" },
-  { label: "Designs", value: "design" },
-  { label: "Exports", value: "export" }
+  { label: "Refs", value: "reference-screenshot" },
+  { label: "Moodboards", value: "moodboard" },
+  { label: "Notes", value: "design-note" },
+  { label: "Mechanics", value: "mechanic-writeup" },
+  { label: "Mockups", value: "mockup" },
+  { label: "Playtests", value: "playtest-note" },
+  { label: "Tech", value: "tech-constraint" },
+  { label: "Assets", value: "asset-list" }
 ];
 
 const ACCEPTED_EXTENSIONS = [".pdf", ".md", ".txt", ".png", ".jpg", ".jpeg", ".json", ".zip"];
@@ -30,8 +44,24 @@ const ACCEPTED_EXTENSIONS = [".pdf", ".md", ".txt", ".png", ".jpg", ".jpeg", ".j
 const getCategoryFromFile = (file: File): VaultCategory => {
   const normalized = file.name.toLowerCase();
 
-  if (normalized.endsWith(".pdf") || normalized.endsWith(".md") || normalized.endsWith(".txt")) {
-    return "research";
+  if (normalized.includes("mood")) {
+    return "moodboard";
+  }
+
+  if (normalized.includes("playtest")) {
+    return "playtest-note";
+  }
+
+  if (normalized.includes("mockup") || normalized.includes("wireframe")) {
+    return "mockup";
+  }
+
+  if (normalized.includes("tech") || normalized.endsWith(".json")) {
+    return "tech-constraint";
+  }
+
+  if (normalized.includes("asset")) {
+    return "asset-list";
   }
 
   if (
@@ -39,11 +69,11 @@ const getCategoryFromFile = (file: File): VaultCategory => {
     normalized.endsWith(".jpg") ||
     normalized.endsWith(".jpeg")
   ) {
-    return "design";
+    return "reference-screenshot";
   }
 
-  if (normalized.endsWith(".json") || normalized.endsWith(".zip")) {
-    return "export";
+  if (normalized.endsWith(".pdf") || normalized.endsWith(".md") || normalized.endsWith(".txt")) {
+    return "design-note";
   }
 
   return "other";
@@ -160,8 +190,8 @@ export const VaultPage = (): JSX.Element => {
         filterOptions={FILTER_OPTIONS}
         filterValue={filter}
         onChangeFilter={(value) => setFilter(value as VaultFilter)}
-        onChangeSearch={setSearch}
-        projectName={project?.name}
+              onChangeSearch={setSearch}
+        projectName={project?.title}
         searchValue={search}
       />
 

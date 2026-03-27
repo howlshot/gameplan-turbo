@@ -6,7 +6,6 @@ import {
 } from "@/components/shared/command-palette/CommandPaletteContent";
 import { useCommandPaletteActions } from "@/components/shared/command-palette/useCommandPaletteActions";
 import { useArtifacts } from "@/hooks/useArtifacts";
-import { useBrief } from "@/hooks/useBrief";
 import { useBuildStages } from "@/hooks/useBuildStages";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
 import { useProject } from "@/hooks/useProject";
@@ -19,8 +18,7 @@ export const CommandPalette = (): JSX.Element | null => {
   const { projects, isLoading } = useProjects();
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
   const { project } = useProject(selectedProjectId ?? undefined);
-  const { brief } = useBrief(selectedProjectId ?? undefined);
-  const { artifacts, createArtifact } = useArtifacts(selectedProjectId ?? undefined);
+  const { artifacts } = useArtifacts(selectedProjectId ?? undefined);
   const { stages } = useBuildStages(selectedProjectId ?? undefined);
   const isOpen = useUIStore((state) => state.isCommandPaletteOpen);
   const setCommandPaletteOpen = useUIStore((state) => state.setCommandPaletteOpen);
@@ -42,16 +40,10 @@ export const CommandPalette = (): JSX.Element | null => {
   };
 
   const latestArtifact = artifacts[0] ?? null;
-  const latestResearchArtifact =
-    artifacts.find((artifact) => artifact.type === "research_prompt") ?? null;
   const { navigationItems, platformLinks, projectTabs, quickActions } =
     useCommandPaletteActions({
-      artifacts,
-      brief: brief ?? undefined,
       closePalette,
-      createArtifact,
       latestArtifact,
-      latestResearchArtifact: latestResearchArtifact ?? undefined,
       onOpenNewProject: () => setIsNewProjectOpen(true),
       project: project ?? undefined,
       selectedProjectId: selectedProjectId ?? undefined,
@@ -78,7 +70,7 @@ export const CommandPalette = (): JSX.Element | null => {
               isLoading={isLoading}
               navigationItems={navigationItems}
               onProjectSelect={(projectId) => {
-                setActiveTab("brief");
+                setActiveTab("concept");
                 navigate(`/project/${projectId}`);
                 closePalette();
               }}

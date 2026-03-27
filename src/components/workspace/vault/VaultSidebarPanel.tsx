@@ -34,17 +34,17 @@ export const VaultSidebarPanel = ({
           </span>
         </div>
         <h2 className="mt-5 font-headline text-2xl font-semibold text-on-surface">
-          Drop your project brain here
+          Drop your game context here
         </h2>
         <p className="mt-2 text-sm text-on-surface-variant">
-          Accepting PDF, MD, PNG, and JSON context files
+          Accepting notes, screenshots, mockups, and technical docs
         </p>
         <button
           type="button"
           onClick={onOpenPicker}
           className="mt-6 rounded-xl border border-outline-variant/15 bg-surface px-5 py-3 text-xs font-semibold uppercase tracking-[0.2em] text-on-surface transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-container-high"
         >
-          Select Assets
+          Select Files
         </button>
       </section>
 

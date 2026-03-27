@@ -1,5 +1,6 @@
 import { memo, useState } from "react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { BUILD_STAGE_SEQUENCE } from "@/lib/templates/genreTemplates";
 import { cn } from "@/lib/utils";
 import type { BuildStage } from "@/types";
 
@@ -34,6 +35,7 @@ const BuildStageCardComponent = ({
       : stage.stageNumber <= 4
         ? "bg-secondary/20 text-secondary"
         : "bg-outline-variant/20 text-on-surface";
+  const totalStages = BUILD_STAGE_SEQUENCE.length;
 
   return (
     <article
@@ -78,18 +80,20 @@ const BuildStageCardComponent = ({
           </div>
 
           <div className="mt-4 flex items-center gap-2 text-xs text-on-surface-variant">
-            {Array.from({ length: 5 }).map((_, index) => (
+            {Array.from({ length: totalStages }).map((_, index) => (
               <span
                 key={index}
                 className={cn(
                   "h-2.5 w-2.5 rounded-full",
-                  index < Math.min(stage.stageNumber, 5)
+                  index < stage.stageNumber
                     ? "bg-primary"
                     : "bg-surface-container-high"
                 )}
               />
             ))}
-            <span>{stage.status === "complete" ? "Steps complete" : "Steps queued"}</span>
+            <span>
+              {stage.status === "complete" ? "Stage complete" : "Stage queued"}
+            </span>
           </div>
 
           <div className="mt-4 rounded-xl bg-surface-container-lowest">

@@ -1,25 +1,17 @@
+import { getProjectStatusTone as getStatusTone } from "@/lib/gameProjectUtils";
+
 export const PROJECT_LINKS = [
-  { id: "brief", icon: "description", label: "Brief" },
-  { id: "research", icon: "analytics", label: "Research" },
-  { id: "design", icon: "architecture", label: "Design" },
-  { id: "prd", icon: "storage", label: "PRD" },
-  { id: "build", icon: "terminal", label: "Build" },
-  { id: "ship", icon: "rocket_launch", label: "Ship" },
-  { id: "vault", icon: "inventory_2", label: "Vault" }
+  { id: "concept", icon: "theater_comedy", label: "Concept" },
+  { id: "design-pillars", icon: "diamond", label: "Design Pillars" },
+  { id: "core-loop", icon: "cycle", label: "Core Loop" },
+  { id: "controls-feel", icon: "sports_esports", label: "Controls & Feel" },
+  { id: "content-bible", icon: "library_books", label: "Content Bible" },
+  { id: "art-tone", icon: "palette", label: "Art & Tone" },
+  { id: "technical-design", icon: "memory", label: "Technical Design" },
+  { id: "build-plan", icon: "terminal", label: "Build Plan" },
+  { id: "vault", icon: "inventory_2", label: "Vault" },
+  { id: "prompt-lab", icon: "auto_awesome", label: "Prompt Lab" }
 ] as const;
 
-export const getProjectStatusTone = (status: string): string => {
-  if (status === "shipped") {
-    return "bg-secondary/15 text-secondary";
-  }
-
-  if (status === "building") {
-    return "bg-primary/15 text-primary";
-  }
-
-  if (status === "researching" || status === "designing") {
-    return "bg-tertiary/15 text-tertiary";
-  }
-
-  return "bg-surface-container text-on-surface-variant";
-};
+export const getProjectStatusTone = (status: string): string =>
+  getStatusTone(status as never);

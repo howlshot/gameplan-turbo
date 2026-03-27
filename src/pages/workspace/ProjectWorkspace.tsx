@@ -1,26 +1,67 @@
 import { Suspense, lazy, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ContextNodeSelector } from "@/components/workspace/ContextNodeSelector";
 import { FloatingActionButton } from "@/components/shared/FloatingActionButton";
+import { ContextNodeSelector } from "@/components/workspace/ContextNodeSelector";
 import { useProject } from "@/hooks/useProject";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/uiStore";
 
-// Lazy load workspace pages for code splitting (named exports)
-const BriefPage = lazy(() => import("@/pages/workspace/BriefPage").then(module => ({ default: module.BriefPage })));
-const BuildPage = lazy(() => import("@/pages/workspace/BuildPage").then(module => ({ default: module.BuildPage })));
-const PRDPage = lazy(() => import("@/pages/workspace/PRDPage").then(module => ({ default: module.PRDPage })));
-const DesignPage = lazy(() => import("@/pages/workspace/DesignPage").then(module => ({ default: module.DesignPage })));
-const ResearchPage = lazy(() => import("@/pages/workspace/ResearchPage").then(module => ({ default: module.ResearchPage })));
-const ShipPage = lazy(() => import("@/pages/workspace/ShipPage").then(module => ({ default: module.ShipPage })));
-const VaultPage = lazy(() => import("@/pages/workspace/VaultPage").then(module => ({ default: module.VaultPage })));
+const ConceptPage = lazy(() =>
+  import("@/pages/workspace/ConceptPage").then((module) => ({
+    default: module.ConceptPage
+  }))
+);
+const DesignPillarsPage = lazy(() =>
+  import("@/pages/workspace/DesignPillarsPage").then((module) => ({
+    default: module.DesignPillarsPage
+  }))
+);
+const CoreLoopPage = lazy(() =>
+  import("@/pages/workspace/CoreLoopPage").then((module) => ({
+    default: module.CoreLoopPage
+  }))
+);
+const ControlsFeelPage = lazy(() =>
+  import("@/pages/workspace/ControlsFeelPage").then((module) => ({
+    default: module.ControlsFeelPage
+  }))
+);
+const ContentBiblePage = lazy(() =>
+  import("@/pages/workspace/ContentBiblePage").then((module) => ({
+    default: module.ContentBiblePage
+  }))
+);
+const ArtTonePage = lazy(() =>
+  import("@/pages/workspace/ArtTonePage").then((module) => ({
+    default: module.ArtTonePage
+  }))
+);
+const TechnicalDesignPage = lazy(() =>
+  import("@/pages/workspace/TechnicalDesignPage").then((module) => ({
+    default: module.TechnicalDesignPage
+  }))
+);
+const BuildPlanPage = lazy(() =>
+  import("@/pages/workspace/BuildPlanPage").then((module) => ({
+    default: module.BuildPlanPage
+  }))
+);
+const VaultPage = lazy(() =>
+  import("@/pages/workspace/VaultPage").then((module) => ({
+    default: module.VaultPage
+  }))
+);
+const PromptLabPage = lazy(() =>
+  import("@/pages/workspace/PromptLabPage").then((module) => ({
+    default: module.PromptLabPage
+  }))
+);
 
-// Loading fallback component
 const PageLoader = () => (
   <div className="flex h-full items-center justify-center">
     <div className="rounded-2xl border border-outline-variant/10 bg-surface-container px-6 py-5">
       <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
-        Loading Page
+        Loading Workspace
       </p>
       <div className="mt-3 h-2 w-48 overflow-hidden rounded-full bg-surface-container-high">
         <div className="h-full w-1/2 animate-pulse rounded-full bg-primary" />
@@ -30,31 +71,30 @@ const PageLoader = () => (
 );
 
 const WORKSPACE_STAGES = [
-  { id: "brief", label: "Brief" },
-  { id: "research", label: "Research" },
-  { id: "design", label: "Design" },
-  { id: "prd", label: "PRD" },
-  { id: "build", label: "Build" },
-  { id: "ship", label: "Ship" },
-  { id: "vault", label: "Vault" }
+  { id: "concept", label: "Concept" },
+  { id: "design-pillars", label: "Pillars" },
+  { id: "core-loop", label: "Loop" },
+  { id: "controls-feel", label: "Feel" },
+  { id: "content-bible", label: "Content" },
+  { id: "art-tone", label: "Art" },
+  { id: "technical-design", label: "Tech" },
+  { id: "build-plan", label: "Build" },
+  { id: "vault", label: "Vault" },
+  { id: "prompt-lab", label: "Prompt Lab" }
 ] as const;
 
-const PLACEHOLDER_STAGE_LABELS: Record<string, number> = {
-  brief: 6,
-  research: 7,
-  design: 8,
-  prd: 9,
-  build: 10,
-  vault: 11
-};
-
-const STATUS_STAGE_INDEX = {
+const STATUS_STAGE_INDEX: Record<string, number> = {
+  concept: 0,
   ideation: 0,
-  researching: 1,
-  designing: 2,
-  building: 4,
-  shipped: 5
-} as const;
+  preproduction: 2,
+  researching: 2,
+  designing: 3,
+  production: 7,
+  building: 7,
+  playtesting: 8,
+  "release-prep": 9,
+  shipped: 9
+};
 
 export const ProjectWorkspace = (): JSX.Element => {
   const navigate = useNavigate();
@@ -65,16 +105,12 @@ export const ProjectWorkspace = (): JSX.Element => {
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
 
   const currentStageIndex = useMemo(() => {
-    if (project?.status === "shipped") {
-      return 5;
-    }
-
     const activeIndex = WORKSPACE_STAGES.findIndex((stage) => stage.id === activeTab);
     if (activeIndex >= 0) {
       return activeIndex;
     }
 
-    return project ? STATUS_STAGE_INDEX[project.status] : 0;
+    return project ? STATUS_STAGE_INDEX[project.status] ?? 0 : 0;
   }, [activeTab, project]);
 
   if (!isLoading && !project) {
@@ -92,52 +128,40 @@ export const ProjectWorkspace = (): JSX.Element => {
             onClick={() => navigate("/")}
             className="gradient-cta glow-primary mt-6 rounded-xl px-4 py-3 text-sm font-semibold text-on-primary"
           >
-            Back to Projects
+            Back to Game Hub
           </button>
         </div>
       </section>
     );
   }
 
-  const stageNumber = PLACEHOLDER_STAGE_LABELS[activeTab] ?? 6;
-  const activeLabel =
-    WORKSPACE_STAGES.find((stage) => stage.id === activeTab)?.label ?? "Brief";
-
-  const renderActiveContent = (): JSX.Element => {
-    return (
-      <Suspense fallback={<PageLoader />}>
-        {activeTab === "brief" ? (
-          <BriefPage />
-        ) : activeTab === "research" ? (
-          <ResearchPage />
-        ) : activeTab === "design" ? (
-          <DesignPage onOpenContextSelector={() => setIsSelectorOpen(true)} />
-        ) : activeTab === "prd" && projectId ? (
-          <PRDPage projectId={projectId} />
-        ) : activeTab === "build" && projectId ? (
-          <BuildPage projectId={projectId} />
-        ) : activeTab === "vault" ? (
-          <VaultPage />
-        ) : activeTab === "ship" && projectId ? (
-          <ShipPage projectId={projectId} />
-        ) : (
-          <div className="flex h-full items-center justify-center px-8">
-            <div className="rounded-2xl border border-outline-variant/10 bg-surface-container p-10 text-center">
-              <p className="font-mono text-xs uppercase tracking-[0.22em] text-primary">
-                Workspace Placeholder
-              </p>
-              <h1 className="mt-4 font-headline text-4xl font-bold tracking-tight text-on-surface">
-                {activeLabel}
-              </h1>
-              <p className="mt-3 text-on-surface-variant">
-                Coming in Stage {stageNumber}.
-              </p>
-            </div>
-          </div>
-        )}
-      </Suspense>
-    );
-  };
+  const renderActiveContent = (): JSX.Element => (
+    <Suspense fallback={<PageLoader />}>
+      {activeTab === "concept" ? (
+        <ConceptPage />
+      ) : activeTab === "design-pillars" ? (
+        <DesignPillarsPage />
+      ) : activeTab === "core-loop" ? (
+        <CoreLoopPage />
+      ) : activeTab === "controls-feel" ? (
+        <ControlsFeelPage />
+      ) : activeTab === "content-bible" ? (
+        <ContentBiblePage />
+      ) : activeTab === "art-tone" ? (
+        <ArtTonePage />
+      ) : activeTab === "technical-design" ? (
+        <TechnicalDesignPage />
+      ) : activeTab === "build-plan" ? (
+        <BuildPlanPage />
+      ) : activeTab === "vault" ? (
+        <VaultPage />
+      ) : activeTab === "prompt-lab" ? (
+        <PromptLabPage />
+      ) : (
+        <ConceptPage />
+      )}
+    </Suspense>
+  );
 
   return (
     <section className="-mx-6 -my-8 flex min-h-[calc(100vh-3.5rem)] flex-col">
@@ -150,10 +174,10 @@ export const ProjectWorkspace = (): JSX.Element => {
                 onClick={() => navigate("/")}
                 className="transition hover:text-on-surface"
               >
-                Projects
+                Game Hub
               </button>
               <span>/</span>
-              <span className="text-on-surface">{project?.name ?? "Loading..."}</span>
+              <span className="text-on-surface">{project?.title ?? "Loading..."}</span>
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2">
@@ -169,7 +193,7 @@ export const ProjectWorkspace = (): JSX.Element => {
                       isCompleted
                         ? "bg-secondary/20 text-secondary"
                         : isCurrent
-                          ? "bg-primary/20 text-primary animate-pulse"
+                          ? "animate-pulse bg-primary/20 text-primary"
                           : "bg-surface-container text-outline"
                     )}
                   >
@@ -203,7 +227,6 @@ export const ProjectWorkspace = (): JSX.Element => {
         ) : null}
       </div>
 
-      {/* Floating Action Button for navigation */}
       <FloatingActionButton />
     </section>
   );

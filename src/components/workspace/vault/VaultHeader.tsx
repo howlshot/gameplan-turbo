@@ -20,10 +20,10 @@ export const VaultHeader = ({
       <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
         <div className="max-w-2xl">
           <h1 className="font-headline text-[28px] font-bold tracking-tight text-on-surface">
-            Project Vault
+            Design Vault
           </h1>
           <p className="mt-2 text-sm text-on-surface-variant">
-            Store and manage technical assets, context files, and project exports.
+            Store reference screenshots, moodboards, mechanic writeups, playtest notes, and technical constraints.
           </p>
         </div>
 
@@ -50,7 +50,7 @@ export const VaultHeader = ({
             <input
               value={searchValue}
               onChange={(event) => onChangeSearch(event.target.value)}
-              placeholder="Scan the vault..."
+              placeholder="Search the vault..."
               className="w-full bg-transparent text-sm text-on-surface outline-none placeholder:text-on-surface-variant"
             />
           </label>
