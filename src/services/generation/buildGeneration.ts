@@ -34,7 +34,7 @@ const buildSharedStageContext = (
     `Pitch: ${project.oneLinePitch || "TBD"}`,
     `Genre: ${project.genre || "TBD"} / ${project.subgenre || "TBD"}`,
     `Scope: ${project.scopeCategory}`,
-    `Session Length: ${gameDesignDoc.concept.sessionLength || "TBD"}`,
+    `Typical Session: ${gameDesignDoc.concept.sessionLength || "TBD"}`,
     `Player Fantasy: ${gameDesignDoc.concept.playerFantasy || "TBD"}`,
     `Design Pillars: ${gameDesignDoc.designPillars.pillars.join(" | ") || "TBD"}`,
     `Core Loop: ${gameDesignDoc.coreLoop.secondToSecond || "TBD"}`,

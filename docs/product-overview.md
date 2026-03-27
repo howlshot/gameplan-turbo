@@ -13,7 +13,7 @@ Gameplan Turbo is not a game engine and not a generic PM suite. It is a game dev
 
 ## Primary modules
 
-- `Concept`: title, pitch, fantasy, genre, platforms, audience, session length, scope
+- `Concept`: title, pitch, fantasy, genre, platforms, audience, typical session, scope
 - `Design Pillars`: what the game must feel like and must never become
 - `Core Loop`: short-loop, session-loop, progression-loop, reward cadence
 - `Controls & Feel`: control scheme, camera rules, responsiveness, accessibility

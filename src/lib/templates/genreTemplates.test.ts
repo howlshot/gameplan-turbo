@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   GAME_TEMPLATES,
+  getGenreFamilyDefinitions,
   getStarterModeDefinitions,
+  inferTemplateIdFromGenreSelection,
   isTemplateId,
   STARTER_MODE_ORDER
 } from "@/lib/templates/genreTemplates";
@@ -40,5 +42,38 @@ describe("genreTemplates", () => {
     expect(isTemplateId("puzzle-action")).toBe(true);
     expect(isTemplateId("custom-guided")).toBe(true);
     expect(isTemplateId("unknown-template")).toBe(false);
+  });
+
+  it("defines a genre taxonomy that maps curated subgenres to hidden templates", () => {
+    expect(getGenreFamilyDefinitions().map((family) => family.id)).toEqual([
+      "action",
+      "platformer",
+      "horror",
+      "strategy",
+      "puzzle",
+      "other"
+    ]);
+
+    expect(
+      inferTemplateIdFromGenreSelection({
+        genreFamilyId: "horror",
+        subgenreId: "survival-horror"
+      })
+    ).toBe("survival-horror-lite");
+  });
+
+  it("falls back to blank and custom-guided templates appropriately for the other path", () => {
+    expect(
+      inferTemplateIdFromGenreSelection({
+        genreFamilyId: "other"
+      })
+    ).toBe("blank-game-project");
+
+    expect(
+      inferTemplateIdFromGenreSelection({
+        genreFamilyId: "other",
+        customGenre: "Immersive Sim"
+      })
+    ).toBe("custom-guided");
   });
 });

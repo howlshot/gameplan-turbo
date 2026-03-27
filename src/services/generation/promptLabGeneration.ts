@@ -36,7 +36,7 @@ const buildLargeModeContext = (
 ): string =>
   [
     "Project Mode: Indie-studio large",
-    `Session Target: ${gameDesignDoc.concept.sessionLength || "TBD"}`,
+    `Typical Session: ${gameDesignDoc.concept.sessionLength || "TBD"}`,
     `Engine / Pipeline Baseline: ${
       gameDesignDoc.technicalDesign.engine || project.enginePreference || "TBD"
     }`,
@@ -51,7 +51,7 @@ const buildLargeProductionAssumptions = (
   [
     "This project is operating in Large Project Mode, which means broader scope with explicit production discipline.",
     `Platform set: ${project.platformTargets.join(", ") || "TBD"}`,
-    `Session target: ${gameDesignDoc.concept.sessionLength || "TBD"}`,
+    `Typical Session: ${gameDesignDoc.concept.sessionLength || "TBD"}`,
     `Technical baseline: ${
       gameDesignDoc.technicalDesign.engine || project.enginePreference || "TBD"
     }`,
@@ -170,7 +170,7 @@ const buildWorkspaceContext = ({
       [
         `Player Fantasy: ${gameDesignDoc.concept.playerFantasy}`,
         `Target Audience: ${gameDesignDoc.concept.targetAudience}`,
-        `Session Length: ${gameDesignDoc.concept.sessionLength}`,
+        `Typical Session: ${gameDesignDoc.concept.sessionLength}`,
         `Monetization: ${gameDesignDoc.concept.monetizationModel}`,
         `Comparable Games: ${gameDesignDoc.concept.comparableGames.join(", ")}`,
         `Differentiators: ${gameDesignDoc.concept.differentiators}`
@@ -314,7 +314,7 @@ export const buildOfflineOutput = ({
         "## Design Pillars",
         gameDesignDoc.designPillars.pillars.map((pillar) => `- ${pillar}`).join("\n") || "- TBD",
         "## Session Shape",
-        `Audience: ${gameDesignDoc.concept.targetAudience || "TBD"}\nSession: ${gameDesignDoc.concept.sessionLength || "TBD"}`,
+        `Audience: ${gameDesignDoc.concept.targetAudience || "TBD"}\nTypical Session: ${gameDesignDoc.concept.sessionLength || "TBD"}`,
         "## Scope Guardrails",
         gameDesignDoc.designPillars.antiGoals.map((goal) => `- ${goal}`).join("\n") || "- TBD"
       ].join("\n\n");

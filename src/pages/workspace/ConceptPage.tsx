@@ -244,7 +244,7 @@ export const ConceptPage = (): JSX.Element => {
             </GameField>
 
             <GameField
-              label="Session Length"
+              label="Typical Session"
               description="This is the typical one-sitting play session, not total campaign length."
             >
               <GameSelect
@@ -271,7 +271,7 @@ export const ConceptPage = (): JSX.Element => {
               <GameTextInput
                 className="mt-3"
                 value={project.sessionLength}
-                placeholder="5-12 minutes"
+                placeholder="3-10 minutes"
                 onChange={(event) => {
                   const value = event.target.value;
                   void Promise.all([

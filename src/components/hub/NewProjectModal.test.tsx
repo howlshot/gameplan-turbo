@@ -45,6 +45,12 @@ describe("NewProjectModal", () => {
     });
   });
 
+  const getGenreFamilySelect = (): HTMLElement =>
+    screen.getByRole("combobox", { name: "Genre Family" });
+
+  const getSubgenreSelect = (): HTMLElement =>
+    screen.getByRole("combobox", { name: "Subgenre" });
+
   it("starts on step one with title focus and preserves values when moving back", async () => {
     render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
 
@@ -66,7 +72,7 @@ describe("NewProjectModal", () => {
 
     expect(screen.getByText(/Step 2 of 2/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /Back/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^Back$/i }));
 
     expect(screen.getByLabelText(/Game Title/i)).toHaveValue("Nightline Zero");
     expect(screen.getByLabelText(/One-Line Pitch/i)).toHaveValue(
@@ -87,21 +93,61 @@ describe("NewProjectModal", () => {
     expect(screen.getByText(/Step 1 of 2/i)).toBeInTheDocument();
   });
 
-  it("applies preset defaults when switching starter modes", async () => {
+  it("starts from a neutral blank baseline when no genre path is chosen", async () => {
     render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
 
-    const platformerCard = screen.getByText(/^Platformer$/).closest("button");
-    expect(platformerCard).not.toBeNull();
-    fireEvent.click(platformerCard!);
-
-    expect(screen.getByLabelText(/^Genre$/i)).toHaveValue("Platformer");
-    expect(screen.getByLabelText(/^Subgenre$/i)).toHaveValue("Action Platformer");
+    expect(screen.getByText(/Neutral baseline/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Choose a genre family and subgenre to load tailored recommendations/i)
+    ).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText(/Game Title/i), {
-      target: { value: "Skywire Sprint" }
+      target: { value: "Untitled Prototype" }
     });
     fireEvent.click(
       screen.getByRole("button", { name: /Next: Production Setup/i })
+    );
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create Game Project/i })
+    );
+
+    await waitFor(() => {
+      expect(mocks.createProject).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Untitled Prototype",
+          templateId: "blank-game-project",
+          sessionLength: "10-20 minutes",
+          platformTargets: ["pc", "web"],
+          agentTargets: ["codex", "cursor"]
+        })
+      );
+    });
+  });
+
+  it("maps genre and subgenre selections to hidden profile recommendations", async () => {
+    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+
+    fireEvent.change(screen.getByLabelText(/Game Title/i), {
+      target: { value: "Station Nine" }
+    });
+    fireEvent.change(getGenreFamilySelect(), {
+      target: { value: "horror" }
+    });
+    fireEvent.change(getSubgenreSelect(), {
+      target: { value: "survival-horror" }
+    });
+
+    expect(screen.getByText(/Horror -> Survival Horror/i)).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Next: Production Setup/i })
+    );
+
+    expect(screen.getByLabelText(/Typical Session/i)).toHaveValue(
+      "20-40 minutes"
+    );
+    expect(screen.getByLabelText(/Target Audience/i)).toHaveValue(
+      "Players who want tense exploration, scarce resources, and readable dread."
     );
 
     fireEvent.click(
@@ -111,65 +157,81 @@ describe("NewProjectModal", () => {
     await waitFor(() => {
       expect(mocks.createProject).toHaveBeenCalledWith(
         expect.objectContaining({
-          title: "Skywire Sprint",
-          templateId: "platformer",
-          genre: "Platformer",
-          subgenre: "Action Platformer",
-          sessionLength: "10-20 minutes",
-          platformTargets: ["pc", "web", "switch"],
-          agentTargets: ["codex", "cursor"]
+          title: "Station Nine",
+          templateId: "survival-horror-lite",
+          genre: "Horror",
+          subgenre: "Survival Horror",
+          sessionLength: "20-40 minutes",
+          platformTargets: ["pc", "console"],
+          agentTargets: ["codex", "claude-code", "cursor"]
         })
       );
     });
   });
 
-  it("reveals custom starter setup and preserves local values when toggling away", async () => {
+  it("keeps manually edited production fields when the genre path changes and can reset them", async () => {
     render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
 
-    const customCard = screen.getByText(/^Custom$/).closest("button");
-    expect(customCard).not.toBeNull();
-    fireEvent.click(customCard!);
-
-    const genreInput = screen.getByLabelText(/^Genre$/i);
-    const fantasyInput = screen.getByLabelText(/Player Fantasy/i);
-    expect(genreInput).toBeInTheDocument();
-
-    fireEvent.change(genreInput, {
-      target: { value: "Strategy" }
+    fireEvent.change(screen.getByLabelText(/Game Title/i), {
+      target: { value: "Prototype Zero" }
     });
-    fireEvent.change(screen.getByLabelText(/^Subgenre$/i), {
-      target: { value: "Deckbuilder Lite" }
+    fireEvent.change(getGenreFamilySelect(), {
+      target: { value: "horror" }
     });
-    fireEvent.change(fantasyInput, {
-      target: { value: "Win by chaining clever card synergies." }
+    fireEvent.change(getSubgenreSelect(), {
+      target: { value: "survival-horror" }
     });
-
-    const platformerCard = screen.getByText(/^Platformer$/).closest("button");
-    expect(platformerCard).not.toBeNull();
-    fireEvent.click(platformerCard!);
-    expect(screen.queryByLabelText(/Player Fantasy/i)).not.toBeInTheDocument();
-
-    const customCardAgain = screen.getByText(/^Custom$/).closest("button");
-    expect(customCardAgain).not.toBeNull();
-    fireEvent.click(customCardAgain!);
-
-    expect(screen.getByLabelText(/^Genre$/i)).toHaveValue("Strategy");
-    expect(screen.getByLabelText(/^Subgenre$/i)).toHaveValue("Deckbuilder Lite");
-    expect(screen.getByLabelText(/Player Fantasy/i)).toHaveValue(
-      "Win by chaining clever card synergies."
+    fireEvent.click(
+      screen.getByRole("button", { name: /Next: Production Setup/i })
     );
+
+    const largeScopeButton = screen.getByText("Large").closest("button");
+    expect(largeScopeButton).not.toBeNull();
+    fireEvent.click(largeScopeButton!);
+    fireEvent.change(screen.getByLabelText(/Target Audience/i), {
+      target: { value: "Custom horror audience" }
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /^Back$/i }));
+    fireEvent.change(getGenreFamilySelect(), {
+      target: { value: "action" }
+    });
+    fireEvent.change(getSubgenreSelect(), {
+      target: { value: "rail-shooter" }
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Next: Production Setup/i })
+    );
+
+    expect(screen.getByText(/Action -> Rail Shooter/i)).toBeInTheDocument();
+    expect(screen.getByText(/Large Scope Warning/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Target Audience/i)).toHaveValue(
+      "Custom horror audience"
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Reset to recommendations/i })
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText(/Large Scope Warning/i)).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue("3-10 minutes")).toBeInTheDocument();
+      expect(screen.getByLabelText(/Target Audience/i)).toHaveValue(
+        "Arcade action fans who want short, replayable sessions."
+      );
+    });
   });
 
-  it("submits custom starter mode through the existing payload shape plus game design seeds", async () => {
+  it("reveals the other path and submits guided custom seeds through the existing payload shape", async () => {
     render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
-
-    const customCard = screen.getByText(/^Custom$/).closest("button");
-    expect(customCard).not.toBeNull();
-    fireEvent.click(customCard!);
 
     fireEvent.change(screen.getByLabelText(/Game Title/i), {
       target: { value: "Cipher Vault" }
     });
+    fireEvent.change(getGenreFamilySelect(), {
+      target: { value: "other" }
+    });
+
     fireEvent.change(screen.getByLabelText(/^Genre$/i), {
       target: { value: "Puzzle" }
     });
@@ -223,48 +285,5 @@ describe("NewProjectModal", () => {
         })
       );
     });
-  });
-
-  it("shows the large warning copy and submits the existing payload shape", async () => {
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
-
-    fireEvent.change(screen.getByLabelText(/Game Title/i), {
-      target: { value: "Nightline Zero" }
-    });
-    fireEvent.click(
-      screen.getByRole("button", { name: /Next: Production Setup/i })
-    );
-
-    const largeScopeButton = screen.getByText("Large").closest("button");
-    expect(largeScopeButton).not.toBeNull();
-    fireEvent.click(largeScopeButton!);
-
-    expect(screen.getByText(/Large Scope Warning/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/optimized for finishable tiny-to-medium projects/i)
-    ).toBeInTheDocument();
-
-    fireEvent.click(
-      screen.getByRole("button", { name: /Create Game Project/i })
-    );
-
-    await waitFor(() => {
-      expect(mocks.createProject).toHaveBeenCalledWith(
-        expect.objectContaining({
-          title: "Nightline Zero",
-          name: "Nightline Zero",
-          scopeCategory: "large",
-          templateId: "arcade-action-rail-shooter",
-          sessionLength: "5-12 minutes",
-          platformTargets: ["ios", "android", "pc"],
-          agentTargets: ["codex", "cursor", "claude-code"],
-          targetPlatforms: ["codex", "cursor", "claude-code"]
-        })
-      );
-    });
-
-    expect(mocks.selectProject).toHaveBeenCalledWith("project-123");
-    expect(mocks.navigate).toHaveBeenCalledWith("/project/project-123");
-    expect(mocks.toastSuccess).toHaveBeenCalledWith("Game project created.");
   });
 });

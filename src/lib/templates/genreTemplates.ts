@@ -27,6 +27,29 @@ export interface GameTemplateDefinition {
   stageFocus: Partial<Record<BuildStageKey, string>>;
 }
 
+export type GenreFamilyId =
+  | "action"
+  | "platformer"
+  | "horror"
+  | "strategy"
+  | "puzzle"
+  | "other";
+
+export interface SubgenreDefinition {
+  id: string;
+  label: string;
+  description: string;
+  rationale: string;
+  profileTemplateId?: TemplateId;
+}
+
+export interface GenreFamilyDefinition {
+  id: GenreFamilyId;
+  label: string;
+  description: string;
+  subgenres: SubgenreDefinition[];
+}
+
 const createBaseConcept = (
   scopeCategory: ScopeCategory = "small",
   platformTargets: GamePlatformTarget[] = ["pc", "web"]
@@ -330,6 +353,98 @@ export const STARTER_MODE_ORDER: TemplateId[] = [
   "custom-guided"
 ];
 
+const GENRE_FAMILIES: GenreFamilyDefinition[] = [
+  {
+    id: "action",
+    label: "Action",
+    description: "Fast-response games built around pressure, timing, and readable threat management.",
+    subgenres: [
+      {
+        id: "rail-shooter",
+        label: "Rail Shooter",
+        description: "Authored camera rails, readable pop-up threats, and score-driven replay.",
+        rationale:
+          "Use this when you want short, choreographed action with tight readability, authored camera flow, and replayable score pressure.",
+        profileTemplateId: "arcade-action-rail-shooter"
+      },
+      {
+        id: "twin-stick-shooter",
+        label: "Twin-Stick Shooter",
+        description: "Arena pressure, crowd control, and upgrade-shaped combat loops.",
+        rationale:
+          "Use this when the game lives or dies on arena clarity, enemy pressure, and satisfying weapon-driven repeat runs.",
+        profileTemplateId: "twin-stick-shooter"
+      }
+    ]
+  },
+  {
+    id: "platformer",
+    label: "Platformer",
+    description: "Games built around traversal feel, hazard readability, and checkpoint cadence.",
+    subgenres: [
+      {
+        id: "action-platformer",
+        label: "Action Platformer",
+        description: "Precise movement, readable hazards, and compact challenge escalation.",
+        rationale:
+          "Use this when jump feel, clean resets, and traversal readability matter more than broad system complexity.",
+        profileTemplateId: "platformer"
+      }
+    ]
+  },
+  {
+    id: "horror",
+    label: "Horror",
+    description: "Tension-first games built around atmosphere, scarcity, and route planning.",
+    subgenres: [
+      {
+        id: "survival-horror",
+        label: "Survival Horror",
+        description: "Resource pressure, safe-room pacing, and compact dread-heavy progression.",
+        rationale:
+          "Use this when the game should center on tension, meaningful scarcity, and careful route planning instead of raw combat volume.",
+        profileTemplateId: "survival-horror-lite"
+      }
+    ]
+  },
+  {
+    id: "strategy",
+    label: "Strategy",
+    description: "Readable decision-first games where planning and intent clarity matter most.",
+    subgenres: [
+      {
+        id: "tactics",
+        label: "Tactics",
+        description: "Compact missions, readable enemy intent, and a deliberately small roster.",
+        rationale:
+          "Use this when the game should reward foresight, clear enemy intent reads, and compact mission structure over sprawling campaign breadth.",
+        profileTemplateId: "tactics-lite"
+      }
+    ]
+  },
+  {
+    id: "puzzle",
+    label: "Puzzle",
+    description: "Rule-driven games built around clarity, twists, and elegant escalation.",
+    subgenres: [
+      {
+        id: "puzzle-action",
+        label: "Puzzle Action",
+        description: "Teach-test-twist puzzle cadence with a small amount of action pressure.",
+        rationale:
+          "Use this when the core appeal is readable rules, short solve loops, and just enough pressure to keep the puzzle dynamic.",
+        profileTemplateId: "puzzle-action"
+      }
+    ]
+  },
+  {
+    id: "other",
+    label: "Other / Custom",
+    description: "Bring your own genre framing and seed the design direction manually.",
+    subgenres: []
+  }
+];
+
 export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
   "blank-game-project": {
     id: "blank-game-project",
@@ -375,7 +490,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
       agentTargets: ["codex", "cursor", "claude-code"],
       targetPlatforms: ["codex", "cursor", "claude-code"],
       targetAudience: "Arcade action fans who want short, replayable sessions.",
-      sessionLength: "5-12 minutes",
+      sessionLength: "3-10 minutes",
       monetizationModel: "Premium with score chase replayability",
       comparableGames: ["Virtua Cop", "Time Crisis", "House of the Dead"],
       enginePreference: "",
@@ -388,7 +503,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
         subgenre: "Rail Shooter",
         playerFantasy: "An elite agent clearing hostile set pieces under pressure.",
         targetAudience: "Players who want high-readability action and quick restarts.",
-        sessionLength: "5-12 minutes",
+        sessionLength: "3-10 minutes",
         monetizationModel: "Premium with leaderboard retention",
         comparableGames: ["Virtua Cop", "Time Crisis", "House of the Dead"],
         scopeCategory: "small",
@@ -1238,3 +1353,58 @@ export const isTemplateId = (value: unknown): value is TemplateId =>
 export const getTemplateDefinition = (
   templateId: TemplateId
 ): GameTemplateDefinition => GAME_TEMPLATES[templateId];
+
+export const getGenreFamilyDefinitions = (): GenreFamilyDefinition[] =>
+  GENRE_FAMILIES;
+
+export const getGenreFamilyDefinition = (
+  genreFamilyId: GenreFamilyId
+): GenreFamilyDefinition | undefined =>
+  GENRE_FAMILIES.find((family) => family.id === genreFamilyId);
+
+export const getSubgenreDefinition = (
+  genreFamilyId: GenreFamilyId,
+  subgenreId: string
+): SubgenreDefinition | undefined =>
+  getGenreFamilyDefinition(genreFamilyId)?.subgenres.find(
+    (subgenre) => subgenre.id === subgenreId
+  );
+
+interface InferTemplateIdInput {
+  customFeelKeywords?: string;
+  customGenre?: string;
+  customPlayPattern?: string;
+  customPlayerFantasy?: string;
+  customSubgenre?: string;
+  genreFamilyId?: GenreFamilyId | "";
+  subgenreId?: string;
+}
+
+export const inferTemplateIdFromGenreSelection = ({
+  customFeelKeywords = "",
+  customGenre = "",
+  customPlayPattern = "",
+  customPlayerFantasy = "",
+  customSubgenre = "",
+  genreFamilyId = "",
+  subgenreId = ""
+}: InferTemplateIdInput): TemplateId => {
+  if (genreFamilyId === "other") {
+    const hasCustomFraming = [
+      customGenre,
+      customSubgenre,
+      customPlayerFantasy,
+      customPlayPattern,
+      customFeelKeywords
+    ].some((value) => value.trim().length > 0);
+
+    return hasCustomFraming ? "custom-guided" : "blank-game-project";
+  }
+
+  if (!genreFamilyId || !subgenreId) {
+    return "blank-game-project";
+  }
+
+  const subgenre = getSubgenreDefinition(genreFamilyId, subgenreId);
+  return subgenre?.profileTemplateId ?? "blank-game-project";
+};

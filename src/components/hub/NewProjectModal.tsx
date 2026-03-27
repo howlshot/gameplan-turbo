@@ -7,8 +7,11 @@ import { useProjectStore } from "@/stores/projectStore";
 import {
   AGENT_PLATFORM_OPTIONS,
   GAME_PLATFORM_OPTIONS,
-  getStarterModeDefinitions,
-  getTemplateDefinition
+  getGenreFamilyDefinition,
+  getGenreFamilyDefinitions,
+  getSubgenreDefinition,
+  getTemplateDefinition,
+  inferTemplateIdFromGenreSelection
 } from "@/lib/templates/genreTemplates";
 import {
   GameField,
@@ -19,9 +22,9 @@ import {
 } from "@/components/workspace/game/GameSectionLayout";
 import {
   getScopeProfile,
+  getSessionPreset,
   SCOPE_ORDER,
-  SESSION_LENGTH_PRESETS,
-  getSessionPreset
+  SESSION_LENGTH_PRESETS
 } from "@/lib/projectFraming";
 import { cn } from "@/lib/utils";
 import type {
@@ -30,6 +33,7 @@ import type {
   ScopeCategory,
   TemplateId
 } from "@/types";
+import type { GenreFamilyId } from "@/lib/templates/genreTemplates";
 
 interface NewProjectModalProps {
   isOpen: boolean;
@@ -42,31 +46,48 @@ interface CreationStep {
   description: string;
 }
 
+interface FormDefaults {
+  agentTargets: AgentPlatform[];
+  enginePreference: string;
+  platformTargets: GamePlatformTarget[];
+  scopeCategory: ScopeCategory;
+  sessionLength: string;
+  targetAudience: string;
+}
+
+type RecommendedFieldKey =
+  | "scopeCategory"
+  | "sessionLength"
+  | "platformTargets"
+  | "agentTargets"
+  | "targetAudience"
+  | "enginePreference";
+
+type RecommendationOwnership = Record<RecommendedFieldKey, boolean>;
+
 const CREATION_STEPS: CreationStep[] = [
   {
     id: 1,
     label: "Core Identity",
-    description: "Starter mode, title, pitch, and genre framing."
+    description: "Title, pitch, and genre framing."
   },
   {
     id: 2,
     label: "Production Setup",
-    description: "Scope, platforms, tools, and shipping setup."
+    description: "Recommended scope, platforms, tools, and shipping setup."
   }
 ];
 
-const DEFAULT_STARTER_MODE: TemplateId = "arcade-action-rail-shooter";
+const DEFAULT_TEMPLATE_ID: TemplateId = "blank-game-project";
 
-interface FormDefaults {
-  agentTargets: AgentPlatform[];
-  enginePreference: string;
-  genre: string;
-  platformTargets: GamePlatformTarget[];
-  scopeCategory: ScopeCategory;
-  sessionLength: string;
-  subgenre: string;
-  targetAudience: string;
-}
+const INITIAL_RECOMMENDATION_OWNERSHIP: RecommendationOwnership = {
+  scopeCategory: false,
+  sessionLength: false,
+  platformTargets: false,
+  agentTargets: false,
+  targetAudience: false,
+  enginePreference: false
+};
 
 const toTrimmedArray = (value: string): string[] =>
   Array.from(
@@ -78,13 +99,15 @@ const toTrimmedArray = (value: string): string[] =>
     )
   );
 
-const getStarterModeDefaults = (templateId: TemplateId): FormDefaults => {
+const areArraysEqual = (left: string[], right: string[]): boolean =>
+  left.length === right.length &&
+  left.every((value, index) => value === right[index]);
+
+const getRecommendationDefaults = (templateId: TemplateId): FormDefaults => {
   const template = getTemplateDefinition(templateId);
   const defaultProject = template.defaultProject;
 
   return {
-    genre: defaultProject.genre ?? "",
-    subgenre: defaultProject.subgenre ?? "",
     targetAudience: defaultProject.targetAudience ?? "",
     enginePreference: defaultProject.enginePreference ?? "",
     scopeCategory: defaultProject.scopeCategory ?? "small",
@@ -107,35 +130,34 @@ export const NewProjectModal = ({
   const customSessionRef = useRef<HTMLInputElement>(null);
   const customGenreRef = useRef<HTMLInputElement>(null);
 
-  const starterModes = useMemo(() => getStarterModeDefinitions(), []);
-  const defaultStarterMode = useMemo(
-    () => getStarterModeDefaults(DEFAULT_STARTER_MODE),
+  const genreFamilies = useMemo(() => getGenreFamilyDefinitions(), []);
+  const defaultRecommendation = useMemo(
+    () => getRecommendationDefaults(DEFAULT_TEMPLATE_ID),
     []
   );
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [templateId, setTemplateId] = useState<TemplateId>(DEFAULT_STARTER_MODE);
   const [title, setTitle] = useState("");
   const [pitch, setPitch] = useState("");
-  const [genre, setGenre] = useState(defaultStarterMode.genre);
-  const [subgenre, setSubgenre] = useState(defaultStarterMode.subgenre);
+  const [genreFamilyId, setGenreFamilyId] = useState<GenreFamilyId | "">("");
+  const [subgenreId, setSubgenreId] = useState("");
   const [targetAudience, setTargetAudience] = useState(
-    defaultStarterMode.targetAudience
+    defaultRecommendation.targetAudience
   );
   const [enginePreference, setEnginePreference] = useState(
-    defaultStarterMode.enginePreference
+    defaultRecommendation.enginePreference
   );
   const [scopeCategory, setScopeCategory] = useState<ScopeCategory>(
-    defaultStarterMode.scopeCategory
+    defaultRecommendation.scopeCategory
   );
   const [sessionLength, setSessionLength] = useState(
-    defaultStarterMode.sessionLength
+    defaultRecommendation.sessionLength
   );
   const [platformTargets, setPlatformTargets] = useState<GamePlatformTarget[]>(
-    defaultStarterMode.platformTargets
+    defaultRecommendation.platformTargets
   );
   const [agentTargets, setAgentTargets] = useState<AgentPlatform[]>(
-    defaultStarterMode.agentTargets
+    defaultRecommendation.agentTargets
   );
   const [customGenre, setCustomGenre] = useState("");
   const [customSubgenre, setCustomSubgenre] = useState("");
@@ -144,28 +166,128 @@ export const NewProjectModal = ({
   const [customFeelKeywords, setCustomFeelKeywords] = useState("");
   const [showTitleError, setShowTitleError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recommendationOwnership, setRecommendationOwnership] =
+    useState<RecommendationOwnership>(INITIAL_RECOMMENDATION_OWNERSHIP);
+
+  const isOtherGenrePath = genreFamilyId === "other";
+  const selectedGenreFamily = useMemo(
+    () =>
+      genreFamilyId ? getGenreFamilyDefinition(genreFamilyId) ?? null : null,
+    [genreFamilyId]
+  );
+  const selectedSubgenre = useMemo(
+    () =>
+      genreFamilyId && !isOtherGenrePath && subgenreId
+        ? getSubgenreDefinition(genreFamilyId, subgenreId) ?? null
+        : null,
+    [genreFamilyId, isOtherGenrePath, subgenreId]
+  );
+
+  const resolvedTemplateId = useMemo(
+    () =>
+      inferTemplateIdFromGenreSelection({
+        genreFamilyId,
+        subgenreId,
+        customGenre,
+        customSubgenre,
+        customPlayerFantasy,
+        customPlayPattern,
+        customFeelKeywords
+      }),
+    [
+      customFeelKeywords,
+      customGenre,
+      customPlayPattern,
+      customPlayerFantasy,
+      customSubgenre,
+      genreFamilyId,
+      subgenreId
+    ]
+  );
+  const selectedTemplate = useMemo(
+    () => getTemplateDefinition(resolvedTemplateId),
+    [resolvedTemplateId]
+  );
+  const recommendedDefaults = useMemo(
+    () => getRecommendationDefaults(resolvedTemplateId),
+    [resolvedTemplateId]
+  );
+  const recommendedScopeProfile = useMemo(
+    () => getScopeProfile(recommendedDefaults.scopeCategory),
+    [recommendedDefaults.scopeCategory]
+  );
+  const recommendedSessionPreset = useMemo(
+    () => getSessionPreset(recommendedDefaults.sessionLength),
+    [recommendedDefaults.sessionLength]
+  );
+  const activeScopeProfile = useMemo(
+    () => getScopeProfile(scopeCategory),
+    [scopeCategory]
+  );
+  const activeSessionPreset = useMemo(
+    () => getSessionPreset(sessionLength),
+    [sessionLength]
+  );
+  const isCustomSession = activeSessionPreset === null;
+  const hasRecommendationOverrides = useMemo(
+    () => Object.values(recommendationOwnership).some(Boolean),
+    [recommendationOwnership]
+  );
+  const recommendationTitle = useMemo(() => {
+    if (selectedSubgenre && selectedGenreFamily) {
+      return `${selectedGenreFamily.label} -> ${selectedSubgenre.label}`;
+    }
+
+    if (isOtherGenrePath) {
+      return customGenre.trim()
+        ? `${customGenre.trim()}${customSubgenre.trim() ? ` -> ${customSubgenre.trim()}` : ""}`
+        : "Other / Custom";
+    }
+
+    return "Neutral baseline";
+  }, [
+    customGenre,
+    customSubgenre,
+    isOtherGenrePath,
+    selectedGenreFamily,
+    selectedSubgenre
+  ]);
+  const recommendationDescription = useMemo(() => {
+    if (selectedSubgenre) {
+      return selectedSubgenre.rationale;
+    }
+
+    if (isOtherGenrePath) {
+      return resolvedTemplateId === "custom-guided"
+        ? "Your custom framing will stay editable while the project uses a lightweight guided baseline behind the scenes."
+        : "Use the freeform fields to describe your own genre path. Until then, Gameplan Turbo keeps a neutral blank-project baseline."
+        ;
+    }
+
+    return "Choose a genre family and subgenre to load tailored recommendations. Until then, the project stays on the blank baseline.";
+  }, [isOtherGenrePath, resolvedTemplateId, selectedSubgenre]);
 
   const resetForm = useCallback((): void => {
     setStep(1);
-    setTemplateId(DEFAULT_STARTER_MODE);
     setTitle("");
     setPitch("");
-    setGenre(defaultStarterMode.genre);
-    setSubgenre(defaultStarterMode.subgenre);
-    setTargetAudience(defaultStarterMode.targetAudience);
-    setEnginePreference(defaultStarterMode.enginePreference);
-    setScopeCategory(defaultStarterMode.scopeCategory);
-    setSessionLength(defaultStarterMode.sessionLength);
-    setPlatformTargets(defaultStarterMode.platformTargets);
-    setAgentTargets(defaultStarterMode.agentTargets);
+    setGenreFamilyId("");
+    setSubgenreId("");
+    setTargetAudience(defaultRecommendation.targetAudience);
+    setEnginePreference(defaultRecommendation.enginePreference);
+    setScopeCategory(defaultRecommendation.scopeCategory);
+    setSessionLength(defaultRecommendation.sessionLength);
+    setPlatformTargets(defaultRecommendation.platformTargets);
+    setAgentTargets(defaultRecommendation.agentTargets);
     setCustomGenre("");
     setCustomSubgenre("");
     setCustomPlayerFantasy("");
     setCustomPlayPattern("");
     setCustomFeelKeywords("");
+    setRecommendationOwnership(INITIAL_RECOMMENDATION_OWNERSHIP);
     setShowTitleError(false);
     setIsSubmitting(false);
-  }, [defaultStarterMode]);
+  }, [defaultRecommendation]);
 
   const closeModal = useCallback((): void => {
     resetForm();
@@ -188,48 +310,97 @@ export const NewProjectModal = ({
     };
   }, [isOpen, step]);
 
-  const selectedTemplate = useMemo(
-    () => getTemplateDefinition(templateId),
-    [templateId]
-  );
-  const isCustomStarterMode = selectedTemplate.kind === "custom";
-  const activeScopeProfile = useMemo(
-    () => getScopeProfile(scopeCategory),
-    [scopeCategory]
-  );
-  const activeSessionPreset = useMemo(
-    () => getSessionPreset(sessionLength),
-    [sessionLength]
-  );
-  const templateScopeProfile = useMemo(
-    () =>
-      selectedTemplate.defaultProject.scopeCategory
-        ? getScopeProfile(selectedTemplate.defaultProject.scopeCategory)
-        : null,
-    [selectedTemplate.defaultProject.scopeCategory]
-  );
-  const isCustomSession = activeSessionPreset === null;
-
-  const handleStarterModeChange = useCallback((nextTemplateId: TemplateId): void => {
-    const defaults = getStarterModeDefaults(nextTemplateId);
-    setTemplateId(nextTemplateId);
-    setGenre(defaults.genre);
-    setSubgenre(defaults.subgenre);
-    setTargetAudience(defaults.targetAudience);
-    setEnginePreference(defaults.enginePreference);
-    setScopeCategory(defaults.scopeCategory);
-    setSessionLength(defaults.sessionLength);
-    setPlatformTargets(defaults.platformTargets);
-    setAgentTargets(defaults.agentTargets);
-
-    if (nextTemplateId === "custom-guided") {
-      window.setTimeout(() => {
-        customGenreRef.current?.focus();
-      }, 0);
+  useEffect(() => {
+    if (!isOpen || !isOtherGenrePath) {
+      return;
     }
+
+    const timeoutId = window.setTimeout(() => {
+      customGenreRef.current?.focus();
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [isOpen, isOtherGenrePath]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    setScopeCategory((current) =>
+      recommendationOwnership.scopeCategory ||
+      current === recommendedDefaults.scopeCategory
+        ? current
+        : recommendedDefaults.scopeCategory
+    );
+    setSessionLength((current) =>
+      recommendationOwnership.sessionLength ||
+      current === recommendedDefaults.sessionLength
+        ? current
+        : recommendedDefaults.sessionLength
+    );
+    setTargetAudience((current) =>
+      recommendationOwnership.targetAudience ||
+      current === recommendedDefaults.targetAudience
+        ? current
+        : recommendedDefaults.targetAudience
+    );
+    setEnginePreference((current) =>
+      recommendationOwnership.enginePreference ||
+      current === recommendedDefaults.enginePreference
+        ? current
+        : recommendedDefaults.enginePreference
+    );
+    setPlatformTargets((current) =>
+      recommendationOwnership.platformTargets ||
+      areArraysEqual(current, recommendedDefaults.platformTargets)
+        ? current
+        : recommendedDefaults.platformTargets
+    );
+    setAgentTargets((current) =>
+      recommendationOwnership.agentTargets ||
+      areArraysEqual(current, recommendedDefaults.agentTargets)
+        ? current
+        : recommendedDefaults.agentTargets
+    );
+  }, [
+    isOpen,
+    recommendationOwnership.agentTargets,
+    recommendationOwnership.enginePreference,
+    recommendationOwnership.platformTargets,
+    recommendationOwnership.scopeCategory,
+    recommendationOwnership.sessionLength,
+    recommendationOwnership.targetAudience,
+    recommendedDefaults.agentTargets,
+    recommendedDefaults.enginePreference,
+    recommendedDefaults.platformTargets,
+    recommendedDefaults.scopeCategory,
+    recommendedDefaults.sessionLength,
+    recommendedDefaults.targetAudience
+  ]);
+
+  const markFieldAsOwned = useCallback((field: RecommendedFieldKey): void => {
+    setRecommendationOwnership((current) =>
+      current[field]
+        ? current
+        : {
+            ...current,
+            [field]: true
+          }
+    );
+  }, []);
+
+  const handleGenreFamilyChange = useCallback((nextValue: string): void => {
+    const nextGenreFamily = nextValue as GenreFamilyId | "";
+
+    setGenreFamilyId(nextGenreFamily);
+    setSubgenreId("");
   }, []);
 
   const togglePlatform = (platform: string): void => {
+    markFieldAsOwned("platformTargets");
     setPlatformTargets((current) =>
       current.includes(platform as GamePlatformTarget)
         ? current.filter((value) => value !== platform)
@@ -238,12 +409,23 @@ export const NewProjectModal = ({
   };
 
   const toggleAgentTarget = (platform: string): void => {
+    markFieldAsOwned("agentTargets");
     setAgentTargets((current) =>
       current.includes(platform as AgentPlatform)
         ? current.filter((value) => value !== platform)
         : [...current, platform as AgentPlatform]
     );
   };
+
+  const handleResetToRecommendations = useCallback((): void => {
+    setRecommendationOwnership(INITIAL_RECOMMENDATION_OWNERSHIP);
+    setScopeCategory(recommendedDefaults.scopeCategory);
+    setSessionLength(recommendedDefaults.sessionLength);
+    setTargetAudience(recommendedDefaults.targetAudience);
+    setEnginePreference(recommendedDefaults.enginePreference);
+    setPlatformTargets(recommendedDefaults.platformTargets);
+    setAgentTargets(recommendedDefaults.agentTargets);
+  }, [recommendedDefaults]);
 
   const handleNextStep = (): void => {
     if (!title.trim()) {
@@ -259,9 +441,14 @@ export const NewProjectModal = ({
   const handleSubmit = useCallback(async (): Promise<void> => {
     const trimmedTitle = title.trim();
     const trimmedPitch = pitch.trim();
-    const trimmedGenre = (isCustomStarterMode ? customGenre : genre).trim();
-    const trimmedSubgenre = (isCustomStarterMode ? customSubgenre : subgenre).trim();
+    const trimmedGenre = isOtherGenrePath
+      ? customGenre.trim()
+      : selectedGenreFamily?.label ?? "";
+    const trimmedSubgenre = isOtherGenrePath
+      ? customSubgenre.trim()
+      : selectedSubgenre?.label ?? "";
     const customToneKeywords = toTrimmedArray(customFeelKeywords);
+    const shouldSeedCustomDoc = resolvedTemplateId === "custom-guided";
 
     if (!trimmedTitle) {
       setShowTitleError(true);
@@ -280,7 +467,7 @@ export const NewProjectModal = ({
       genre: trimmedGenre,
       subgenre: trimmedSubgenre,
       scopeCategory,
-      templateId,
+      templateId: resolvedTemplateId,
       platformTargets,
       agentTargets,
       targetPlatforms: agentTargets,
@@ -290,7 +477,7 @@ export const NewProjectModal = ({
         selectedTemplate.defaultProject.monetizationModel ?? "Premium",
       enginePreference: enginePreference.trim(),
       comparableGames: selectedTemplate.defaultProject.comparableGames ?? [],
-      gameDesignDoc: isCustomStarterMode
+      gameDesignDoc: shouldSeedCustomDoc
         ? {
             concept: {
               playerFantasy: customPlayerFantasy.trim()
@@ -321,28 +508,28 @@ export const NewProjectModal = ({
     navigate(`/project/${project.id}`);
   }, [
     agentTargets,
+    createProject,
     customFeelKeywords,
     customGenre,
     customPlayPattern,
     customPlayerFantasy,
     customSubgenre,
-    createProject,
     enginePreference,
-    genre,
-    isCustomStarterMode,
+    isOtherGenrePath,
     navigate,
     onOpenChange,
     pitch,
     platformTargets,
     resetForm,
+    resolvedTemplateId,
     scopeCategory,
     selectProject,
+    selectedGenreFamily?.label,
+    selectedSubgenre?.label,
     selectedTemplate.defaultProject.comparableGames,
     selectedTemplate.defaultProject.monetizationModel,
     sessionLength,
-    subgenre,
     targetAudience,
-    templateId,
     title,
     toast
   ]);
@@ -375,8 +562,8 @@ export const NewProjectModal = ({
                 Start a new game design workspace
               </h2>
               <p className="mt-3 text-sm leading-6 text-on-surface-variant">
-                Create the project core first, then lock the production setup without
-                cramming every decision into one screen.
+                Choose the game identity first, then lock production decisions with
+                recommendations you can override field by field.
               </p>
             </div>
             <button
@@ -424,38 +611,6 @@ export const NewProjectModal = ({
           {step === 1 ? (
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-5">
-                <GameField
-                  label="Starter Mode"
-                  description="Pick a curated mode bias or start from a guided custom setup."
-                >
-                  <SingleSelectCards
-                    layoutVariant="starter-mode"
-                    selectedValue={templateId}
-                    onSelect={(value) =>
-                      handleStarterModeChange(value as TemplateId)
-                    }
-                    cards={starterModes.map((starterMode) => {
-                      const scopeProfile = starterMode.defaultProject.scopeCategory
-                        ? getScopeProfile(starterMode.defaultProject.scopeCategory)
-                        : null;
-
-                      return {
-                        value: starterMode.id,
-                        title: starterMode.label,
-                        description: starterMode.description,
-                        eyebrow:
-                          starterMode.kind === "custom"
-                            ? "Guided Setup"
-                            : undefined,
-                        meta: [
-                          scopeProfile?.label ?? "Flexible",
-                          starterMode.defaultProject.sessionLength ?? "TBD"
-                        ]
-                      };
-                    })}
-                  />
-                </GameField>
-
                 <GameField label="Game Title">
                   <GameTextInput
                     ref={titleRef}
@@ -481,31 +636,83 @@ export const NewProjectModal = ({
                   <GameTextInput
                     type="text"
                     value={pitch}
-                    placeholder="A touch-first rail shooter about surviving choreographed ambushes."
+                    placeholder="A compact horror game about surviving one unsafe night in a sealed station."
                     onChange={(event) => setPitch(event.target.value)}
                   />
                 </GameField>
 
-                {isCustomStarterMode ? (
+                <div className="grid gap-5 md:grid-cols-2">
+                  <GameField
+                    label="Genre Family"
+                    description="Choose a broad category first. Recommendations stay editable."
+                  >
+                    <GameSelect
+                      aria-label="Genre Family"
+                      value={genreFamilyId}
+                      onChange={(event) =>
+                        handleGenreFamilyChange(event.target.value)
+                      }
+                    >
+                      <option value="">Choose a genre family</option>
+                      {genreFamilies.map((genreFamily) => (
+                        <option key={genreFamily.id} value={genreFamily.id}>
+                          {genreFamily.label}
+                        </option>
+                      ))}
+                    </GameSelect>
+                  </GameField>
+
+                  {isOtherGenrePath ? (
+                    <GameField label="Genre">
+                      <GameTextInput
+                        ref={customGenreRef}
+                        type="text"
+                        value={customGenre}
+                        placeholder="Immersive Sim"
+                        onChange={(event) => setCustomGenre(event.target.value)}
+                      />
+                    </GameField>
+                  ) : (
+                    <GameField
+                      label="Subgenre"
+                      description={
+                        genreFamilyId
+                          ? "Pick the closest subgenre to load targeted recommendations."
+                          : "Choose a genre family first."
+                      }
+                    >
+                      <GameSelect
+                        aria-label="Subgenre"
+                        value={subgenreId}
+                        onChange={(event) => setSubgenreId(event.target.value)}
+                        disabled={!genreFamilyId}
+                      >
+                        <option value="">
+                          {genreFamilyId
+                            ? "Choose a subgenre"
+                            : "Choose a genre family first"}
+                        </option>
+                        {selectedGenreFamily?.subgenres.map((subgenre) => (
+                          <option key={subgenre.id} value={subgenre.id}>
+                            {subgenre.label}
+                          </option>
+                        ))}
+                      </GameSelect>
+                    </GameField>
+                  )}
+                </div>
+
+                {isOtherGenrePath ? (
                   <div className="rounded-3xl border border-primary/15 bg-surface px-5 py-5">
                     <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
-                      Guided Custom Setup
+                      Other / Custom
                     </p>
                     <div className="mt-4 grid gap-5 md:grid-cols-2">
-                      <GameField label="Genre">
-                        <GameTextInput
-                          ref={customGenreRef}
-                          type="text"
-                          value={customGenre}
-                          placeholder="Strategy"
-                          onChange={(event) => setCustomGenre(event.target.value)}
-                        />
-                      </GameField>
                       <GameField label="Subgenre">
                         <GameTextInput
                           type="text"
                           value={customSubgenre}
-                          placeholder="Deckbuilder Lite"
+                          placeholder="Stealth Puzzle"
                           onChange={(event) => setCustomSubgenre(event.target.value)}
                         />
                       </GameField>
@@ -516,7 +723,7 @@ export const NewProjectModal = ({
                         <GameTextInput
                           type="text"
                           value={customPlayerFantasy}
-                          placeholder="Outsmart escalating threats with clever chain reactions."
+                          placeholder="Outsmart escalating threats with careful observation and decisive actions."
                           onChange={(event) =>
                             setCustomPlayerFantasy(event.target.value)
                           }
@@ -527,7 +734,7 @@ export const NewProjectModal = ({
                         <GameTextInput
                           type="text"
                           value={customPlayPattern}
-                          placeholder="Read the arena, trigger one strong interaction, and reposition before the next twist."
+                          placeholder="Read the space, commit to one strong move, then reposition before the next twist."
                           onChange={(event) =>
                             setCustomPlayPattern(event.target.value)
                           }
@@ -545,81 +752,110 @@ export const NewProjectModal = ({
                         />
                         <p className="mt-3 text-sm leading-6 text-on-surface-variant">
                           Use comma-separated keywords. These seed the feel statement
-                          and tone vocabulary for the new project.
+                          and tone vocabulary if you stay on the custom path.
                         </p>
                       </GameField>
                     </div>
                   </div>
-                ) : (
-                  <div className="grid gap-5 md:grid-cols-2">
-                    <GameField label="Genre">
-                      <GameTextInput
-                        type="text"
-                        value={genre}
-                        onChange={(event) => setGenre(event.target.value)}
-                      />
-                    </GameField>
-                    <GameField label="Subgenre">
-                      <GameTextInput
-                        type="text"
-                        value={subgenre}
-                        onChange={(event) => setSubgenre(event.target.value)}
-                      />
-                    </GameField>
-                  </div>
-                )}
+                ) : null}
               </div>
 
               <div className="space-y-4">
                 <div className="rounded-3xl border border-outline-variant/10 bg-surface p-5">
                   <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
-                    Selected Starter Mode
+                    Recommended Setup
                   </p>
                   <p className="mt-3 font-headline text-xl font-semibold text-on-surface">
-                    {selectedTemplate.label}
+                    {recommendationTitle}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-                    {selectedTemplate.description}
+                    {recommendationDescription}
                   </p>
 
                   <div className="mt-5 space-y-3 text-sm leading-6 text-on-surface-variant">
                     <p>
                       <span className="font-semibold text-on-surface">
-                        Default scope:
+                        Recommended scope:
                       </span>{" "}
-                      {templateScopeProfile?.label ?? "Flexible"}.
+                      {recommendedScopeProfile.label}.
                     </p>
                     <p>
                       <span className="font-semibold text-on-surface">
                         Typical session:
                       </span>{" "}
-                      {selectedTemplate.defaultProject.sessionLength || "TBD"}.
+                      {recommendedDefaults.sessionLength}.
                     </p>
                     <p>
                       <span className="font-semibold text-on-surface">
-                        Default tool bias:
+                        Platform targets:
                       </span>{" "}
-                      {(selectedTemplate.defaultProject.agentTargets ?? [])
-                        .join(", ")
-                        .toUpperCase() || "None"}.
+                      {recommendedDefaults.platformTargets.join(", ").toUpperCase()}.
+                    </p>
+                    <p>
+                      <span className="font-semibold text-on-surface">
+                        AI tool bias:
+                      </span>{" "}
+                      {recommendedDefaults.agentTargets.join(", ").toUpperCase()}.
                     </p>
                   </div>
                 </div>
 
                 <div className="rounded-3xl border border-outline-variant/10 bg-surface px-5 py-4">
                   <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
-                    {isCustomStarterMode ? "Custom Mode" : "Fast Path"}
+                    How Recommendations Work
                   </p>
                   <p className="mt-3 text-sm leading-6 text-on-surface-variant">
-                    {isCustomStarterMode
-                      ? "Custom stays lightweight: define the fantasy, loop seed, and tone keywords here, then shape production constraints in Step 2."
-                      : "Only the game title is required to keep moving. Step 2 handles production setup, tools, and scope framing."}
+                    Step 2 starts from the current genre recommendation. Once you edit
+                    a production field yourself, Gameplan Turbo stops overwriting that
+                    field until you reset it.
                   </p>
                 </div>
               </div>
             </div>
           ) : (
             <div className="space-y-6">
+              <div className="flex flex-col gap-4 rounded-3xl border border-outline-variant/10 bg-surface px-5 py-5 lg:flex-row lg:items-start lg:justify-between">
+                <div className="max-w-3xl">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
+                    Recommendation Profile
+                  </p>
+                  <p className="mt-3 font-headline text-xl font-semibold text-on-surface">
+                    {recommendationTitle}
+                  </p>
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                    {recommendationDescription}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2 text-xs uppercase tracking-[0.18em] text-primary">
+                    <span className="rounded-full border border-outline-variant/15 bg-surface-container px-3 py-1">
+                      {recommendedScopeProfile.label}
+                    </span>
+                    <span className="rounded-full border border-outline-variant/15 bg-surface-container px-3 py-1">
+                      {recommendedDefaults.sessionLength}
+                    </span>
+                    <span className="rounded-full border border-outline-variant/15 bg-surface-container px-3 py-1">
+                      {recommendedDefaults.platformTargets.length} platform targets
+                    </span>
+                    <span className="rounded-full border border-outline-variant/15 bg-surface-container px-3 py-1">
+                      {recommendedDefaults.agentTargets.length} tool targets
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-3 lg:min-w-[220px]">
+                  <button
+                    type="button"
+                    onClick={handleResetToRecommendations}
+                    className="w-full rounded-2xl border border-outline-variant/15 bg-surface-container px-4 py-3 text-sm text-on-surface"
+                  >
+                    Reset to recommendations
+                  </button>
+                  <p className="text-xs leading-5 text-on-surface-variant">
+                    {hasRecommendationOverrides
+                      ? "One or more production fields are currently user-owned."
+                      : "You are still using the current recommendation baseline."}
+                  </p>
+                </div>
+              </div>
+
               <GameField
                 label="Scope"
                 description="Choose the production ceiling for v1, not the fantasy size of the game."
@@ -627,7 +863,10 @@ export const NewProjectModal = ({
                 <SingleSelectCards
                   layoutVariant="modal-compact"
                   selectedValue={scopeCategory}
-                  onSelect={(value) => setScopeCategory(value as ScopeCategory)}
+                  onSelect={(value) => {
+                    markFieldAsOwned("scopeCategory");
+                    setScopeCategory(value as ScopeCategory);
+                  }}
                   cards={SCOPE_ORDER.map((scopeCategoryValue) => {
                     const profile = getScopeProfile(scopeCategoryValue);
 
@@ -669,12 +908,13 @@ export const NewProjectModal = ({
               <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
                 <div className="space-y-6">
                   <GameField
-                    label="Session Length"
+                    label="Typical Session"
                     description="Typical one-sitting play time, not total completion time."
                   >
                     <GameSelect
                       value={activeSessionPreset?.label ?? "__custom__"}
                       onChange={(event) => {
+                        markFieldAsOwned("sessionLength");
                         const value = event.target.value;
                         if (value === "__custom__") {
                           setSessionLength((current) =>
@@ -703,12 +943,21 @@ export const NewProjectModal = ({
                         type="text"
                         value={sessionLength}
                         placeholder="Use a custom session target"
-                        onChange={(event) => setSessionLength(event.target.value)}
+                        onChange={(event) => {
+                          markFieldAsOwned("sessionLength");
+                          setSessionLength(event.target.value);
+                        }}
                       />
                     ) : null}
                     <p className="mt-3 text-sm leading-6 text-on-surface-variant">
                       {activeSessionPreset?.summary ??
-                        "Use a custom session target when your intended play rhythm does not match the preset ranges."}
+                        "Use a custom session target when the intended play rhythm does not match the preset ranges."}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-on-surface-variant">
+                      Recommended baseline:{" "}
+                      {recommendedSessionPreset?.label ??
+                        recommendedDefaults.sessionLength}
+                      .
                     </p>
                   </GameField>
 
@@ -717,8 +966,11 @@ export const NewProjectModal = ({
                       <GameTextInput
                         type="text"
                         value={targetAudience}
-                        placeholder="Arcade action fans who want short, high-readability runs"
-                        onChange={(event) => setTargetAudience(event.target.value)}
+                        placeholder="Players who want readable pressure and fast runs"
+                        onChange={(event) => {
+                          markFieldAsOwned("targetAudience");
+                          setTargetAudience(event.target.value);
+                        }}
                       />
                     </GameField>
 
@@ -727,7 +979,10 @@ export const NewProjectModal = ({
                         type="text"
                         value={enginePreference}
                         placeholder="Leave blank to stay engine-agnostic"
-                        onChange={(event) => setEnginePreference(event.target.value)}
+                        onChange={(event) => {
+                          markFieldAsOwned("enginePreference");
+                          setEnginePreference(event.target.value);
+                        }}
                       />
                     </GameField>
                   </div>
@@ -736,7 +991,7 @@ export const NewProjectModal = ({
                 <div className="space-y-6">
                   <GameField
                     label="Game Platform Targets"
-                    description="Pick the platforms this v1 should actually ship on."
+                    description="Recommended from genre, but fully editable."
                   >
                     <MultiSelectPills
                       selectedValues={platformTargets}
@@ -750,7 +1005,7 @@ export const NewProjectModal = ({
 
                   <GameField
                     label="Preferred AI Build Tools"
-                    description="Choose the agents this project should generate prompts for."
+                    description="Recommended from the hidden profile, but fully editable."
                   >
                     <MultiSelectPills
                       selectedValues={agentTargets}
@@ -769,7 +1024,7 @@ export const NewProjectModal = ({
                     <ul className="mt-4 space-y-2 text-sm leading-6 text-on-surface-variant">
                       <li>Local-first planning before any AI key is added.</li>
                       <li>Clear first-playable framing and prompt-ready build stages.</li>
-                      <li>Small-to-medium game scopes by default, with large mode kept milestone-driven.</li>
+                      <li>Genre-led recommendations that stay under user control.</li>
                     </ul>
                   </div>
                 </div>
