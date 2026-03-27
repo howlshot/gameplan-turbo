@@ -156,7 +156,7 @@ export const OnboardingFlow = ({
         role="dialog"
         aria-modal="true"
         aria-label="Preflight onboarding"
-        className="glass-panel noise-texture relative w-full max-w-2xl overflow-hidden rounded-2xl border border-outline-variant/15 bg-surface-container"
+        className="glass-panel noise-texture relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-outline-variant/15 bg-surface-container"
       >
         <OnboardingProgress step={step} />
 
