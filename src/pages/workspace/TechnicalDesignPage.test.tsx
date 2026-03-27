@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TechnicalDesignPage } from "@/pages/workspace/TechnicalDesignPage";
 import type { GameDesignDoc, Project } from "@/types";
@@ -12,7 +12,8 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("react-router-dom", () => ({
-  useParams: () => ({ projectId: "project-1" })
+  useParams: () => ({ projectId: "project-1" }),
+  useNavigate: () => vi.fn()
 }));
 
 vi.mock("@/hooks/useProject", () => ({
@@ -156,5 +157,122 @@ describe("TechnicalDesignPage", () => {
     expect(
       screen.getByDisplayValue("Mid-range PCs")
     ).toBeInTheDocument();
+  });
+
+  it("can fill blank technical fields with starter suggestions", () => {
+    currentProject = {
+      id: "project-1",
+      title: "Night Watch",
+      name: "Night Watch",
+      oneLinePitch: "A tense survival prototype.",
+      description: "A tense survival prototype.",
+      status: "concept",
+      scopeCategory: "small",
+      genre: "Horror",
+      subgenre: "Survival Horror",
+      platformTargets: ["pc"],
+      agentTargets: ["codex"],
+      targetPlatforms: ["codex"],
+      targetAudience: "Horror players",
+      sessionLength: "20-40 minutes",
+      monetizationModel: "Premium",
+      comparableGames: [],
+      templateId: "survival-horror-lite",
+      enginePreference: "",
+      techStack: [],
+      createdAt: 1,
+      updatedAt: 1
+    };
+
+    currentGameDesignDoc = {
+      id: "doc-1",
+      projectId: "project-1",
+      concept: {
+        gameTitle: "Night Watch",
+        oneLinePitch: "A tense survival prototype.",
+        playerFantasy: "Survive the station.",
+        genre: "Horror",
+        subgenre: "Survival Horror",
+        platformTargets: ["pc"],
+        targetAudience: "Horror players",
+        sessionLength: "20-40 minutes",
+        monetizationModel: "Premium",
+        comparableGames: [],
+        scopeCategory: "small",
+        differentiators: "Compact tension loop."
+      },
+      designPillars: {
+        pillars: [],
+        feelStatement: "",
+        antiGoals: [],
+        emotionalTargets: [],
+        readabilityPrinciples: ""
+      },
+      coreLoop: {
+        secondToSecond: "",
+        minuteToMinute: "",
+        sessionLoop: "",
+        longTermProgression: "",
+        failureStates: "",
+        rewardCadence: ""
+      },
+      controlsFeel: {
+        controlScheme: "",
+        cameraRules: "",
+        movementPhilosophy: "",
+        combatFeelGoals: "",
+        responsivenessStandards: "",
+        platformInputNotes: "",
+        accessibilityConsiderations: ""
+      },
+      contentBible: {
+        playerVerbs: "",
+        enemies: "",
+        weaponsAbilities: "",
+        encounters: "",
+        levelsMissions: "",
+        bossesSpecialEvents: "",
+        pickupsRewards: "",
+        uiHudElements: ""
+      },
+      artTone: {
+        artDirection: "",
+        toneKeywords: [],
+        visualReferences: [],
+        negativeReferences: [],
+        animationStyle: "",
+        vfxDirection: "",
+        audioMusicDirection: ""
+      },
+      technicalDesign: {
+        engine: "",
+        renderingConstraints: "",
+        targetFramerate: "",
+        memoryPerformanceBudget: "",
+        saveSystem: "",
+        contentPipeline: "",
+        namingConventions: "",
+        folderStructure: "",
+        platformConstraints: ""
+      },
+      updatedAt: 1
+    };
+
+    render(<TechnicalDesignPage />);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Fill blank fields with starter suggestions/i
+      })
+    );
+
+    expect(mocks.updateGameDesignDoc).toHaveBeenCalledWith({
+      technicalDesign: expect.objectContaining({
+        contentPipeline: expect.stringMatching(/Author rooms, locks, item placement/i),
+        folderStructure: expect.stringMatching(/Separate rooms, interactables, threats/i),
+        namingConventions: expect.stringMatching(/Name rooms, locks, keys/i),
+        saveSystem: expect.stringMatching(/Checkpoint or safe-room saves/i)
+      })
+    });
   });
 });

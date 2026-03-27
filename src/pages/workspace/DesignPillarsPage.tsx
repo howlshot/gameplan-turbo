@@ -4,8 +4,11 @@ import {
   GameSectionLayout,
   GameTextarea
 } from "@/components/workspace/game/GameSectionLayout";
+import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { splitLineSeparated, toLineSeparated } from "@/lib/gameProjectUtils";
+
+const PILLARS_TEXTAREA_CLASS = "min-h-[220px]";
 
 export const DesignPillarsPage = (): JSX.Element => {
   const { projectId } = useParams();
@@ -36,6 +39,7 @@ export const DesignPillarsPage = (): JSX.Element => {
           description="One idea per line. Aim for three to five pillars."
         >
           <GameTextarea
+            className={PILLARS_TEXTAREA_CLASS}
             value={toLineSeparated(section.pillars)}
             placeholder={"Readable threat silhouettes\nFast, satisfying hit feedback\nShort-session replayability"}
             onChange={(event) => {
@@ -50,6 +54,7 @@ export const DesignPillarsPage = (): JSX.Element => {
 
         <GameField label="What The Game Must Feel Like">
           <GameTextarea
+            className={PILLARS_TEXTAREA_CLASS}
             value={section.feelStatement}
             placeholder="Describe the sensory and emotional truth the player should feel during play."
             onChange={(event) => {
@@ -64,6 +69,7 @@ export const DesignPillarsPage = (): JSX.Element => {
 
         <GameField label="What The Game Must Never Become" description="One anti-goal per line.">
           <GameTextarea
+            className={PILLARS_TEXTAREA_CLASS}
             value={toLineSeparated(section.antiGoals)}
             placeholder={"Bloated with upgrade trees\nMuddy visual communication\nLong dead-air traversal"}
             onChange={(event) => {
@@ -78,6 +84,7 @@ export const DesignPillarsPage = (): JSX.Element => {
 
         <GameField label="Primary Emotional Targets" description="One emotional target per line.">
           <GameTextarea
+            className={PILLARS_TEXTAREA_CLASS}
             value={toLineSeparated(section.emotionalTargets)}
             placeholder={"Urgency\nPrecision\nConfidence"}
             onChange={(event) => {
@@ -105,6 +112,8 @@ export const DesignPillarsPage = (): JSX.Element => {
           }}
         />
       </GameField>
+
+      <WorkspacePageNavigation currentTabId="design-pillars" />
     </GameSectionLayout>
   );
 };

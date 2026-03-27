@@ -1,6 +1,5 @@
 import { Suspense, lazy, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { FloatingActionButton } from "@/components/shared/FloatingActionButton";
 import { ContextNodeSelector } from "@/components/workspace/ContextNodeSelector";
 import { useProject } from "@/hooks/useProject";
 import { cn } from "@/lib/utils";
@@ -101,6 +100,7 @@ export const ProjectWorkspace = (): JSX.Element => {
   const { projectId } = useParams();
   const { project, isLoading } = useProject(projectId);
   const activeTab = useUIStore((state) => state.activeTab);
+  const setActiveTab = useUIStore((state) => state.setActiveTab);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
 
@@ -163,6 +163,16 @@ export const ProjectWorkspace = (): JSX.Element => {
     </Suspense>
   );
 
+  const navigateToStage = (stageId: (typeof WORKSPACE_STAGES)[number]["id"]): void => {
+    if (!projectId) {
+      return;
+    }
+
+    setActiveTab(stageId);
+    navigate(`/project/${projectId}`);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <section className="-mx-6 -my-8 flex min-h-[calc(100vh-3.5rem)] flex-col">
       <div className="sticky top-0 z-30 border-b border-outline-variant/10 bg-surface/80 px-8 py-4 backdrop-blur-md">
@@ -186,10 +196,12 @@ export const ProjectWorkspace = (): JSX.Element => {
                 const isCurrent = index === currentStageIndex;
 
                 return (
-                  <span
+                  <button
                     key={stage.id}
+                    type="button"
+                    onClick={() => navigateToStage(stage.id)}
                     className={cn(
-                      "rounded-full px-3 py-1 text-xs",
+                      "rounded-full px-3 py-1 text-xs transition hover:scale-[1.01] hover:text-on-surface",
                       isCompleted
                         ? "bg-secondary/20 text-secondary"
                         : isCurrent
@@ -198,7 +210,7 @@ export const ProjectWorkspace = (): JSX.Element => {
                     )}
                   >
                     {stage.label}
-                  </span>
+                  </button>
                 );
               })}
             </div>
@@ -226,8 +238,6 @@ export const ProjectWorkspace = (): JSX.Element => {
           />
         ) : null}
       </div>
-
-      <FloatingActionButton />
     </section>
   );
 };

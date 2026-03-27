@@ -4,6 +4,7 @@ import { useDropzone } from "react-dropzone";
 import { VaultHeader } from "@/components/workspace/vault/VaultHeader";
 import { VaultLibraryGrid } from "@/components/workspace/vault/VaultLibraryGrid";
 import { VaultSidebarPanel } from "@/components/workspace/vault/VaultSidebarPanel";
+import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
 import { useProject } from "@/hooks/useProject";
 import { useToast } from "@/hooks/useToast";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
@@ -221,6 +222,8 @@ export const VaultPage = (): JSX.Element => {
           />
         </div>
       </div>
+
+      <WorkspacePageNavigation currentTabId="vault" />
     </div>
   );
 };

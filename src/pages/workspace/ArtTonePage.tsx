@@ -4,6 +4,7 @@ import {
   GameSectionLayout,
   GameTextarea
 } from "@/components/workspace/game/GameSectionLayout";
+import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { splitLineSeparated, toLineSeparated } from "@/lib/gameProjectUtils";
 
@@ -121,6 +122,8 @@ export const ArtTonePage = (): JSX.Element => {
           </GameField>
         </div>
       </div>
+
+      <WorkspacePageNavigation currentTabId="art-tone" />
     </GameSectionLayout>
   );
 };

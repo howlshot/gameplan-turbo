@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { OutputPanel } from "@/components/shared/OutputPanel";
+import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
 import {
   GameField,
   GameSectionLayout,
@@ -239,6 +240,8 @@ export const PromptLabPage = (): JSX.Element => {
           )}
         </div>
       </div>
+
+      <WorkspacePageNavigation currentTabId="prompt-lab" />
     </GameSectionLayout>
   );
 };

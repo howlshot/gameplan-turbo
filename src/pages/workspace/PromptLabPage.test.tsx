@@ -4,7 +4,8 @@ import { PromptLabPage } from "@/pages/workspace/PromptLabPage";
 import type { BuildStage, GameDesignDoc, Project } from "@/types";
 
 vi.mock("react-router-dom", () => ({
-  useParams: () => ({ projectId: "project-1" })
+  useParams: () => ({ projectId: "project-1" }),
+  useNavigate: () => vi.fn()
 }));
 
 vi.mock("@/hooks/useToast", () => ({

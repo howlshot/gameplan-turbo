@@ -15,7 +15,9 @@ import {
   ENGINE_OPTIONS,
   getEngineSelectValue
 } from "@/lib/engineOptions";
-import type { TechnicalDesignSection } from "@/types";
+import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
+import { getTemplateDefinition } from "@/lib/templates/genreTemplates";
+import type { TechnicalDesignSection, TemplateId } from "@/types";
 
 const technicalFields = [
   ["renderingConstraints", "Rendering Constraints"],
@@ -27,6 +29,30 @@ const technicalFields = [
   ["folderStructure", "Folder Structure"],
   ["platformConstraints", "Platform Constraints"]
 ] as const;
+
+const TECHNICAL_STARTER_FIELDS = [
+  "saveSystem",
+  "contentPipeline",
+  "namingConventions",
+  "folderStructure"
+] as const;
+
+const GENERIC_TECHNICAL_STARTERS: Pick<
+  TechnicalDesignSection,
+  (typeof TECHNICAL_STARTER_FIELDS)[number]
+> = {
+  saveSystem:
+    "Keep saves lightweight: settings, progression flags, and the minimum state needed to resume cleanly.",
+  contentPipeline:
+    "Start with lightweight data files or scriptable objects for levels, encounters, items, and tuning values before building a heavy toolchain.",
+  namingConventions:
+    "Name files by gameplay role first, then type or variant, so content stays readable as the project grows.",
+  folderStructure:
+    "Keep folders simple at first: gameplay, content, UI, audio, art, and data. Split deeper only once the first playable proves the real boundaries."
+};
+
+const NOT_SURE_YET_VALUE =
+  "Not sure yet. Keep this lightweight until the first playable proves what the project actually needs.";
 
 export const TechnicalDesignPage = (): JSX.Element => {
   const { projectId } = useParams();
@@ -48,6 +74,7 @@ export const TechnicalDesignPage = (): JSX.Element => {
   return (
     <TechnicalDesignEditor
       enginePreference={project.enginePreference}
+      templateId={project.templateId}
       technicalDesign={gameDesignDoc.technicalDesign}
       onUpdateEnginePreference={(value) => {
         void Promise.all([
@@ -66,13 +93,20 @@ export const TechnicalDesignPage = (): JSX.Element => {
           }
         });
       }}
+      onUpdateTechnicalFields={(values) => {
+        void updateGameDesignDoc({
+          technicalDesign: values
+        });
+      }}
     />
   );
 };
 
 interface TechnicalDesignEditorProps {
   enginePreference: string;
+  onUpdateTechnicalFields: (values: Partial<TechnicalDesignSection>) => void;
   technicalDesign: TechnicalDesignSection;
+  templateId: TemplateId;
   onUpdateEnginePreference: (value: string) => void;
   onUpdateTechnicalField: (
     key: (typeof technicalFields)[number][0],
@@ -82,7 +116,9 @@ interface TechnicalDesignEditorProps {
 
 const TechnicalDesignEditor = ({
   enginePreference,
+  onUpdateTechnicalFields,
   technicalDesign,
+  templateId,
   onUpdateEnginePreference,
   onUpdateTechnicalField
 }: TechnicalDesignEditorProps): JSX.Element => {
@@ -91,17 +127,69 @@ const TechnicalDesignEditor = ({
   const [engineSelection, setEngineSelection] = useState(
     getEngineSelectValue(currentEnginePreference)
   );
+  const templateSuggestions =
+    getTemplateDefinition(templateId).defaultDoc.technicalDesign ??
+    GENERIC_TECHNICAL_STARTERS;
 
   useEffect(() => {
     setEngineSelection(getEngineSelectValue(currentEnginePreference));
   }, [currentEnginePreference]);
 
+  const applyTechnicalStarterState = (
+    mode: "starter" | "not-sure-yet"
+  ): void => {
+    const updates: Partial<TechnicalDesignSection> = {};
+
+    TECHNICAL_STARTER_FIELDS.forEach((field) => {
+      if (technicalDesign[field].trim().length > 0) {
+        return;
+      }
+
+      updates[field] =
+        mode === "starter"
+          ? templateSuggestions[field] || GENERIC_TECHNICAL_STARTERS[field]
+          : NOT_SURE_YET_VALUE;
+    });
+
+    if (Object.keys(updates).length > 0) {
+      onUpdateTechnicalFields(updates);
+    }
+  };
+
   return (
     <GameSectionLayout
       eyebrow="Technical Direction"
       title="Technical Design"
-      description="Keep this engine-agnostic when possible, but be explicit about performance targets, pipeline limits, naming, and content authoring rules."
+      description="This page is optional early on. Use it to lock technical constraints when you know them, or leave fields light and tighten them after the first playable."
     >
+      <div className="rounded-3xl border border-outline-variant/10 bg-surface px-5 py-5">
+        <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">
+          Optional for early-stage indies
+        </p>
+        <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+          If folder structure, content pipeline, or save strategy feel premature,
+          you do not need to solve them perfectly right now. Fill blank fields
+          with starter suggestions, mark them for later, or return after the
+          first playable is stable. Prompt Lab can also expand this later.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={() => applyTechnicalStarterState("starter")}
+            className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-primary/15"
+          >
+            Fill blank fields with starter suggestions
+          </button>
+          <button
+            type="button"
+            onClick={() => applyTechnicalStarterState("not-sure-yet")}
+            className="rounded-2xl border border-outline-variant/15 bg-surface-container px-4 py-2 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high"
+          >
+            Mark blank fields for later
+          </button>
+        </div>
+      </div>
+
       <GameField label="Engine Preference">
         <GameSelect
           value={engineSelection}
@@ -143,6 +231,8 @@ const TechnicalDesignEditor = ({
           </GameField>
         ))}
       </div>
+
+      <WorkspacePageNavigation currentTabId="technical-design" />
     </GameSectionLayout>
   );
 };

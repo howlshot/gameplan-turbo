@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { BuildStageCard } from "@/components/workspace/BuildStageCard";
+import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
 import {
   GameField,
   GameSectionLayout,
@@ -169,6 +170,8 @@ export const BuildPlanPage = (): JSX.Element => {
           </div>
         )}
       </div>
+
+      <WorkspacePageNavigation currentTabId="build-plan" />
     </GameSectionLayout>
   );
 };

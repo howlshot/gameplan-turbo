@@ -22,6 +22,14 @@ import {
   GAME_PLATFORM_OPTIONS
 } from "@/lib/templates/genreTemplates";
 import { splitCommaSeparated, toCommaSeparated } from "@/lib/gameProjectUtils";
+import { getConceptFieldGuidance } from "@/lib/conceptHelpers";
+import {
+  CUSTOM_MONETIZATION_VALUE,
+  getMonetizationOption,
+  MONETIZATION_OPTIONS,
+  normalizeMonetizationValue
+} from "@/lib/monetizationOptions";
+import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
 import type { AgentPlatform, GamePlatformTarget, ScopeCategory } from "@/types";
 
 export const ConceptPage = (): JSX.Element => {
@@ -44,6 +52,15 @@ export const ConceptPage = (): JSX.Element => {
   const concept = gameDesignDoc.concept;
   const activeScopeProfile = getScopeProfile(project.scopeCategory);
   const activeSessionPreset = getSessionPreset(project.sessionLength);
+  const conceptGuidance = getConceptFieldGuidance({
+    genre: project.genre,
+    subgenre: project.subgenre,
+    templateId: project.templateId
+  });
+  const activeMonetizationValue = normalizeMonetizationValue(
+    project.monetizationModel
+  );
+  const activeMonetizationOption = getMonetizationOption(activeMonetizationValue);
 
   const updateConcept = async (
     field: keyof typeof concept,
@@ -106,10 +123,13 @@ export const ConceptPage = (): JSX.Element => {
             />
           </GameField>
 
-          <GameField label="One-Line Pitch">
+          <GameField
+            label="One-Line Pitch"
+            description="State the game, the core action, and the twist in one sentence."
+          >
             <GameTextInput
               value={project.oneLinePitch}
-              placeholder="A touch-first rail shooter about surviving choreographed urban ambushes."
+              placeholder={conceptGuidance.oneLinePitchPlaceholder}
               onChange={(event) => {
                 const value = event.target.value;
                 void Promise.all([
@@ -120,10 +140,13 @@ export const ConceptPage = (): JSX.Element => {
             />
           </GameField>
 
-          <GameField label="Player Fantasy">
+          <GameField
+            label="Player Fantasy"
+            description={conceptGuidance.playerFantasyDescription}
+          >
             <GameTextarea
               value={concept.playerFantasy}
-              placeholder="What fantasy is the player buying into?"
+              placeholder={conceptGuidance.playerFantasyPlaceholder}
               onChange={(event) => {
                 void updateConcept("playerFantasy", event.target.value);
               }}
@@ -291,18 +314,62 @@ export const ConceptPage = (): JSX.Element => {
             </GameField>
           </div>
 
-          <GameField label="Monetization Model">
-            <GameTextInput
-              value={project.monetizationModel}
-              placeholder="Premium, premium + DLC, free with ads, etc."
+          <GameField
+            label="Monetization Model"
+            description="Choose the closest business model first, then refine it if this project needs a hybrid or platform-specific setup."
+          >
+            <GameSelect
+              value={activeMonetizationValue}
               onChange={(event) => {
-                const value = event.target.value;
+                const nextValue = event.target.value;
+
+                if (nextValue === CUSTOM_MONETIZATION_VALUE) {
+                  const customSeed =
+                    activeMonetizationValue === CUSTOM_MONETIZATION_VALUE
+                      ? project.monetizationModel
+                      : "";
+
+                  void Promise.all([
+                    updateProjectHeader({ monetizationModel: customSeed }),
+                    updateConcept("monetizationModel", customSeed)
+                  ]);
+                  return;
+                }
+
                 void Promise.all([
-                  updateProjectHeader({ monetizationModel: value }),
-                  updateConcept("monetizationModel", value)
+                  updateProjectHeader({ monetizationModel: nextValue }),
+                  updateConcept("monetizationModel", nextValue)
                 ]);
               }}
-            />
+            >
+              {MONETIZATION_OPTIONS.map((option) => (
+                <option key={option.value || "__blank__"} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </GameSelect>
+            {activeMonetizationValue === CUSTOM_MONETIZATION_VALUE ? (
+              <GameTextInput
+                className="mt-3"
+                value={project.monetizationModel}
+                placeholder="Example: Premium + cosmetic DLC, or free demo with a one-time unlock"
+                onChange={(event) => {
+                  const value = event.target.value;
+                  void Promise.all([
+                    updateProjectHeader({ monetizationModel: value }),
+                    updateConcept("monetizationModel", value)
+                  ]);
+                }}
+              />
+            ) : null}
+            <div className="mt-3 rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+              <p className="text-sm leading-6 text-on-surface-variant">
+                {activeMonetizationValue === CUSTOM_MONETIZATION_VALUE
+                  ? "Custom monetization is useful when the plan is a hybrid, a platform-specific deal, or still needs nuance beyond the standard patterns."
+                  : (activeMonetizationOption ?? MONETIZATION_OPTIONS[0])
+                      .description}
+              </p>
+            </div>
           </GameField>
 
           <GameField
@@ -344,6 +411,8 @@ export const ConceptPage = (): JSX.Element => {
           </GameField>
         </div>
       </div>
+
+      <WorkspacePageNavigation currentTabId="concept" />
     </GameSectionLayout>
   );
 };

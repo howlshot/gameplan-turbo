@@ -4,6 +4,7 @@ import {
   GameSectionLayout,
   GameTextarea
 } from "@/components/workspace/game/GameSectionLayout";
+import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 
 const contentFields = [
@@ -54,6 +55,8 @@ export const ContentBiblePage = (): JSX.Element => {
           </GameField>
         ))}
       </div>
+
+      <WorkspacePageNavigation currentTabId="content-bible" />
     </GameSectionLayout>
   );
 };

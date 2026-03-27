@@ -13,5 +13,7 @@ export const PROJECT_LINKS = [
   { id: "prompt-lab", icon: "auto_awesome", label: "Prompt Lab" }
 ] as const;
 
+export type ProjectLinkId = (typeof PROJECT_LINKS)[number]["id"];
+
 export const getProjectStatusTone = (status: string): string =>
   getStatusTone(status as never);

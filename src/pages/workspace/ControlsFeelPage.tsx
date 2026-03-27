@@ -4,6 +4,7 @@ import {
   GameSectionLayout,
   GameTextarea
 } from "@/components/workspace/game/GameSectionLayout";
+import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 
 const controlFields = [
@@ -53,6 +54,8 @@ export const ControlsFeelPage = (): JSX.Element => {
           </GameField>
         ))}
       </div>
+
+      <WorkspacePageNavigation currentTabId="controls-feel" />
     </GameSectionLayout>
   );
 };

@@ -664,7 +664,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
       targetPlatforms: ["codex", "cursor", "claude-code"],
       targetAudience: "Arcade action fans who want short, replayable sessions.",
       sessionLength: "3-10 minutes",
-      monetizationModel: "Premium with score chase replayability",
+      monetizationModel: "Premium",
       comparableGames: ["Virtua Cop", "Time Crisis", "House of the Dead"],
       enginePreference: "",
       techStack: []
@@ -677,7 +677,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
         playerFantasy: "An elite agent clearing hostile set pieces under pressure.",
         targetAudience: "Players who want high-readability action and quick restarts.",
         sessionLength: "3-10 minutes",
-        monetizationModel: "Premium with leaderboard retention",
+        monetizationModel: "Premium",
         comparableGames: ["Virtua Cop", "Time Crisis", "House of the Dead"],
         scopeCategory: "small",
         differentiators:
