@@ -1,4 +1,10 @@
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  fetchCodexBridgeStatus,
+  getCodexBridgeStartCommand,
+  getCodexLoginCommand,
+  type CodexBridgeStatus
+} from "@/lib/codexBridge";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { cn } from "@/lib/utils";
 import type { AIProvider } from "@/types";
@@ -28,6 +34,20 @@ export const ProviderCard = ({
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [bridgeStatusMessage, setBridgeStatusMessage] = useState("");
+  const [isCheckingBridge, setIsCheckingBridge] = useState(false);
+  const [isBridgeReady, setIsBridgeReady] = useState<boolean | null>(null);
+  const isLocalBridgeProvider = config.authMode === "local-bridge";
+  const isConnected = isLocalBridgeProvider ? isBridgeReady === true : provider.hasKey;
+  const statusLabel = isLocalBridgeProvider
+    ? isCheckingBridge
+      ? "Checking"
+      : isConnected
+        ? "Bridge Ready"
+        : "Bridge Offline"
+    : provider.hasKey
+      ? "Connected"
+      : "Disconnected";
 
   const handleSave = async (): Promise<void> => {
     const value = inputRef.current?.value.trim() ?? "";
@@ -47,6 +67,60 @@ export const ProviderCard = ({
     }
   };
 
+  const checkBridgeStatus = useCallback(async (): Promise<CodexBridgeStatus | null> => {
+    setIsCheckingBridge(true);
+
+    try {
+      const status = await fetchCodexBridgeStatus();
+
+      if (!status.cliAvailable) {
+        setIsBridgeReady(false);
+        setBridgeStatusMessage("Codex CLI is not installed on this machine.");
+      } else if (!status.loggedIn) {
+        setIsBridgeReady(false);
+        setBridgeStatusMessage(
+          `Bridge is online, but Codex is not logged in. Run \`${getCodexLoginCommand()}\` first.`
+        );
+      } else {
+        setIsBridgeReady(true);
+        setBridgeStatusMessage(
+          `Bridge ready. ${status.loginMethod ?? "ChatGPT"} login detected.`
+        );
+      }
+
+      return status;
+    } catch {
+      setIsBridgeReady(false);
+      setBridgeStatusMessage(
+        `Bridge offline. Start it with \`${getCodexBridgeStartCommand()}\`.`
+      );
+      return null;
+    } finally {
+      setIsCheckingBridge(false);
+    }
+  }, []);
+
+  const handleLocalBridgeConnect = useCallback(async (): Promise<void> => {
+    const status = await checkBridgeStatus();
+
+    if (!status?.ok || !status.loggedIn) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await onSave(provider.provider, "codex-cli-bridge");
+    } finally {
+      setIsSaving(false);
+    }
+  }, [checkBridgeStatus, onSave, provider.provider]);
+
+  useEffect(() => {
+    if (isLocalBridgeProvider) {
+      void checkBridgeStatus();
+    }
+  }, [checkBridgeStatus, isLocalBridgeProvider, provider.hasKey]);
+
   return (
     <article className="flex min-h-[220px] flex-col justify-between rounded-2xl border border-outline-variant/10 bg-surface-container-low p-5">
       <div className="flex items-start justify-between gap-4">
@@ -57,16 +131,16 @@ export const ProviderCard = ({
           <span
             className={cn(
               "h-2.5 w-2.5 rounded-full",
-              provider.hasKey ? "bg-secondary" : "bg-tertiary"
+              isConnected ? "bg-secondary" : "bg-tertiary"
             )}
           />
           <span
             className={cn(
               "font-mono text-[10px] uppercase tracking-[0.2em]",
-              provider.hasKey ? "text-secondary" : "text-tertiary"
+              isConnected ? "text-secondary" : "text-tertiary"
             )}
           >
-            {provider.hasKey ? "Connected" : "Disconnected"}
+            {statusLabel}
           </span>
         </div>
       </div>
@@ -92,7 +166,42 @@ export const ProviderCard = ({
           ) : null}
         </div>
 
-        {isEditing ? (
+        {isLocalBridgeProvider ? (
+          <div className="mt-4 space-y-4">
+            <p className="text-sm leading-6 text-on-surface-variant">
+              Uses your local Codex CLI session. No API key is stored in the app.
+            </p>
+            <p className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 font-mono text-[11px] leading-5 text-on-surface-variant">
+              {bridgeStatusMessage || "Checking local Codex bridge status..."}
+            </p>
+            <div className="space-y-2 font-mono text-[10px] uppercase tracking-[0.16em] text-on-surface-variant">
+              <p>Start bridge: {getCodexBridgeStartCommand()}</p>
+              <p>Login if needed: {getCodexLoginCommand()}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={isSaving || isCheckingBridge}
+                onClick={() => void handleLocalBridgeConnect()}
+                className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+              >
+                {isSaving
+                  ? "Connecting..."
+                  : provider.hasKey
+                    ? "Reconnect"
+                    : "Connect Bridge"}
+              </button>
+              <button
+                type="button"
+                disabled={isCheckingBridge}
+                onClick={() => void checkBridgeStatus()}
+                className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
+              >
+                {isCheckingBridge ? "Checking..." : "Check Status"}
+              </button>
+            </div>
+          </div>
+        ) : isEditing ? (
           <div className="mt-4 space-y-3">
             <input
               ref={inputRef}

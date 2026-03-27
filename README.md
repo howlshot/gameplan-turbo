@@ -31,6 +31,17 @@ corepack pnpm dev
 
 Open [http://localhost:5173](http://localhost:5173). The app works without AI keys; add providers later in `Settings` if you want generated outputs from external models.
 
+### Optional: use your ChatGPT-backed Codex login
+
+If you want Prompt Lab to run through the local Codex CLI instead of an API key:
+
+```bash
+codex login
+corepack pnpm codex:bridge
+```
+
+Then open `Settings`, connect `Codex (ChatGPT login)`, and set it as the default provider.
+
 ## Core workflow
 
 1. Create a game project from `Blank Game Project` or `Arcade Action / Rail Shooter`.

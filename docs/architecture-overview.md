@@ -41,7 +41,9 @@ Preserved from the upstream app:
 - streaming output
 - BYOK configuration
 
-This means the product can stay local-first while still supporting external generation when keys are configured.
+The fork also adds an optional localhost Codex bridge. That bridge shells out to the installed `codex` CLI, so users can route generations through their existing ChatGPT-backed Codex login without putting OAuth tokens into the browser app.
+
+This means the product can stay local-first while still supporting external generation when keys are configured or when the local Codex bridge is available.
 
 ## Generation architecture
 

@@ -14,6 +14,11 @@ export const createProviderFromConfig = (
   config: AIProviderConfig
 ): Promise<AIProvider> => {
   switch (config.provider) {
+    case "codex":
+      return import("@/services/ai/providers/codexBridgeProvider").then(
+        (module) =>
+          module.createCodexBridgeProvider(config.model, config.baseUrl)
+      );
     case "anthropic":
       return import("@/services/ai/providers/anthropicProvider").then((module) =>
         module.createAnthropicProvider(config.apiKey, config.model)

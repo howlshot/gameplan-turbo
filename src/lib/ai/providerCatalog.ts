@@ -8,9 +8,11 @@ export interface ProviderCatalogEntry {
   keyLabel: string;
   defaultModel: string;
   models: string[];
+  authMode?: "api-key" | "local-bridge";
 }
 
 export const PROVIDER_ORDER: AIProvider[] = [
+  "codex",
   "anthropic",
   "openai",
   "google",
@@ -21,6 +23,16 @@ export const PROVIDER_ORDER: AIProvider[] = [
 ];
 
 export const PROVIDER_CATALOG: Record<AIProvider, ProviderCatalogEntry> = {
+  codex: {
+    provider: "codex",
+    label: "Codex (ChatGPT login)",
+    icon: "terminal",
+    helpUrl: "https://developers.openai.com/codex/cli",
+    keyLabel: "Codex bridge",
+    defaultModel: "codex-default",
+    models: ["codex-default", "gpt-5.3-codex", "gpt-5-codex", "gpt-5"],
+    authMode: "local-bridge"
+  },
   anthropic: {
     provider: "anthropic",
     label: "Anthropic",

@@ -40,6 +40,7 @@ export type AgentPlatform =
 export type Platform = AgentPlatform;
 
 export type AIProvider =
+  | "codex"
   | "anthropic"
   | "openai"
   | "google"

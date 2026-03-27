@@ -15,6 +15,11 @@ import type { UsageLogEntry } from "@/lib/appData";
 import { clearAllAppData, exportAppData, getUsageLogs } from "@/lib/appData";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import {
+  fetchCodexBridgeStatus,
+  getCodexBridgeStartCommand,
+  getCodexLoginCommand
+} from "@/lib/codexBridge";
+import {
   buildProviderCards,
   downloadJsonFile
 } from "@/pages/settings/settingsPageHelpers";
@@ -43,6 +48,29 @@ export const SettingsPage = (): JSX.Element => {
   ): Promise<void> => {
     const existing = providers.find((item) => item.provider === provider);
     const config = PROVIDER_CATALOG[provider];
+
+    if (provider === "codex") {
+      try {
+        const status = await fetchCodexBridgeStatus();
+
+        if (!status.cliAvailable) {
+          toast.error("Codex CLI was not found on this machine.");
+          return;
+        }
+
+        if (!status.loggedIn) {
+          toast.error(
+            `Codex is not logged in. Run \`${getCodexLoginCommand()}\` and retry.`
+          );
+          return;
+        }
+      } catch {
+        toast.error(
+          `Codex bridge is offline. Start it with \`${getCodexBridgeStartCommand()}\`.`
+        );
+        return;
+      }
+    }
 
     const result = await saveProvider({
       id: existing?.id,

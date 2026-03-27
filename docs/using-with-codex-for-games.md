@@ -1,5 +1,17 @@
 # Using Preflight Game OS With Codex
 
+## Direct Codex bridge setup
+
+If you want Preflight Game OS to generate outputs through your local ChatGPT-backed Codex login:
+
+1. Run `codex login`
+2. Run `corepack pnpm codex:bridge`
+3. Open `Settings`
+4. Connect `Codex (ChatGPT login)`
+5. Set it as the default provider
+
+This route uses the local Codex CLI as a bridge. The browser app does not store your ChatGPT OAuth tokens.
+
 ## Recommended flow
 
 1. Fill `Concept`, `Design Pillars`, `Core Loop`, and `Controls & Feel` before you ask Codex to implement anything.

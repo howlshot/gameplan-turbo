@@ -1,5 +1,6 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import db from "@/lib/db";
+import { DEFAULT_PLATFORM_LAUNCHERS } from "@/lib/db";
 import type { AIProviderConfig } from "@/types";
 
 export interface AIProviderSummary {
@@ -99,16 +100,7 @@ export const useAIProviders = () => {
             id: "app-settings",
             theme: "dark",
             defaultProvider: provider.isDefault ? provider.provider : null,
-            enabledPlatformLaunchers: [
-              "lovable",
-              "bolt",
-              "cursor",
-              "v0",
-              "replit",
-              "perplexity",
-              "gemini",
-              "chatgpt"
-            ],
+            enabledPlatformLaunchers: DEFAULT_PLATFORM_LAUNCHERS,
             streamingEnabled: true,
             userName: "",
             isOnboardingComplete: false,
