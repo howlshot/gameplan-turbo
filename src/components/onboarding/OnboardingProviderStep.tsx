@@ -105,9 +105,16 @@ export const OnboardingProviderStep = ({
             <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
               <p className="font-semibold text-on-surface">Fastest path</p>
               <p className="mt-2">
-                If you launched the app using the Desktop icon, try
-                <strong> Open ChatGPT Sign-In</strong> first. The bridge is usually already
-                running.
+                If you launched the app using the Desktop icon, try{" "}
+                <button
+                  type="button"
+                  onClick={onStartCodexLogin}
+                  disabled={isStartingCodexLogin}
+                  className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  Open ChatGPT Sign-In
+                </button>{" "}
+                first. The bridge is usually already running.
               </p>
             </div>
             <div className="space-y-2">
