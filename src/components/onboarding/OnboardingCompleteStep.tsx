@@ -1,3 +1,5 @@
+import { APP_NAME } from "@/lib/brand";
+
 interface OnboardingCompleteStepProps {
   onComplete: () => void;
 }
@@ -28,7 +30,7 @@ export const OnboardingCompleteStep = ({
         onClick={onComplete}
         className="gradient-cta glow-primary mt-10 flex w-full items-center justify-center gap-2 rounded-xl px-5 py-4 font-semibold text-on-primary"
       >
-        <span>Open Preflight Game OS</span>
+        <span>Open {APP_NAME}</span>
         <span className="material-symbols-outlined text-base">arrow_forward</span>
       </button>
     </div>

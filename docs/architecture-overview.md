@@ -12,7 +12,7 @@ The UI remains a browser-only single-page app with a persistent sidebar workspac
 ## Local data model
 
 - Dexie / IndexedDB
-- Database name: `preflight-game-os`
+- Database name: `gameplan-turbo`
 
 Primary tables:
 
@@ -42,6 +42,8 @@ Preserved from the upstream app:
 - BYOK configuration
 
 The fork also adds an optional localhost Codex bridge. That bridge shells out to the installed `codex` CLI, so users can route generations through their existing ChatGPT-backed Codex login without putting OAuth tokens into the browser app.
+
+On first launch, the renamed app can also import existing browser data from the prior `preflight-game-os` IndexedDB name before continuing under `gameplan-turbo`.
 
 This means the product can stay local-first while still supporting external generation when keys are configured or when the local Codex bridge is available.
 

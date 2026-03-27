@@ -61,7 +61,7 @@ export const getDesignPromptForPlatform = (
     ``,
     `<constraints>`,
     getConstraintBlock(platform),
-    `Use the Preflight visual language: premium dark UI, tonal surface layering, primary glow accents, and strong hierarchy.`,
+    `Use the Gameplan Turbo visual language: premium dark UI, tonal surface layering, primary glow accents, and strong hierarchy.`,
     `</constraints>`
   ].join("\n");
 };

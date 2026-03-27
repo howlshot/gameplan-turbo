@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error("Preflight crashed inside the error boundary.", error, errorInfo);
+    console.error("Gameplan Turbo crashed inside the error boundary.", error, errorInfo);
   }
 
   render(): ReactNode {

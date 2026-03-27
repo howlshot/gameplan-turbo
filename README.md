@@ -1,6 +1,6 @@
-# Preflight Game OS
+# Gameplan Turbo
 
-Preflight Game OS is a local-first game design operating system for AI-assisted builders. It takes the original Preflight shell and refocuses it on game concept development, design pillars, playable-loop planning, staged implementation prompts, and vault-backed context for tools like Codex, Cursor, Claude Code, and Qwen Code.
+Gameplan Turbo is a local-first game design operating system for AI-assisted builders. It takes the original Preflight shell and refocuses it on game concept development, design pillars, playable-loop planning, staged implementation prompts, and vault-backed context for tools like Codex, Cursor, Claude Code, and Qwen Code.
 
 ## What changed
 
@@ -23,8 +23,8 @@ Preflight Game OS is a local-first game design operating system for AI-assisted 
 ## Quick start
 
 ```bash
-git clone https://github.com/Meykiio/preflight.git preflight-game-os
-cd preflight-game-os
+git clone https://github.com/Meykiio/preflight.git gameplan-turbo
+cd gameplan-turbo
 corepack pnpm install
 corepack pnpm dev
 ```
@@ -52,7 +52,7 @@ Then open `Settings`, connect `Codex (ChatGPT login)`, and set it as the default
 
 ## v1 focus
 
-Preflight Game OS v1 is optimized for small-scope action and arcade-style games, especially:
+Gameplan Turbo v1 is optimized for small-scope action and arcade-style games, especially:
 
 - arcade action
 - rail shooters

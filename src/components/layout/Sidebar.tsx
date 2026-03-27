@@ -1,6 +1,8 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { BrandMark } from "@/components/branding/BrandMark";
 import { useProject } from "@/hooks/useProject";
 import { PROJECT_LINKS, getProjectStatusTone } from "@/components/layout/sidebarConfig";
+import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { useProjectStore } from "@/stores/projectStore";
 import { useUIStore } from "@/stores/uiStore";
@@ -40,13 +42,16 @@ export const Sidebar = (): JSX.Element => {
       )}
     >
       {!sidebarCollapsed ? (
-        <div className="mb-4 px-4">
-          <p className="font-headline text-lg font-bold tracking-tight text-on-surface">
-            Preflight Game OS
-          </p>
-          <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">
-            Idea to first playable
-          </p>
+        <div className="mb-4 flex items-center gap-3 px-4">
+          <BrandMark className="h-11 w-11 rounded-2xl" />
+          <div className="min-w-0">
+            <p className="truncate font-headline text-lg font-bold tracking-tight text-on-surface">
+              {APP_NAME}
+            </p>
+            <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">
+              {APP_TAGLINE}
+            </p>
+          </div>
         </div>
       ) : null}
 

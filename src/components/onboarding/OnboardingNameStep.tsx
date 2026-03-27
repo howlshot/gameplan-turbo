@@ -1,3 +1,6 @@
+import { BrandMark } from "@/components/branding/BrandMark";
+import { APP_NAME } from "@/lib/brand";
+
 interface OnboardingNameStepProps {
   name: string;
   onChangeName: (value: string) => void;
@@ -12,8 +15,11 @@ export const OnboardingNameStep = ({
   return (
     <div className="p-10">
       <div className="text-center">
+        <div className="mb-6 flex justify-center">
+          <BrandMark className="h-16 w-16 rounded-2xl" />
+        </div>
         <h1 className="font-headline text-4xl font-bold tracking-tight text-on-surface">
-          Welcome to Preflight Game OS
+          Welcome to {APP_NAME}
         </h1>
         <p className="mt-3 text-on-surface-variant">
           Let’s set up your local-first game design workspace.

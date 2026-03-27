@@ -1,8 +1,8 @@
-# Using Preflight Game OS With Codex
+# Using Gameplan Turbo With Codex
 
 ## Direct Codex bridge setup
 
-If you want Preflight Game OS to generate outputs through your local ChatGPT-backed Codex login:
+If you want Gameplan Turbo to generate outputs through your local ChatGPT-backed Codex login:
 
 1. Run `codex login`
 2. Run `corepack pnpm codex:bridge`

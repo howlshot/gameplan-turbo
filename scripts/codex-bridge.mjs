@@ -3,8 +3,15 @@
 import http from "node:http";
 import { spawn } from "node:child_process";
 
-const HOST = process.env.PREFLIGHT_CODEX_BRIDGE_HOST || "127.0.0.1";
-const PORT = Number(process.env.PREFLIGHT_CODEX_BRIDGE_PORT || "8765");
+const HOST =
+  process.env.GAMEPLAN_TURBO_CODEX_BRIDGE_HOST ||
+  process.env.PREFLIGHT_CODEX_BRIDGE_HOST ||
+  "127.0.0.1";
+const PORT = Number(
+  process.env.GAMEPLAN_TURBO_CODEX_BRIDGE_PORT ||
+    process.env.PREFLIGHT_CODEX_BRIDGE_PORT ||
+    "8765"
+);
 const MAX_BODY_BYTES = 1024 * 1024;
 const BRIDGE_VERSION = "0.1.0";
 const ALLOWED_ORIGIN = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/;

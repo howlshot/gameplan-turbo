@@ -1,3 +1,8 @@
+import {
+  APP_CHECKPOINT_STORAGE_KEY,
+  LEGACY_CHECKPOINT_STORAGE_KEY
+} from "@/lib/brand";
+
 /**
  * Checkpoint configuration for generation progress
  * Saves progress every 500 tokens to enable resume
@@ -10,7 +15,7 @@ export interface CheckpointConfig {
 
 export const DEFAULT_CHECKPOINT_CONFIG: CheckpointConfig = {
   intervalTokens: 500,
-  storageKey: 'preflight_generation_checkpoint',
+  storageKey: APP_CHECKPOINT_STORAGE_KEY,
   autoResume: true
 };
 
@@ -45,10 +50,19 @@ export const saveCheckpoint = (checkpoint: GenerationCheckpoint): void => {
  */
 export const loadCheckpoint = (): GenerationCheckpoint | null => {
   try {
-    const data = localStorage.getItem(DEFAULT_CHECKPOINT_CONFIG.storageKey);
+    const data =
+      localStorage.getItem(DEFAULT_CHECKPOINT_CONFIG.storageKey) ??
+      localStorage.getItem(LEGACY_CHECKPOINT_STORAGE_KEY);
     if (!data) return null;
     
     const checkpoint = JSON.parse(data) as GenerationCheckpoint;
+
+    if (!localStorage.getItem(DEFAULT_CHECKPOINT_CONFIG.storageKey)) {
+      localStorage.setItem(
+        DEFAULT_CHECKPOINT_CONFIG.storageKey,
+        JSON.stringify(checkpoint)
+      );
+    }
     
     // Invalidate checkpoints older than 24 hours
     const oneDay = 24 * 60 * 60 * 1000;
@@ -70,6 +84,7 @@ export const loadCheckpoint = (): GenerationCheckpoint | null => {
 export const clearCheckpoint = (): void => {
   try {
     localStorage.removeItem(DEFAULT_CHECKPOINT_CONFIG.storageKey);
+    localStorage.removeItem(LEGACY_CHECKPOINT_STORAGE_KEY);
   } catch (error) {
     console.warn('Failed to clear generation checkpoint:', error);
   }

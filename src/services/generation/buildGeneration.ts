@@ -1,3 +1,4 @@
+import { APP_BUILD_PLAN_FILE_NAME } from "@/lib/brand";
 import { downloadAsFile } from "@/lib/utils";
 import {
   getBuildStageSequence,
@@ -203,5 +204,5 @@ export const exportAllPrompts = (stages: BuildStage[]): void => {
     )
     .join("\n\n---\n\n");
 
-  downloadAsFile(content, "preflight-game-os-build-plan.md");
+  downloadAsFile(content, APP_BUILD_PLAN_FILE_NAME);
 };

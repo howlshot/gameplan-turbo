@@ -1,9 +1,14 @@
 import type { RefObject } from "react";
+import { BrandMark } from "@/components/branding/BrandMark";
 import {
   getCodexBridgeStartCommand,
   getCodexLoginCommand
 } from "@/lib/codexBridge";
 import { PROVIDER_CATALOG, PROVIDER_ORDER } from "@/lib/ai/providerCatalog";
+import {
+  APP_FOLDER_PLACEHOLDER,
+  APP_NAME
+} from "@/lib/brand";
 import type { AIProvider } from "@/types";
 
 interface OnboardingProviderStepProps {
@@ -99,7 +104,7 @@ export const OnboardingProviderStep = ({
         {isLocalBridgeProvider ? (
           <div className="space-y-4 rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-sm leading-6 text-on-surface-variant">
             <p>
-              No API key is needed here. Preflight Game OS will use your local Codex CLI
+              No API key is needed here. {APP_NAME} will use your local Codex CLI
               session instead.
             </p>
             <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
@@ -124,9 +129,9 @@ export const OnboardingProviderStep = ({
                 2. Run <code>{getCodexLoginCommand()}</code>
               </p>
               <p>3. Finish the ChatGPT sign-in flow that opens in your browser.</p>
-              <p>4. In Terminal, switch to your Preflight Game OS folder.</p>
+              <p>4. In Terminal, switch to your {APP_NAME} folder.</p>
               <p>
-                If needed, run <code>cd /path/to/preflight-game-os</code>
+                If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
               </p>
               <p>
                 5. Run <code>{getCodexBridgeStartCommand()}</code>
@@ -223,7 +228,10 @@ export const OnboardingProviderStep = ({
       </div>
 
       <div className="pointer-events-none absolute right-8 top-8 hidden text-right font-mono text-[10px] uppercase tracking-[0.24em] text-primary/40 md:block">
-        <p>Preflight Game OS</p>
+        <div className="flex items-center justify-end gap-2">
+          <BrandMark className="h-7 w-7 rounded-xl" />
+          <p>{APP_NAME}</p>
+        </div>
         <p className="mt-1">Local-First</p>
       </div>
     </div>

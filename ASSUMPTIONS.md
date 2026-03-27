@@ -1,6 +1,6 @@
 # Assumptions
 
-- Brand: `Preflight Game OS`
+- Brand: `Gameplan Turbo`
 - v1 remains browser-only and local-first
 - No new backend is added
 - The AI provider layer remains BYOK

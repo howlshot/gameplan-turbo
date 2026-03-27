@@ -1,4 +1,10 @@
+import Dexie from "dexie";
 import db from "@/lib/db";
+import {
+  APP_CHECKPOINT_STORAGE_KEY,
+  LEGACY_APP_DATABASE_NAME,
+  LEGACY_CHECKPOINT_STORAGE_KEY
+} from "@/lib/brand";
 import { estimateTokens } from "@/lib/utils";
 import {
   createEmptyGameDesignDoc,
@@ -170,4 +176,7 @@ export const getUsageLogs = async (): Promise<UsageLogEntry[]> => {
 
 export const clearAllAppData = async (): Promise<void> => {
   await db.delete();
+  await Dexie.delete(LEGACY_APP_DATABASE_NAME);
+  localStorage.removeItem(APP_CHECKPOINT_STORAGE_KEY);
+  localStorage.removeItem(LEGACY_CHECKPOINT_STORAGE_KEY);
 };

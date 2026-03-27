@@ -6,6 +6,7 @@ import {
   openCodexLoginFlow,
   type CodexBridgeStatus
 } from "@/lib/codexBridge";
+import { APP_FOLDER_PLACEHOLDER, APP_NAME } from "@/lib/brand";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
@@ -206,9 +207,9 @@ export const ProviderCard = ({
                 2. Run <code>{getCodexLoginCommand()}</code>
               </p>
               <p>3. Finish the ChatGPT sign-in in your browser.</p>
-              <p>4. Switch Terminal into your Preflight Game OS folder.</p>
+              <p>4. Switch Terminal into your {APP_NAME} folder.</p>
               <p>
-                If needed, run <code>cd /path/to/preflight-game-os</code>
+                If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
               </p>
               <p>
                 5. Run <code>{getCodexBridgeStartCommand()}</code>

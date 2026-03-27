@@ -62,7 +62,7 @@ const App = (): JSX.Element => {
 
   useEffect(() => {
     void db.initializeDefaults().catch((error: unknown) => {
-      console.error("Failed to initialize Preflight defaults.", error);
+      console.error("Failed to initialize Gameplan Turbo defaults.", error);
     });
   }, []);
 

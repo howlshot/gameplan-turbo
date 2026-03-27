@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { BrandMark } from "@/components/branding/BrandMark";
+import { APP_NAME } from "@/lib/brand";
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -41,22 +43,12 @@ export const SplashScreen = ({
           }`}
         >
           <div className="absolute inset-0 scale-125 rounded-2xl bg-primary/20 blur-3xl" />
-          <div className="relative flex h-20 w-20 items-center justify-center rounded-2xl border border-outline-variant/15 bg-surface-container-highest">
-            <span
-              className="material-symbols-outlined text-5xl text-primary"
-              style={{ fontVariationSettings: "'FILL' 1" }}
-            >
-              pentagon
-            </span>
-            <span className="material-symbols-outlined absolute text-xl text-on-primary-container">
-              rocket_launch
-            </span>
-          </div>
+          <BrandMark className="relative h-20 w-20 rounded-2xl" />
         </div>
 
         <div className="mt-8">
           <h1 className="font-headline text-[32px] font-bold tracking-tighter text-on-surface">
-            Preflight Game OS
+            {APP_NAME}
           </h1>
           <p
             className={`mt-2 font-mono text-[11px] uppercase tracking-[0.28em] text-outline transition-opacity duration-500 ${

@@ -6,6 +6,7 @@ import {
   openCodexLoginFlow,
   type CodexBridgeStatus
 } from "@/lib/codexBridge";
+import { APP_NAME } from "@/lib/brand";
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 
@@ -176,7 +177,7 @@ export const DiagnosticsCard = (): JSX.Element => {
             2. Start bridge: <code>{getCodexBridgeStartCommand()}</code>
           </p>
           <p className="text-sm text-on-surface-variant">
-            3. Keep that Terminal window open while using Preflight Game OS
+            3. Keep that Terminal window open while using {APP_NAME}
           </p>
           <div className="pt-2">
             <button

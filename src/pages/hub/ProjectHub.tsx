@@ -12,6 +12,7 @@ import {
 import { useProjects } from "@/hooks/useProjects";
 import { useSettings } from "@/hooks/useSettings";
 import { useToast } from "@/hooks/useToast";
+import { APP_NAME } from "@/lib/brand";
 import { cn, formatDate } from "@/lib/utils";
 
 export const ProjectHub = (): JSX.Element => {
@@ -130,8 +131,7 @@ export const ProjectHub = (): JSX.Element => {
                   : "Build the game before the scope drifts."}
               </h1>
               <p className="mt-4 text-sm leading-6 text-on-surface-variant">
-                {projects.length} game projects in orbit. Last active {lastActive}. Preflight
-                Game OS stays local-first, preserves your vault context, and turns design
+                {projects.length} game projects in orbit. Last active {lastActive}. {APP_NAME} stays local-first, preserves your vault context, and turns design
                 intent into staged prompts for AI coding agents.
               </p>
             </div>

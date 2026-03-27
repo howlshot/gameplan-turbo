@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/brand";
 import type { ScopeCategory } from "@/types";
 
 export interface ScopeProfile {
@@ -65,7 +66,7 @@ export const SCOPE_PROFILES: ScopeProfile[] = [
     ],
     tone: "warning",
     warningMessage:
-      "Large is allowed for honest planning, but Preflight Game OS is still optimized for finishable tiny-to-medium projects."
+      `Large is allowed for honest planning, but ${APP_NAME} is still optimized for finishable tiny-to-medium projects.`
   }
 ];
 

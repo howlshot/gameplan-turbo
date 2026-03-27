@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { APP_NAME } from "@/lib/brand";
 
 interface AppearanceSectionProps {
   userName: string;
@@ -24,7 +24,7 @@ export const AppearanceSection = ({
             type="text"
             value={userName}
             onChange={(event) => onChangeUserName(event.target.value)}
-            placeholder="How should Preflight greet you?"
+            placeholder={`How should ${APP_NAME} greet you?`}
             className="w-full rounded-xl border border-outline-variant/15 bg-surface px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary/40"
           />
         </div>
@@ -34,7 +34,7 @@ export const AppearanceSection = ({
             Dark Theme
           </p>
           <p className="mt-2 text-sm text-outline">
-            Preflight uses a dark-only theme for optimal developer experience.
+            {APP_NAME} uses a dark-only theme for optimal developer experience.
           </p>
         </div>
       </div>

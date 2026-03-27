@@ -1,3 +1,4 @@
+import { APP_NAME } from "@/lib/brand";
 import { useState } from "react";
 
 interface OnboardingTutorialStepProps {
@@ -63,7 +64,7 @@ export const OnboardingTutorialStep = ({
           Quick Tour
         </h1>
         <p className="mt-3 text-on-surface-variant">
-          Here’s what Preflight Game OS is built to do.
+          Here’s what {APP_NAME} is built to do.
         </p>
       </div>
 

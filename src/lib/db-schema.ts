@@ -1,4 +1,5 @@
 import Dexie, { type Table } from "dexie";
+import { APP_DATABASE_NAME } from "@/lib/brand";
 import type {
   AgentSystemPrompt,
   AIProviderConfig,
@@ -13,7 +14,7 @@ import type {
   VaultFile
 } from "@/types";
 
-export class PreflightDatabase extends Dexie {
+export class GameplanTurboDatabase extends Dexie {
   projects!: Table<Project, string>;
   gameDesignDocs!: Table<GameDesignDoc, string>;
   briefs!: Table<Brief | GameDesignDoc, string>;
@@ -27,7 +28,7 @@ export class PreflightDatabase extends Dexie {
   credentials!: Table<Credential, string>;
 
   constructor() {
-    super("preflight-game-os");
+    super(APP_DATABASE_NAME);
 
     this.version(1).stores({
       projects: "id, status, updatedAt, templateId",

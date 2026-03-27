@@ -19,7 +19,7 @@ Original Preflight centered on:
 - PRDs and system instructions for SaaS / web builds
 - app-style build stages such as auth, database, deployment
 
-Preflight Game OS centers on:
+Gameplan Turbo centers on:
 
 - game concept definition
 - design pillars and feel targets
@@ -31,7 +31,8 @@ Preflight Game OS centers on:
 
 - `Project` now stores game-specific metadata: title, pitch, genre, scope, platform targets, agent targets, monetization model, and engine preference.
 - `Brief` has been replaced in the visible product by `GameDesignDoc`.
-- The app uses a new IndexedDB name: `preflight-game-os`.
+- The app now uses the IndexedDB name `gameplan-turbo`.
+- On first launch, it can import existing local data from the older `preflight-game-os` DB before continuing under the renamed app.
 - JSON import accepts legacy Preflight exports and maps `briefs` into `GameDesignDoc` records.
 
 ## Navigation migration

@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/useToast";
 import type { UsageLogEntry } from "@/lib/appData";
 import { clearAllAppData, exportAppData, getUsageLogs } from "@/lib/appData";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
+import { APP_EXPORT_FILE_NAME, APP_NAME } from "@/lib/brand";
 import {
   fetchCodexBridgeStatus,
   getCodexBridgeStartCommand,
@@ -104,7 +105,7 @@ export const SettingsPage = (): JSX.Element => {
 
   const handleClearAllData = async (): Promise<void> => {
     const confirmed = window.confirm(
-      "Clear all local Preflight Game OS data? This will remove projects, design docs, vault files, prompts, and settings."
+      `Clear all local ${APP_NAME} data? This will remove projects, design docs, vault files, prompts, and settings.`
     );
 
     if (!confirmed) {
@@ -204,7 +205,7 @@ export const SettingsPage = (): JSX.Element => {
               onExportJson={() =>
                 void (async () => {
                   const payload = await exportAppData();
-                  downloadJsonFile(payload, "preflight-game-os-export.json");
+                  downloadJsonFile(payload, APP_EXPORT_FILE_NAME);
                   toast.success("Workspace JSON exported.");
                 })()
               }

@@ -18,7 +18,7 @@ export const generateReadme = (input: GenerateReadmeInput): string => {
 
   return `# ${project.name}
 
-${project.description || "An amazing project built with Preflight"}
+${project.description || "An amazing project built with Gameplan Turbo"}
 
 ## Overview
 
@@ -100,6 +100,6 @@ MIT License - feel free to use this project for your needs.
 
 ---
 
-Built with [Preflight](https://github.com/preflight) - The Project OS for vibe coders.
+Built with Gameplan Turbo - The Project OS for AI-assisted game builders.
 `;
 };

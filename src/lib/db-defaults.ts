@@ -1,9 +1,9 @@
 import type { AgentType } from "@/types";
-import { PreflightDatabase } from "@/lib/db-schema";
+import { GameplanTurboDatabase } from "@/lib/db-schema";
 import { DEFAULT_AGENT_PROMPTS, DEFAULT_PLATFORM_LAUNCHERS } from "@/lib/db-seeds";
 
 export async function initializeDatabaseDefaults(
-  db: PreflightDatabase
+  db: GameplanTurboDatabase
 ): Promise<void> {
   const settingsCount = await db.appSettings.count();
 

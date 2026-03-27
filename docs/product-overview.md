@@ -1,6 +1,6 @@
 # Product Overview
 
-Preflight Game OS is not a game engine and not a generic PM suite. It is a game development operating system for AI-assisted builders who need a durable bridge between idea, design intent, and staged implementation.
+Gameplan Turbo is not a game engine and not a generic PM suite. It is a game development operating system for AI-assisted builders who need a durable bridge between idea, design intent, and staged implementation.
 
 ## Problems it solves
 
