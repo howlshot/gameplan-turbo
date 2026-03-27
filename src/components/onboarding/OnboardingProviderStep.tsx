@@ -102,8 +102,16 @@ export const OnboardingProviderStep = ({
               No API key is needed here. Preflight Game OS will use your local Codex CLI
               session instead.
             </p>
+            <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
+              <p className="font-semibold text-on-surface">Fastest path</p>
+              <p className="mt-2">
+                If you launched the app using the Desktop icon, try
+                <strong> Open ChatGPT Sign-In</strong> first. The bridge is usually already
+                running.
+              </p>
+            </div>
             <div className="space-y-2">
-              <p className="font-semibold text-on-surface">Do this exactly once:</p>
+              <p className="font-semibold text-on-surface">Manual fallback</p>
               <p>1. Open Terminal.</p>
               <p>
                 2. Run <code>{getCodexLoginCommand()}</code>
@@ -137,8 +145,8 @@ export const OnboardingProviderStep = ({
               </p>
             </div>
             <p className="text-xs">
-              If you launched the app using the Desktop icon, the bridge may already be
-              running. In that case, just click continue.
+              If the sign-in button says it cannot reach the bridge, use the manual fallback
+              steps above, then try the button again.
             </p>
           </div>
         ) : (

@@ -22,11 +22,23 @@ export const getCodexBridgeStartCommand = (): string =>
 export const getCodexLoginCommand = (): string => "codex login";
 
 export const fetchCodexBridgeStatus = async (): Promise<CodexBridgeStatus> => {
-  const response = await fetch(`${getCodexBridgeUrl()}/auth/status`, {
-    headers: {
-      Accept: "application/json"
+  let response: Response;
+
+  try {
+    response = await fetch(`${getCodexBridgeUrl()}/auth/status`, {
+      headers: {
+        Accept: "application/json"
+      }
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(
+        "Could not reach the local Codex bridge. Start it with `corepack pnpm codex:bridge` or relaunch the desktop app."
+      );
     }
-  });
+
+    throw error;
+  }
 
   if (!response.ok) {
     throw new Error(`Codex bridge status request failed (${response.status}).`);
@@ -36,12 +48,24 @@ export const fetchCodexBridgeStatus = async (): Promise<CodexBridgeStatus> => {
 };
 
 export const openCodexLoginFlow = async (): Promise<void> => {
-  const response = await fetch(`${getCodexBridgeUrl()}/auth/open-login`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json"
+  let response: Response;
+
+  try {
+    response = await fetch(`${getCodexBridgeUrl()}/auth/open-login`, {
+      method: "POST",
+      headers: {
+        Accept: "application/json"
+      }
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(
+        "Could not reach the local Codex bridge. Start it with `corepack pnpm codex:bridge` or relaunch the desktop app, then try again."
+      );
     }
-  });
+
+    throw error;
+  }
 
   if (!response.ok) {
     let message = "Could not open the Codex login flow.";
