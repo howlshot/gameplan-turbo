@@ -13,8 +13,15 @@ import {
   GameField,
   GameSelect,
   GameTextInput,
-  MultiSelectPills
+  MultiSelectPills,
+  SingleSelectCards
 } from "@/components/workspace/game/GameSectionLayout";
+import {
+  getScopeProfile,
+  SCOPE_PROFILES,
+  SESSION_LENGTH_PRESETS,
+  getSessionPreset
+} from "@/lib/projectFraming";
 import type {
   AgentPlatform,
   GamePlatformTarget,
@@ -46,6 +53,7 @@ export const NewProjectModal = ({
 
   const [templateId, setTemplateId] = useState<TemplateId>("arcade-action-rail-shooter");
   const [scopeCategory, setScopeCategory] = useState<ScopeCategory>("small");
+  const [sessionLength, setSessionLength] = useState("5-12 minutes");
   const [platformTargets, setPlatformTargets] = useState<GamePlatformTarget[]>([
     "ios",
     "android",
@@ -69,6 +77,7 @@ export const NewProjectModal = ({
     if (engineRef.current) engineRef.current.value = "";
     setTemplateId("arcade-action-rail-shooter");
     setScopeCategory("small");
+    setSessionLength("5-12 minutes");
     setPlatformTargets(["ios", "android", "pc"]);
     setAgentTargets(["codex", "cursor", "claude-code"]);
     setShowTitleError(false);
@@ -89,6 +98,14 @@ export const NewProjectModal = ({
   const selectedTemplate = useMemo(
     () => GAME_TEMPLATES[templateId],
     [templateId]
+  );
+  const activeScopeProfile = useMemo(
+    () => getScopeProfile(scopeCategory),
+    [scopeCategory]
+  );
+  const activeSessionPreset = useMemo(
+    () => getSessionPreset(sessionLength),
+    [sessionLength]
   );
 
   const togglePlatform = (platform: string): void => {
@@ -132,7 +149,7 @@ export const NewProjectModal = ({
       agentTargets,
       targetPlatforms: agentTargets,
       targetAudience: audienceRef.current?.value.trim() ?? "",
-      sessionLength: sessionLengthRef.current?.value.trim() ?? "",
+      sessionLength: sessionLength.trim(),
       monetizationModel:
         selectedTemplate.defaultProject.monetizationModel ?? "Premium",
       enginePreference: engineRef.current?.value.trim() ?? "",
@@ -253,24 +270,70 @@ export const NewProjectModal = ({
             </div>
 
             <div className="grid gap-5 md:grid-cols-2">
-              <GameField label="Scope">
-                <GameSelect
-                  value={scopeCategory}
-                  onChange={(event) =>
-                    setScopeCategory(event.target.value as ScopeCategory)
-                  }
-                >
-                  <option value="tiny">tiny</option>
-                  <option value="small">small</option>
-                  <option value="medium">medium</option>
-                </GameSelect>
+              <GameField
+                label="Scope"
+                description="Choose the production ceiling for v1, not the fantasy size of the game."
+              >
+                <SingleSelectCards
+                  selectedValue={scopeCategory}
+                  onSelect={(value) => setScopeCategory(value as ScopeCategory)}
+                  cards={SCOPE_PROFILES.map((profile) => ({
+                    value: profile.id,
+                    title: profile.label,
+                    description: profile.summary
+                  }))}
+                />
+                <div className="mt-3 rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                    Scope Guardrails
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-on-surface-variant">
+                    {activeScopeProfile.guardrails.map((guardrail) => (
+                      <li key={guardrail}>{guardrail}</li>
+                    ))}
+                  </ul>
+                </div>
               </GameField>
-              <GameField label="Session Length">
+              <GameField
+                label="Session Length"
+                description="Typical one-sitting play time, not total completion time."
+              >
+                <GameSelect
+                  value={activeSessionPreset?.label ?? "__custom__"}
+                  onChange={(event) => {
+                    if (!sessionLengthRef.current) {
+                      return;
+                    }
+
+                    const value = event.target.value;
+                    if (value !== "__custom__") {
+                      sessionLengthRef.current.value = value;
+                      setSessionLength(value);
+                    }
+                  }}
+                >
+                  {SESSION_LENGTH_PRESETS.map((preset) => (
+                    <option key={preset.id} value={preset.label}>
+                      {preset.label}
+                    </option>
+                  ))}
+                  <option value="__custom__">Custom</option>
+                </GameSelect>
                 <GameTextInput
+                  className="mt-3"
                   ref={sessionLengthRef}
                   type="text"
-                  defaultValue="5-12 minutes"
+                  value={sessionLength}
+                  onChange={(event) => setSessionLength(event.target.value)}
                 />
+                <div className="mt-3 rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+                  <p className="text-sm leading-6 text-on-surface-variant">
+                    {(activeSessionPreset ?? {
+                      summary:
+                        "Use a custom session target when your intended play rhythm does not match the presets."
+                    }).summary}
+                  </p>
+                </div>
               </GameField>
             </div>
 

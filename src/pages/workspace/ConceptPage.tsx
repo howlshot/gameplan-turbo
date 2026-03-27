@@ -5,11 +5,18 @@ import {
   GameSelect,
   GameTextInput,
   GameTextarea,
-  MultiSelectPills
+  MultiSelectPills,
+  SingleSelectCards
 } from "@/components/workspace/game/GameSectionLayout";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
 import { useProjects } from "@/hooks/useProjects";
+import {
+  getScopeProfile,
+  SCOPE_PROFILES,
+  SESSION_LENGTH_PRESETS,
+  getSessionPreset
+} from "@/lib/projectFraming";
 import {
   AGENT_PLATFORM_OPTIONS,
   GAME_PLATFORM_OPTIONS
@@ -37,6 +44,8 @@ export const ConceptPage = (): JSX.Element => {
   }
 
   const concept = gameDesignDoc.concept;
+  const activeScopeProfile = getScopeProfile(project.scopeCategory);
+  const activeSessionPreset = getSessionPreset(project.sessionLength);
 
   const updateConcept = async (
     field: keyof typeof concept,
@@ -170,23 +179,35 @@ export const ConceptPage = (): JSX.Element => {
         </div>
 
         <div className="space-y-6">
-          <GameField label="Scope Category">
-            <GameSelect
-              value={project.scopeCategory}
-              onChange={(event) => {
-                const value = event.target.value as ScopeCategory;
+          <GameField
+            label="Scope Category"
+            description="Scope is not genre size. It is the production ceiling you are allowing this v1 to have."
+          >
+            <SingleSelectCards
+              selectedValue={project.scopeCategory}
+              onSelect={(value) => {
+                const nextValue = value as ScopeCategory;
                 void Promise.all([
-                  updateProjectHeader({ scopeCategory: value }),
-                  updateConcept("scopeCategory", value)
+                  updateProjectHeader({ scopeCategory: nextValue }),
+                  updateConcept("scopeCategory", nextValue)
                 ]);
               }}
-            >
-              {scopeOptions.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </GameSelect>
+              cards={SCOPE_PROFILES.map((profile) => ({
+                value: profile.id,
+                title: profile.label,
+                description: profile.summary
+              }))}
+            />
+            <div className="mt-4 rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                Current Guardrails
+              </p>
+              <ul className="mt-3 space-y-2 text-sm leading-6 text-on-surface-variant">
+                {activeScopeProfile.guardrails.map((guardrail) => (
+                  <li key={guardrail}>{guardrail}</li>
+                ))}
+              </ul>
+            </div>
           </GameField>
 
           <div className="grid gap-6 md:grid-cols-2">
@@ -204,8 +225,33 @@ export const ConceptPage = (): JSX.Element => {
               />
             </GameField>
 
-            <GameField label="Session Length">
+            <GameField
+              label="Session Length"
+              description="This is the typical one-sitting play session, not total campaign length."
+            >
+              <GameSelect
+                value={activeSessionPreset?.label ?? "__custom__"}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  if (value === "__custom__") {
+                    return;
+                  }
+
+                  void Promise.all([
+                    updateProjectHeader({ sessionLength: value }),
+                    updateConcept("sessionLength", value)
+                  ]);
+                }}
+              >
+                {SESSION_LENGTH_PRESETS.map((preset) => (
+                  <option key={preset.id} value={preset.label}>
+                    {preset.label}
+                  </option>
+                ))}
+                <option value="__custom__">Custom</option>
+              </GameSelect>
               <GameTextInput
+                className="mt-3"
                 value={project.sessionLength}
                 placeholder="5-12 minutes"
                 onChange={(event) => {
@@ -216,6 +262,14 @@ export const ConceptPage = (): JSX.Element => {
                   ]);
                 }}
               />
+              <div className="mt-3 rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+                <p className="text-sm leading-6 text-on-surface-variant">
+                  {(activeSessionPreset ?? {
+                    summary:
+                      "Use a custom session target when your intended play rhythm does not match the presets."
+                  }).summary}
+                </p>
+              </div>
             </GameField>
           </div>
 

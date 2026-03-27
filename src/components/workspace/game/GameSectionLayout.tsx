@@ -150,3 +150,54 @@ export const MultiSelectPills = ({
     </div>
   );
 };
+
+interface ChoiceCard {
+  description: string;
+  title: string;
+  value: string;
+}
+
+interface SingleSelectCardsProps {
+  cards: ChoiceCard[];
+  onSelect: (value: string) => void;
+  selectedValue: string;
+}
+
+export const SingleSelectCards = ({
+  cards,
+  onSelect,
+  selectedValue
+}: SingleSelectCardsProps): JSX.Element => {
+  return (
+    <div className="grid gap-3 md:grid-cols-3">
+      {cards.map((card) => {
+        const isSelected = card.value === selectedValue;
+        return (
+          <button
+            key={card.value}
+            type="button"
+            onClick={() => onSelect(card.value)}
+            className={cn(
+              "rounded-2xl border p-4 text-left transition",
+              isSelected
+                ? "border-primary/40 bg-primary/10 shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
+                : "border-outline-variant/10 bg-surface hover:border-primary/20 hover:bg-surface-container-lowest"
+            )}
+          >
+            <p
+              className={cn(
+                "font-headline text-base font-semibold",
+                isSelected ? "text-on-surface" : "text-on-surface"
+              )}
+            >
+              {card.title}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+              {card.description}
+            </p>
+          </button>
+        );
+      })}
+    </div>
+  );
+};
