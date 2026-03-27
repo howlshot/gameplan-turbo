@@ -1,15 +1,24 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import db from "@/lib/db";
-import type { BuildStage, BuildStageStatus } from "@/types";
+import { BUILD_STAGE_SEQUENCE } from "@/lib/templates/genreTemplates";
+import type { BuildStage, BuildStageKey, BuildStageStatus } from "@/types";
 
 interface CreateBuildStageInput {
   description: string;
   name: string;
   platform: string;
   promptContent: string;
+  stageKey?: BuildStageKey;
   stageNumber: number;
   status?: BuildStageStatus;
 }
+
+const getFallbackStageKey = (stageNumber: number): BuildStageKey => {
+  return (
+    BUILD_STAGE_SEQUENCE[stageNumber - 1]?.key ??
+    BUILD_STAGE_SEQUENCE[BUILD_STAGE_SEQUENCE.length - 1].key
+  );
+};
 
 export const useBuildStages = (projectId: string | undefined) => {
   const stagesQuery = useLiveQuery(
@@ -18,10 +27,7 @@ export const useBuildStages = (projectId: string | undefined) => {
         return [];
       }
 
-      return db.buildStages
-        .where("projectId")
-        .equals(projectId)
-        .sortBy("stageNumber");
+      return db.buildStages.where("projectId").equals(projectId).sortBy("stageNumber");
     },
     [projectId]
   );
@@ -41,6 +47,7 @@ export const useBuildStages = (projectId: string | undefined) => {
       const nextStages = inputs.map((input) => ({
         id: crypto.randomUUID(),
         projectId,
+        stageKey: input.stageKey ?? getFallbackStageKey(input.stageNumber),
         stageNumber: input.stageNumber,
         name: input.name,
         description: input.description,

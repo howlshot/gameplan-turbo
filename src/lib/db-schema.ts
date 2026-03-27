@@ -1,21 +1,22 @@
 import Dexie, { type Table } from "dexie";
 import type {
   AgentSystemPrompt,
-  AgentType,
   AIProviderConfig,
   AppSettings,
   Brief,
   BuildStage,
+  Credential,
+  GameDesignDoc,
   GeneratedArtifact,
   Project,
-  VaultFile,
   ProjectVersion,
-  Credential
+  VaultFile
 } from "@/types";
 
 export class PreflightDatabase extends Dexie {
   projects!: Table<Project, string>;
-  briefs!: Table<Brief, string>;
+  gameDesignDocs!: Table<GameDesignDoc, string>;
+  briefs!: Table<Brief | GameDesignDoc, string>;
   artifacts!: Table<GeneratedArtifact, string>;
   vaultFiles!: Table<VaultFile, string>;
   buildStages!: Table<BuildStage, string>;
@@ -26,19 +27,26 @@ export class PreflightDatabase extends Dexie {
   credentials!: Table<Credential, string>;
 
   constructor() {
-    super("preflight");
+    super("preflight-game-os");
 
     this.version(1).stores({
-      projects: "id, status, updatedAt",
-      briefs: "id, projectId",
+      projects: "id, status, updatedAt, templateId",
+      gameDesignDocs: "id, projectId, updatedAt",
       artifacts: "id, projectId, type, createdAt",
       vaultFiles: "id, projectId, category, isActiveContext",
-      buildStages: "id, projectId, stageNumber",
+      buildStages: "id, projectId, stageNumber, stageKey",
       aiProviders: "id, provider, isDefault",
       agentSystemPrompts: "id, agentType, isDefault",
       appSettings: "id",
       projectVersions: "id, projectId, createdAt",
       credentials: "id, projectId, category"
     });
+
+    // Legacy alias so old hooks/components still type-check while the visible app
+    // uses gameDesignDocs.
+    this.briefs = this.table("gameDesignDocs") as unknown as Table<
+      Brief | GameDesignDoc,
+      string
+    >;
   }
 }

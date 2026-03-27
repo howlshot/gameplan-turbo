@@ -1,9 +1,15 @@
-import type { Brief } from "@/types";
+import type { Brief, GameDesignDoc } from "@/types";
 
 interface BriefCompletionMeta {
   projectName?: string;
   targetPlatformsCount?: number;
   techStackCount?: number;
+}
+
+interface GameDesignDocCompletionMeta {
+  projectTitle?: string;
+  agentTargetsCount?: number;
+  platformTargetsCount?: number;
 }
 
 export const getBriefCompletionScore = (
@@ -43,3 +49,64 @@ export const isBriefComplete = (
   brief: Brief,
   meta: BriefCompletionMeta = {}
 ): boolean => getBriefCompletionScore(brief, meta) >= 70;
+
+export const getGameDesignDocCompletionScore = (
+  gameDesignDoc: GameDesignDoc,
+  meta: GameDesignDocCompletionMeta = {}
+): number => {
+  let score = 0;
+
+  if (meta.projectTitle?.trim() || gameDesignDoc.concept.gameTitle.trim()) {
+    score += 10;
+  }
+
+  if (gameDesignDoc.concept.oneLinePitch.trim()) {
+    score += 10;
+  }
+
+  if (gameDesignDoc.concept.playerFantasy.trim()) {
+    score += 10;
+  }
+
+  if (gameDesignDoc.designPillars.pillars.filter(Boolean).length >= 3) {
+    score += 15;
+  }
+
+  if (gameDesignDoc.coreLoop.secondToSecond.trim()) {
+    score += 10;
+  }
+
+  if (gameDesignDoc.controlsFeel.controlScheme.trim()) {
+    score += 10;
+  }
+
+  if (gameDesignDoc.contentBible.playerVerbs.trim()) {
+    score += 10;
+  }
+
+  if (gameDesignDoc.artTone.artDirection.trim()) {
+    score += 10;
+  }
+
+  if (gameDesignDoc.technicalDesign.engine.trim()) {
+    score += 5;
+  }
+
+  if ((meta.agentTargetsCount ?? 0) > 0) {
+    score += 5;
+  }
+
+  if (
+    (meta.platformTargetsCount ?? 0) > 0 ||
+    gameDesignDoc.concept.platformTargets.length > 0
+  ) {
+    score += 5;
+  }
+
+  return score;
+};
+
+export const isGameDesignDocReady = (
+  gameDesignDoc: GameDesignDoc,
+  meta: GameDesignDocCompletionMeta = {}
+): boolean => getGameDesignDocCompletionScore(gameDesignDoc, meta) >= 65;

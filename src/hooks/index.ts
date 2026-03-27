@@ -6,6 +6,7 @@ export { useBuildStages } from "@/hooks/useBuildStages";
 export { useCommandPalette } from "@/hooks/useCommandPalette";
 export { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
 export { useFirstLaunch } from "@/hooks/useFirstLaunch";
+export { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 export { useProject } from "@/hooks/useProject";
 export { useProjects } from "@/hooks/useProjects";
 export { useSettings } from "@/hooks/useSettings";

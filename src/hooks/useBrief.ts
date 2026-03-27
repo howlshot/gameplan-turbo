@@ -1,6 +1,5 @@
-import { useCallback, useEffect } from "react";
-import { useLiveQuery } from "dexie-react-hooks";
-import db from "@/lib/db";
+import { useMemo } from "react";
+import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import type { Brief, CoreFeature } from "@/types";
 
 interface UpdateBriefInput {
@@ -11,84 +10,78 @@ interface UpdateBriefInput {
   targetUser?: string;
 }
 
-export const useBrief = (projectId: string | undefined) => {
-  // Read-only observation - no writes inside liveQuery
-  const briefQuery = useLiveQuery(
-    async (): Promise<Brief | null> => {
-      if (!projectId) {
-        return null;
-      }
+const mapGameDesignDocToBrief = (
+  projectId: string | undefined,
+  doc: ReturnType<typeof useGameDesignDoc>["gameDesignDoc"]
+): Brief | null => {
+  if (!projectId || !doc) {
+    return null;
+  }
 
-      return (await db.briefs.where("projectId").equals(projectId).first()) ?? null;
-    },
-    [projectId]
+  const pillars = doc.designPillars.pillars.map((pillar, index) => ({
+    id: `pillar-${index}`,
+    order: index,
+    text: pillar
+  }));
+
+  return {
+    id: doc.id,
+    projectId,
+    problem: doc.concept.playerFantasy,
+    targetUser: doc.concept.targetAudience,
+    coreFeatures: pillars,
+    inspirations: doc.artTone.visualReferences,
+    notes: [
+      doc.coreLoop.secondToSecond,
+      doc.coreLoop.minuteToMinute,
+      doc.coreLoop.sessionLoop
+    ]
+      .filter(Boolean)
+      .join("\n\n"),
+    updatedAt: doc.updatedAt
+  };
+};
+
+export const useBrief = (projectId: string | undefined) => {
+  const {
+    gameDesignDoc,
+    isLoading,
+    initializeGameDesignDoc,
+    updateGameDesignDoc
+  } = useGameDesignDoc(projectId);
+
+  const brief = useMemo(
+    () => mapGameDesignDocToBrief(projectId, gameDesignDoc),
+    [gameDesignDoc, projectId]
   );
 
-  // Separate initialization logic - called explicitly, not in liveQuery
-  const initializeBrief = useCallback(async (): Promise<Brief | null> => {
-    if (!projectId) {
-      return null;
-    }
-
-    const current = await db.briefs.where("projectId").equals(projectId).first();
-    if (current) {
-      return current;
-    }
-
-    const nextBrief: Brief = {
-      id: crypto.randomUUID(),
-      projectId,
-      problem: "",
-      targetUser: "",
-      coreFeatures: [],
-      inspirations: [],
-      notes: "",
-      updatedAt: Date.now()
-    };
-
-    await db.briefs.add(nextBrief);
-    return nextBrief;
-  }, [projectId]);
-
-  // Auto-initialize brief on mount if it doesn't exist
-  useEffect(() => {
-    if (projectId && briefQuery === null) {
-      initializeBrief();
-    }
-  }, [projectId, briefQuery, initializeBrief]);
-
   const updateBrief = async (updates: UpdateBriefInput): Promise<Brief | null> => {
-    if (!projectId) {
-      return null;
-    }
+    const nextPillars = updates.coreFeatures?.map((feature) => feature.text.trim()).filter(Boolean);
+    const nextReferences = updates.inspirations?.filter(Boolean);
 
-    try {
-      const current =
-        (await db.briefs.where("projectId").equals(projectId).first()) ?? null;
+    const updatedDoc = await updateGameDesignDoc({
+      concept: {
+        playerFantasy: updates.problem,
+        targetAudience: updates.targetUser
+      },
+      designPillars: {
+        pillars: nextPillars
+      },
+      artTone: {
+        visualReferences: nextReferences
+      },
+      coreLoop: {
+        secondToSecond: updates.notes
+      }
+    });
 
-      const nextBrief: Brief = {
-        id: current?.id ?? crypto.randomUUID(),
-        projectId,
-        problem: updates.problem ?? current?.problem ?? "",
-        targetUser: updates.targetUser ?? current?.targetUser ?? "",
-        coreFeatures: updates.coreFeatures ?? current?.coreFeatures ?? [],
-        inspirations: updates.inspirations ?? current?.inspirations ?? [],
-        notes: updates.notes ?? current?.notes ?? "",
-        updatedAt: Date.now()
-      };
-
-      await db.briefs.put(nextBrief);
-      return nextBrief;
-    } catch (error) {
-      console.error("Failed to update brief.", error);
-      return null;
-    }
+    return mapGameDesignDocToBrief(projectId, updatedDoc);
   };
 
   return {
-    brief: briefQuery ?? null,
-    isLoading: briefQuery === undefined,
+    brief,
+    isLoading,
     updateBrief,
-    initializeBrief
+    initializeBrief: initializeGameDesignDoc
   };
 };
