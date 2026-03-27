@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getProjectTabPath } from "@/components/layout/sidebarConfig";
 import { NewProjectModal } from "@/components/hub/NewProjectModal";
 import {
   CommandPaletteContent,
@@ -88,7 +89,7 @@ const CommandPaletteDialog = ({
             navigationItems={navigationItems}
             onProjectSelect={(projectId) => {
               setActiveTab("concept");
-              navigate(`/project/${projectId}`);
+              navigate(getProjectTabPath(projectId, "concept"));
               closePalette();
             }}
             onQueryChange={setQuery}

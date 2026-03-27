@@ -21,9 +21,31 @@ import type { BuildStage } from "@/types";
 
 export const BuildPlanPage = (): JSX.Element => {
   const { projectId } = useParams();
-  const toast = useToast();
   const { project } = useProject(projectId);
   const { gameDesignDoc } = useGameDesignDoc(projectId);
+
+  if (!project || !gameDesignDoc) {
+    return (
+      <GameSectionLayout title="Build Plan" description="Loading build plan workspace.">
+        <div className="h-64 animate-pulse rounded-3xl bg-surface-container-high" />
+      </GameSectionLayout>
+    );
+  }
+
+  return <BuildPlanEditor project={project} gameDesignDoc={gameDesignDoc} />;
+};
+
+interface BuildPlanEditorProps {
+  gameDesignDoc: NonNullable<ReturnType<typeof useGameDesignDoc>["gameDesignDoc"]>;
+  project: NonNullable<ReturnType<typeof useProject>["project"]>;
+}
+
+const BuildPlanEditor = ({
+  gameDesignDoc,
+  project
+}: BuildPlanEditorProps): JSX.Element => {
+  const { projectId } = useParams();
+  const toast = useToast();
   const { stages, createStages, updateStageStatus } = useBuildStages(projectId);
   const { defaultProvider } = useAIProviders();
   const [targetPlatform, setTargetPlatform] = useState("codex");
@@ -31,8 +53,8 @@ export const BuildPlanPage = (): JSX.Element => {
   const [highlightedStageId, setHighlightedStageId] = useState<string | null>(null);
 
   const availableTargets = useMemo(
-    () => project?.agentTargets ?? ["codex", "cursor", "claude-code"],
-    [project?.agentTargets]
+    () => project.agentTargets ?? ["codex", "cursor", "claude-code"],
+    [project.agentTargets]
   );
 
   const cycleStatus = async (stage: BuildStage): Promise<void> => {
@@ -58,11 +80,6 @@ export const BuildPlanPage = (): JSX.Element => {
   };
 
   const handleGenerate = async (): Promise<void> => {
-    if (!project || !gameDesignDoc) {
-      toast.error("Project context is still loading.");
-      return;
-    }
-
     const nextStages = await generateBuildStages({
       gameDesignDoc,
       project,
@@ -75,14 +92,6 @@ export const BuildPlanPage = (): JSX.Element => {
     );
     toast.success("Build plan generated.");
   };
-
-  if (!project || !gameDesignDoc) {
-    return (
-      <GameSectionLayout title="Build Plan" description="Loading build plan workspace.">
-        <div className="h-64 animate-pulse rounded-3xl bg-surface-container-high" />
-      </GameSectionLayout>
-    );
-  }
 
   const isLargeMode = project.scopeCategory === "large";
   const legacyLargePlan = isLegacyLargeBuildPlan(project.scopeCategory, stages);
@@ -210,28 +219,31 @@ export const BuildPlanPage = (): JSX.Element => {
         {stages.length > 0 ? (
           <>
             {nextActionStage ? (
-              <div className="rounded-3xl border border-primary/15 bg-primary/5 px-5 py-4">
-                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">
+              <div className="rounded-3xl border border-primary/15 bg-primary/5 px-5 py-5 shadow-[0_12px_32px_rgba(116,88,255,0.08)]">
+                <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
                   Next recommended action
                 </p>
-                <p className="mt-2 text-sm leading-6 text-on-surface">
-                  Open <span className="font-semibold">{nextActionStage.name}</span>
+                <p className="mt-3 text-lg font-semibold leading-8 text-on-surface sm:text-xl">
+                  Open <span className="text-primary">{nextActionStage.name}</span>
                   {connectedToolPlatform === nextActionStage.platform ? (
                     <>
-                      , then click{" "}
-                      <span className="font-semibold">
+                      {" "}and click{" "}
+                      <span className="text-primary">
                         Send to {getAgentPlatformLabel(nextActionStage.platform)}
-                      </span>{" "}
-                      below to run it with your connected tool. You can still copy
-                      the prompt if you want to inspect or paste it manually.
+                      </span>
+                      .
                     </>
                   ) : (
                     <>
-                      , copy its prompt into{" "}
-                      <span className="font-semibold">{targetLabel}</span>, start
-                      the work there, then return here and mark the stage as started.
+                      {" "}and copy the prompt into{" "}
+                      <span className="text-primary">{targetLabel}</span>.
                     </>
                   )}
+                </p>
+                <p className="mt-3 max-w-4xl text-sm leading-6 text-on-surface-variant sm:text-base">
+                  {connectedToolPlatform === nextActionStage.platform
+                    ? "Run the stage with your connected tool first, then come back here and mark it as started. Copy prompt is still available if you want to inspect or paste it manually."
+                    : "Start the work in your chosen tool, then come back here and mark the stage as started so the next pass unlocks cleanly."}
                 </p>
               </div>
             ) : null}

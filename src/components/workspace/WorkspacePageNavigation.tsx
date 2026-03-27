@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from "react-router-dom";
 import {
+  getProjectTabPath,
   PROJECT_LINKS,
   type ProjectLinkId
 } from "@/components/layout/sidebarConfig";
@@ -30,7 +31,7 @@ export const WorkspacePageNavigation = ({
 
   const navigateToLink = (linkId: ProjectLinkId): void => {
     setActiveTab(linkId);
-    navigate(`/project/${projectId}`);
+    navigate(getProjectTabPath(projectId, linkId));
   };
 
   return (

@@ -1,5 +1,9 @@
 import { Suspense, lazy, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+  getProjectTabFromSearch,
+  getProjectTabPath
+} from "@/components/layout/sidebarConfig";
 import { ContextNodeSelector } from "@/components/workspace/ContextNodeSelector";
 import { useProject } from "@/hooks/useProject";
 import { cn } from "@/lib/utils";
@@ -96,6 +100,7 @@ const STATUS_STAGE_INDEX: Record<string, number> = {
 };
 
 export const ProjectWorkspace = (): JSX.Element => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { projectId } = useParams();
   const { project, isLoading } = useProject(projectId);
@@ -103,15 +108,17 @@ export const ProjectWorkspace = (): JSX.Element => {
   const setActiveTab = useUIStore((state) => state.setActiveTab);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+  const urlTab = getProjectTabFromSearch(location.search);
+  const resolvedTab = urlTab ?? activeTab;
 
   const currentStageIndex = useMemo(() => {
-    const activeIndex = WORKSPACE_STAGES.findIndex((stage) => stage.id === activeTab);
+    const activeIndex = WORKSPACE_STAGES.findIndex((stage) => stage.id === resolvedTab);
     if (activeIndex >= 0) {
       return activeIndex;
     }
 
     return project ? STATUS_STAGE_INDEX[project.status] ?? 0 : 0;
-  }, [activeTab, project]);
+  }, [project, resolvedTab]);
 
   if (!isLoading && !project) {
     return (
@@ -137,25 +144,25 @@ export const ProjectWorkspace = (): JSX.Element => {
 
   const renderActiveContent = (): JSX.Element => (
     <Suspense fallback={<PageLoader />}>
-      {activeTab === "concept" ? (
+      {resolvedTab === "concept" ? (
         <ConceptPage />
-      ) : activeTab === "design-pillars" ? (
+      ) : resolvedTab === "design-pillars" ? (
         <DesignPillarsPage />
-      ) : activeTab === "core-loop" ? (
+      ) : resolvedTab === "core-loop" ? (
         <CoreLoopPage />
-      ) : activeTab === "controls-feel" ? (
+      ) : resolvedTab === "controls-feel" ? (
         <ControlsFeelPage />
-      ) : activeTab === "content-bible" ? (
+      ) : resolvedTab === "content-bible" ? (
         <ContentBiblePage />
-      ) : activeTab === "art-tone" ? (
+      ) : resolvedTab === "art-tone" ? (
         <ArtTonePage />
-      ) : activeTab === "technical-design" ? (
+      ) : resolvedTab === "technical-design" ? (
         <TechnicalDesignPage />
-      ) : activeTab === "build-plan" ? (
+      ) : resolvedTab === "build-plan" ? (
         <BuildPlanPage />
-      ) : activeTab === "vault" ? (
+      ) : resolvedTab === "vault" ? (
         <VaultPage />
-      ) : activeTab === "prompt-lab" ? (
+      ) : resolvedTab === "prompt-lab" ? (
         <PromptLabPage />
       ) : (
         <ConceptPage />
@@ -169,7 +176,7 @@ export const ProjectWorkspace = (): JSX.Element => {
     }
 
     setActiveTab(stageId);
-    navigate(`/project/${projectId}`);
+    navigate(getProjectTabPath(projectId, stageId));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 

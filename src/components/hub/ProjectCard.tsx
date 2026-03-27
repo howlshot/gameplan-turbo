@@ -1,5 +1,6 @@
 import { memo, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getProjectTabPath } from "@/components/layout/sidebarConfig";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useArtifacts } from "@/hooks/useArtifacts";
 import { useBuildStages } from "@/hooks/useBuildStages";
@@ -98,7 +99,7 @@ export const ProjectCard = memo(
       }
 
       selectProject(project.id);
-      navigate(`/project/${project.id}`);
+      navigate(getProjectTabPath(project.id, "concept"));
     };
 
     const toggleDraftPlatform = (value: GamePlatformTarget): void => {
@@ -464,27 +465,45 @@ export const ProjectCard = memo(
             </div>
           </div>
 
-          <div className="mt-5">
-            <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">
-              Platforms
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {project.platformTargets.map((platform) => (
-                <span
-                  key={platform}
-                  className="rounded-full bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-primary"
-                >
-                  {formatChipLabel(platform)}
-                </span>
-              ))}
-              {project.agentTargets.map((platform) => (
-                <span
-                  key={platform}
-                  className="rounded-full bg-secondary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-secondary"
-                >
-                  {getAgentPlatformLabel(platform)}
-                </span>
-              ))}
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">
+                Ships On
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {project.platformTargets.length > 0 ? (
+                  project.platformTargets.map((platform) => (
+                    <span
+                      key={platform}
+                      className="rounded-full bg-primary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-primary"
+                    >
+                      {formatChipLabel(platform)}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-on-surface-variant">Not set</span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">
+                Build With
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {project.agentTargets.length > 0 ? (
+                  project.agentTargets.map((platform) => (
+                    <span
+                      key={platform}
+                      className="rounded-full bg-secondary/10 px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-secondary"
+                    >
+                      {getAgentPlatformLabel(platform)}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-xs text-on-surface-variant">Not set</span>
+                )}
+              </div>
             </div>
           </div>
 

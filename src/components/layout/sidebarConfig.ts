@@ -14,6 +14,23 @@ export const PROJECT_LINKS = [
 ] as const;
 
 export type ProjectLinkId = (typeof PROJECT_LINKS)[number]["id"];
+export const PROJECT_LINK_IDS = PROJECT_LINKS.map((link) => link.id) as ProjectLinkId[];
+
+export const isProjectLinkId = (value: string | null | undefined): value is ProjectLinkId =>
+  typeof value === "string" &&
+  PROJECT_LINK_IDS.includes(value as ProjectLinkId);
+
+export const getProjectTabFromSearch = (
+  search: string
+): ProjectLinkId | null => {
+  const tab = new URLSearchParams(search).get("tab");
+  return isProjectLinkId(tab) ? tab : null;
+};
+
+export const getProjectTabPath = (
+  projectId: string,
+  tabId: ProjectLinkId
+): string => `/project/${projectId}?tab=${tabId}`;
 
 export const getProjectStatusTone = (status: string): string =>
   getStatusTone(status as never);

@@ -18,6 +18,22 @@ is_listening() {
   lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1
 }
 
+open_browser() {
+  local url="$1"
+
+  if open -a "Google Chrome" "$url" >/dev/null 2>&1; then
+    osascript -e 'tell application "Google Chrome" to activate' >/dev/null 2>&1 || true
+    return
+  fi
+
+  if open -a "Safari" "$url" >/dev/null 2>&1; then
+    osascript -e 'tell application "Safari" to activate' >/dev/null 2>&1 || true
+    return
+  fi
+
+  open "$url"
+}
+
 start_detached() {
   local command="$1"
   local log_file="$2"
@@ -40,4 +56,4 @@ for _ in {1..30}; do
   sleep 1
 done
 
-open "$APP_URL"
+open_browser "$APP_URL"

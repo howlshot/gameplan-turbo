@@ -1,4 +1,5 @@
 import type { NavigateFunction } from "react-router-dom";
+import { getProjectTabPath } from "@/components/layout/sidebarConfig";
 import { getGenerationErrorState } from "@/lib/generationErrors";
 import { generateDesignPrompt } from "@/services/generation/designGeneration";
 import { generateResearchPrompt } from "@/services/generation/researchGeneration";
@@ -75,8 +76,8 @@ export const generateResearchFromPalette = async ({
       version: artifacts.filter((artifact) => artifact.type === "research_prompt").length + 1
     });
 
-    setActiveTab("research");
-    navigate(`/project/${selectedProjectId}`);
+    setActiveTab("prompt-lab");
+    navigate(getProjectTabPath(selectedProjectId, "prompt-lab"));
     closePalette();
     toast.success("Research prompt generated.");
   } catch (error) {
@@ -120,8 +121,8 @@ export const generateDesignFromPalette = async ({
       version: artifacts.filter((artifact) => artifact.type === "design_prompt").length + 1
     });
 
-    setActiveTab("design");
-    navigate(`/project/${selectedProjectId}`);
+    setActiveTab("prompt-lab");
+    navigate(getProjectTabPath(selectedProjectId, "prompt-lab"));
     closePalette();
     toast.success("Design prompt generated.");
   } catch (error) {

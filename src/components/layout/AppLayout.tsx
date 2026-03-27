@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation, useMatch } from "react-router-dom";
+import { getProjectTabFromSearch } from "@/components/layout/sidebarConfig";
 import { Header } from "@/components/layout/Header";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { CommandPalette } from "@/components/shared/CommandPalette";
@@ -38,6 +39,8 @@ export const AppLayout = (): JSX.Element => {
   }, [projectMatch?.params.projectId, selectProject]);
 
   useEffect(() => {
+    const urlProjectTab = getProjectTabFromSearch(location.search);
+
     if (location.pathname === "/" && activeTab !== "projects") {
       setActiveTab("projects");
       return;
@@ -48,10 +51,17 @@ export const AppLayout = (): JSX.Element => {
       return;
     }
 
-    if (projectMatch && activeTab === "projects") {
-      setActiveTab("concept");
+    if (projectMatch) {
+      if (urlProjectTab && activeTab !== urlProjectTab) {
+        setActiveTab(urlProjectTab);
+        return;
+      }
+
+      if (!urlProjectTab && activeTab === "projects") {
+        setActiveTab("concept");
+      }
     }
-  }, [activeTab, location.pathname, projectMatch, setActiveTab]);
+  }, [activeTab, location.pathname, location.search, projectMatch, setActiveTab]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-surface-container-lowest text-on-surface">

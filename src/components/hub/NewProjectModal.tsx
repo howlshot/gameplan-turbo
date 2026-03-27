@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
+import { getProjectTabPath } from "@/components/layout/sidebarConfig";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
 import { useAIProviders } from "@/hooks/useAIProviders";
 import { useProjects } from "@/hooks/useProjects";
@@ -538,7 +539,7 @@ export const NewProjectModal = ({
     resetForm();
     onOpenChange(false);
     toast.success("Game project created.");
-    navigate(`/project/${project.id}`);
+    navigate(getProjectTabPath(project.id, "concept"));
   }, [
     agentTargets,
     createProject,

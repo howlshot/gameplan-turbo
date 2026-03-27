@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { getProjectTabPath } from "@/components/layout/sidebarConfig";
 import {
   NAVIGATION_ITEMS,
   PLATFORM_LINKS,
@@ -60,14 +61,22 @@ export const useCommandPaletteActions = ({
         icon: "auto_awesome",
         label: "Open Prompt Lab",
         hidden: !selectedProjectId,
-        onSelect: () => handleNavigate(`/project/${selectedProjectId}`, "prompt-lab")
+        onSelect: () =>
+          handleNavigate(
+            getProjectTabPath(selectedProjectId!, "prompt-lab"),
+            "prompt-lab"
+          )
       },
       {
         id: "open-build-plan",
         icon: "terminal",
         label: "Open Build Plan",
         hidden: !selectedProjectId,
-        onSelect: () => handleNavigate(`/project/${selectedProjectId}`, "build-plan")
+        onSelect: () =>
+          handleNavigate(
+            getProjectTabPath(selectedProjectId!, "build-plan"),
+            "build-plan"
+          )
       },
       {
         id: "export-build",
@@ -115,7 +124,8 @@ export const useCommandPaletteActions = ({
     projectTabs: selectedProjectId
       ? PROJECT_TABS.map((tab) => ({
           ...tab,
-          onSelect: () => handleNavigate(`/project/${selectedProjectId}`, tab.id)
+          onSelect: () =>
+            handleNavigate(getProjectTabPath(selectedProjectId, tab.id), tab.id)
         }))
       : [],
     quickActions

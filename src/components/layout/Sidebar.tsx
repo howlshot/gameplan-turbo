@@ -1,7 +1,12 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { BrandMark } from "@/components/branding/BrandMark";
 import { useProject } from "@/hooks/useProject";
-import { PROJECT_LINKS, getProjectStatusTone } from "@/components/layout/sidebarConfig";
+import {
+  getProjectStatusTone,
+  getProjectTabPath,
+  PROJECT_LINKS,
+  type ProjectLinkId
+} from "@/components/layout/sidebarConfig";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
 import { cn } from "@/lib/utils";
 import { useProjectStore } from "@/stores/projectStore";
@@ -25,13 +30,13 @@ export const Sidebar = (): JSX.Element => {
     navigate("/");
   };
 
-  const navigateToProjectTab = (tabId: string): void => {
+  const navigateToProjectTab = (tabId: ProjectLinkId): void => {
     if (!selectedProjectId) {
       return;
     }
 
     setActiveTab(tabId);
-    navigate(`/project/${selectedProjectId}`);
+    navigate(getProjectTabPath(selectedProjectId, tabId));
   };
 
   return (
