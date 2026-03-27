@@ -34,7 +34,20 @@ if [[ -f "$ICON_SOURCE" ]] && command -v iconutil >/dev/null 2>&1; then
 
   iconutil -c icns "$ICONSET_DIR" -o "$TMP_DIR/gameplan-turbo.icns"
   cp "$TMP_DIR/gameplan-turbo.icns" "$OUTPUT_APP/Contents/Resources/applet.icns"
+
+  osascript <<EOF "$OUTPUT_APP" "$TMP_DIR/gameplan-turbo.icns" >/dev/null 2>&1 || true
+on run argv
+  set appFile to POSIX file (item 1 of argv) as alias
+  set iconFile to POSIX file (item 2 of argv) as alias
+  tell application "Finder"
+    set icon of appFile to (read iconFile as picture)
+  end tell
+end run
+EOF
+
   rm -rf "$TMP_DIR"
 fi
+
+touch "$OUTPUT_APP"
 
 echo "Created macOS launcher at: $OUTPUT_APP"
