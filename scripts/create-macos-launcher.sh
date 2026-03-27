@@ -6,20 +6,65 @@ SCRIPT_PATH="${(%):-%N}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd)"
 PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 LAUNCH_SCRIPT="$PROJECT_DIR/scripts/launch-gameplan-turbo.sh"
-OUTPUT_APP="${1:-$HOME/Desktop/Gameplan Turbo.app}"
+OUTPUT_APP="${1:-$HOME/Applications/Gameplan Turbo.app}"
 ICON_SOURCE="$PROJECT_DIR/public/gameplan-turbo-icon.png"
+APP_NAME="Gameplan Turbo"
+APP_EXECUTABLE="gameplan-turbo-launcher"
+APP_BUNDLE_ID="com.gameplanturbo.launcher"
 
 if [[ ! -x "$LAUNCH_SCRIPT" ]]; then
   echo "Launch script not found or not executable: $LAUNCH_SCRIPT" >&2
   exit 1
 fi
 
-rm -rf "$OUTPUT_APP"
+APP_DIR="$(dirname -- "$OUTPUT_APP")"
+CONTENTS_DIR="$OUTPUT_APP/Contents"
+MACOS_DIR="$CONTENTS_DIR/MacOS"
+RESOURCES_DIR="$CONTENTS_DIR/Resources"
 
-osacompile -o "$OUTPUT_APP" \
-  -e 'on run' \
-  -e "do shell script quoted form of \"$LAUNCH_SCRIPT\"" \
-  -e 'end run'
+mkdir -p "$APP_DIR"
+rm -rf "$OUTPUT_APP"
+mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
+
+cat >"$CONTENTS_DIR/Info.plist" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleDisplayName</key>
+  <string>${APP_NAME}</string>
+  <key>CFBundleExecutable</key>
+  <string>${APP_EXECUTABLE}</string>
+  <key>CFBundleIdentifier</key>
+  <string>${APP_BUNDLE_ID}</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>${APP_NAME}</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundleIconFile</key>
+  <string>gameplan-turbo.icns</string>
+  <key>LSMinimumSystemVersion</key>
+  <string>11.0</string>
+  <key>NSHighResolutionCapable</key>
+  <true/>
+</dict>
+</plist>
+EOF
+
+cat >"$MACOS_DIR/$APP_EXECUTABLE" <<EOF
+#!/bin/zsh
+set -euo pipefail
+exec "$LAUNCH_SCRIPT"
+EOF
+chmod +x "$MACOS_DIR/$APP_EXECUTABLE"
 
 if [[ -f "$ICON_SOURCE" ]] && command -v iconutil >/dev/null 2>&1; then
   TMP_DIR="$(mktemp -d)"
@@ -32,19 +77,7 @@ if [[ -f "$ICON_SOURCE" ]] && command -v iconutil >/dev/null 2>&1; then
     sips -z "$doubled_size" "$doubled_size" "$ICON_SOURCE" --out "$ICONSET_DIR/icon_${size}x${size}@2x.png" >/dev/null
   done
 
-  iconutil -c icns "$ICONSET_DIR" -o "$TMP_DIR/gameplan-turbo.icns"
-  cp "$TMP_DIR/gameplan-turbo.icns" "$OUTPUT_APP/Contents/Resources/applet.icns"
-
-  osascript <<EOF "$OUTPUT_APP" "$TMP_DIR/gameplan-turbo.icns" >/dev/null 2>&1 || true
-on run argv
-  set appFile to POSIX file (item 1 of argv) as alias
-  set iconFile to POSIX file (item 2 of argv) as alias
-  tell application "Finder"
-    set icon of appFile to (read iconFile as picture)
-  end tell
-end run
-EOF
-
+  iconutil -c icns "$ICONSET_DIR" -o "$RESOURCES_DIR/gameplan-turbo.icns"
   rm -rf "$TMP_DIR"
 fi
 
