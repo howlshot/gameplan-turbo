@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { BuildStageCard } from "@/components/workspace/BuildStageCard";
 import { WorkspacePageNavigation } from "@/components/workspace/WorkspacePageNavigation";
@@ -27,6 +27,8 @@ export const BuildPlanPage = (): JSX.Element => {
   const { stages, createStages, updateStageStatus } = useBuildStages(projectId);
   const { defaultProvider } = useAIProviders();
   const [targetPlatform, setTargetPlatform] = useState("codex");
+  const [pendingScrollStageId, setPendingScrollStageId] = useState<string | null>(null);
+  const [highlightedStageId, setHighlightedStageId] = useState<string | null>(null);
 
   const availableTargets = useMemo(
     () => project?.agentTargets ?? ["codex", "cursor", "claude-code"],
@@ -68,6 +70,9 @@ export const BuildPlanPage = (): JSX.Element => {
     });
 
     await createStages(nextStages);
+    setPendingScrollStageId(
+      nextStages.find((stage) => stage.status === "not-started")?.id ?? nextStages[0]?.id ?? null
+    );
     toast.success("Build plan generated.");
   };
 
@@ -93,6 +98,46 @@ export const BuildPlanPage = (): JSX.Element => {
   const connectedToolPlatform = defaultProvider
     ? getPreferredAgentPlatformForProvider(defaultProvider.provider)
     : null;
+
+  useEffect(() => {
+    if (!pendingScrollStageId) {
+      return;
+    }
+
+    const stageExists = stages.some((stage) => stage.id === pendingScrollStageId);
+    if (!stageExists) {
+      return;
+    }
+
+    const animationFrame = window.requestAnimationFrame(() => {
+      const stageElement = document.querySelector<HTMLElement>(
+        `[data-build-stage-id="${pendingScrollStageId}"]`
+      );
+      const primaryAction = stageElement?.querySelector<HTMLElement>(
+        "[data-build-stage-primary-action='true']"
+      );
+      (primaryAction ?? stageElement)?.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+      setHighlightedStageId(pendingScrollStageId);
+      setPendingScrollStageId(null);
+    });
+
+    return () => window.cancelAnimationFrame(animationFrame);
+  }, [pendingScrollStageId, stages]);
+
+  useEffect(() => {
+    if (!highlightedStageId) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setHighlightedStageId(null);
+    }, 3500);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [highlightedStageId]);
 
   return (
     <GameSectionLayout
@@ -199,6 +244,8 @@ export const BuildPlanPage = (): JSX.Element => {
                     ? `Send to ${getAgentPlatformLabel(stage.platform)}`
                     : undefined
                 }
+                highlightPrimaryAction={highlightedStageId === stage.id}
+                isActionSpotlighted={highlightedStageId === stage.id}
                 stage={stage}
                 totalStages={totalStages}
                 isNextRecommended={nextActionStage?.id === stage.id}

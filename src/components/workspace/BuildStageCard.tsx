@@ -7,7 +7,9 @@ import type { BuildStage } from "@/types";
 
 interface BuildStageCardProps {
   directSendLabel?: string;
+  highlightPrimaryAction?: boolean;
   isNextRecommended?: boolean;
+  isActionSpotlighted?: boolean;
   onDirectSend?: (stage: BuildStage) => Promise<string>;
   onStatusChange: (stage: BuildStage) => void;
   stage: BuildStage;
@@ -30,7 +32,9 @@ const STATUS_TONES: Record<BuildStage["status"], string> = {
 
 const BuildStageCardComponent = ({
   directSendLabel,
+  highlightPrimaryAction = false,
   isNextRecommended = false,
+  isActionSpotlighted = false,
   onDirectSend,
   onStatusChange,
   stage,
@@ -52,10 +56,14 @@ const BuildStageCardComponent = ({
 
   return (
     <article
+      data-build-stage-id={stage.id}
       className={cn(
         "relative rounded-xl border border-outline-variant/10 bg-surface-container p-5 transition-all",
         stage.status === "in-progress" ? "border-l-[3px] border-l-primary" : "",
         stage.status === "complete" ? "opacity-80" : "",
+        isActionSpotlighted
+          ? "border-primary/35 shadow-[0_0_0_1px_rgba(194,185,255,0.18),0_18px_48px_rgba(116,88,255,0.14)]"
+          : "",
         isLocked ? "opacity-40" : ""
       )}
     >
@@ -177,6 +185,7 @@ const BuildStageCardComponent = ({
             {onDirectSend ? (
               <button
                 type="button"
+                data-build-stage-primary-action="true"
                 disabled={isLocked || isSending}
                 onClick={async () => {
                   try {
@@ -194,16 +203,29 @@ const BuildStageCardComponent = ({
                     setIsSending(false);
                   }
                 }}
-                className="rounded-xl border border-primary/25 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/35 hover:bg-primary/15 disabled:opacity-50"
+                className={cn(
+                  "rounded-xl px-4 py-2 text-sm font-semibold transition disabled:opacity-50",
+                  highlightPrimaryAction
+                    ? "gradient-cta glow-primary text-on-primary ring-2 ring-primary/30"
+                    : "border border-primary/25 bg-primary/10 text-primary hover:border-primary/35 hover:bg-primary/15"
+                )}
               >
                 {isSending ? "Sending…" : directSendLabel ?? `Send to ${platformLabel}`}
               </button>
             ) : null}
             <button
               type="button"
+              data-build-stage-primary-action={!onDirectSend ? "true" : undefined}
               disabled={isLocked}
               onClick={() => onStatusChange(stage)}
-              className="gradient-cta glow-primary rounded-xl px-4 py-2 text-sm font-semibold text-on-primary disabled:opacity-50"
+              className={cn(
+                "rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-50",
+                onDirectSend
+                  ? "border border-outline-variant/15 bg-surface-container text-on-surface hover:bg-surface-container-high"
+                  : highlightPrimaryAction
+                    ? "gradient-cta glow-primary text-on-primary ring-2 ring-primary/30"
+                    : "gradient-cta glow-primary text-on-primary"
+              )}
             >
               {stage.status === "not-started" && "Mark as Started"}
               {stage.status === "in-progress" && "Mark Complete"}
