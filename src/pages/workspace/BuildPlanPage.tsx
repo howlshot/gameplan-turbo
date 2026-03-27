@@ -8,11 +8,14 @@ import {
   GameSelect
 } from "@/components/workspace/game/GameSectionLayout";
 import { useBuildStages } from "@/hooks/useBuildStages";
+import { useAIProviders } from "@/hooks/useAIProviders";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
 import { useToast } from "@/hooks/useToast";
 import { isLegacyLargeBuildPlan } from "@/lib/buildPlanUtils";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
+import { getPreferredAgentPlatformForProvider } from "@/lib/ai/providerCatalog";
+import { generateWithAgent } from "@/services/ai";
 import { generateBuildStages, exportAllPrompts } from "@/services/generation/buildGeneration";
 import type { BuildStage } from "@/types";
 
@@ -22,6 +25,7 @@ export const BuildPlanPage = (): JSX.Element => {
   const { project } = useProject(projectId);
   const { gameDesignDoc } = useGameDesignDoc(projectId);
   const { stages, createStages, updateStageStatus } = useBuildStages(projectId);
+  const { defaultProvider } = useAIProviders();
   const [targetPlatform, setTargetPlatform] = useState("codex");
 
   const availableTargets = useMemo(
@@ -81,6 +85,14 @@ export const BuildPlanPage = (): JSX.Element => {
     (max, stage) => Math.max(max, stage.stageNumber),
     0
   );
+  const nextActionStage =
+    stages.find((stage) => stage.status === "not-started") ??
+    stages.find((stage) => stage.status === "in-progress") ??
+    null;
+  const targetLabel = getAgentPlatformLabel(targetPlatform);
+  const connectedToolPlatform = defaultProvider
+    ? getPreferredAgentPlatformForProvider(defaultProvider.provider)
+    : null;
 
   return (
     <GameSectionLayout
@@ -151,14 +163,60 @@ export const BuildPlanPage = (): JSX.Element => {
 
       <div className="space-y-4">
         {stages.length > 0 ? (
-          stages.map((stage) => (
-            <BuildStageCard
-              key={stage.id}
-              stage={stage}
-              totalStages={totalStages}
-              onStatusChange={(nextStage) => void cycleStatus(nextStage)}
-            />
-          ))
+          <>
+            {nextActionStage ? (
+              <div className="rounded-3xl border border-primary/15 bg-primary/5 px-5 py-4">
+                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">
+                  Next recommended action
+                </p>
+                <p className="mt-2 text-sm leading-6 text-on-surface">
+                  Open <span className="font-semibold">{nextActionStage.name}</span>
+                  {connectedToolPlatform === nextActionStage.platform ? (
+                    <>
+                      , then click{" "}
+                      <span className="font-semibold">
+                        Send to {getAgentPlatformLabel(nextActionStage.platform)}
+                      </span>{" "}
+                      below to run it with your connected tool. You can still copy
+                      the prompt if you want to inspect or paste it manually.
+                    </>
+                  ) : (
+                    <>
+                      , copy its prompt into{" "}
+                      <span className="font-semibold">{targetLabel}</span>, start
+                      the work there, then return here and mark the stage as started.
+                    </>
+                  )}
+                </p>
+              </div>
+            ) : null}
+
+            {stages.map((stage) => (
+              <BuildStageCard
+                key={stage.id}
+                directSendLabel={
+                  connectedToolPlatform === stage.platform
+                    ? `Send to ${getAgentPlatformLabel(stage.platform)}`
+                    : undefined
+                }
+                stage={stage}
+                totalStages={totalStages}
+                isNextRecommended={nextActionStage?.id === stage.id}
+                onDirectSend={
+                  connectedToolPlatform === stage.platform
+                    ? async (nextStage) =>
+                        generateWithAgent(
+                          "implementation-stage",
+                          nextStage.promptContent,
+                          undefined,
+                          project.id
+                        )
+                    : undefined
+                }
+                onStatusChange={(nextStage) => void cycleStatus(nextStage)}
+              />
+            ))}
+          </>
         ) : (
           <div className="rounded-3xl border border-dashed border-outline-variant/20 bg-surface px-6 py-16 text-center">
             <p className="font-headline text-2xl font-semibold text-on-surface">

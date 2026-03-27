@@ -275,4 +275,125 @@ describe("TechnicalDesignPage", () => {
       })
     });
   });
+
+  it("can mark all blank technical fields for later", () => {
+    currentProject = {
+      id: "project-1",
+      title: "Night Watch",
+      name: "Night Watch",
+      oneLinePitch: "A tense survival prototype.",
+      description: "A tense survival prototype.",
+      status: "concept",
+      scopeCategory: "small",
+      genre: "Horror",
+      subgenre: "Survival Horror",
+      platformTargets: ["pc"],
+      agentTargets: ["codex"],
+      targetPlatforms: ["codex"],
+      targetAudience: "Horror players",
+      sessionLength: "20-40 minutes",
+      monetizationModel: "Premium",
+      comparableGames: [],
+      templateId: "survival-horror-lite",
+      enginePreference: "",
+      techStack: [],
+      createdAt: 1,
+      updatedAt: 1
+    };
+
+    currentGameDesignDoc = {
+      id: "doc-1",
+      projectId: "project-1",
+      concept: {
+        gameTitle: "Night Watch",
+        oneLinePitch: "A tense survival prototype.",
+        playerFantasy: "Survive the station.",
+        genre: "Horror",
+        subgenre: "Survival Horror",
+        platformTargets: ["pc"],
+        targetAudience: "Horror players",
+        sessionLength: "20-40 minutes",
+        monetizationModel: "Premium",
+        comparableGames: [],
+        scopeCategory: "small",
+        differentiators: "Compact tension loop."
+      },
+      designPillars: {
+        pillars: [],
+        feelStatement: "",
+        antiGoals: [],
+        emotionalTargets: [],
+        readabilityPrinciples: ""
+      },
+      coreLoop: {
+        secondToSecond: "",
+        minuteToMinute: "",
+        sessionLoop: "",
+        longTermProgression: "",
+        failureStates: "",
+        rewardCadence: ""
+      },
+      controlsFeel: {
+        controlScheme: "",
+        cameraRules: "",
+        movementPhilosophy: "",
+        combatFeelGoals: "",
+        responsivenessStandards: "",
+        platformInputNotes: "",
+        accessibilityConsiderations: ""
+      },
+      contentBible: {
+        playerVerbs: "",
+        enemies: "",
+        weaponsAbilities: "",
+        encounters: "",
+        levelsMissions: "",
+        bossesSpecialEvents: "",
+        pickupsRewards: "",
+        uiHudElements: ""
+      },
+      artTone: {
+        artDirection: "",
+        toneKeywords: [],
+        visualReferences: [],
+        negativeReferences: [],
+        animationStyle: "",
+        vfxDirection: "",
+        audioMusicDirection: ""
+      },
+      technicalDesign: {
+        engine: "",
+        renderingConstraints: "",
+        targetFramerate: "",
+        memoryPerformanceBudget: "",
+        saveSystem: "",
+        contentPipeline: "",
+        namingConventions: "",
+        folderStructure: "",
+        platformConstraints: ""
+      },
+      updatedAt: 1
+    };
+
+    render(<TechnicalDesignPage />);
+
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: /Mark all blank technical fields for later/i
+      })
+    );
+
+    expect(mocks.updateGameDesignDoc).toHaveBeenCalledWith({
+      technicalDesign: {
+        renderingConstraints: expect.stringMatching(/Not sure yet/i),
+        targetFramerate: expect.stringMatching(/Not sure yet/i),
+        memoryPerformanceBudget: expect.stringMatching(/Not sure yet/i),
+        saveSystem: expect.stringMatching(/Not sure yet/i),
+        contentPipeline: expect.stringMatching(/Not sure yet/i),
+        namingConventions: expect.stringMatching(/Not sure yet/i),
+        folderStructure: expect.stringMatching(/Not sure yet/i),
+        platformConstraints: expect.stringMatching(/Not sure yet/i)
+      }
+    });
+  });
 });

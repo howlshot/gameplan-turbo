@@ -15,6 +15,12 @@ vi.mock("@/hooks/useToast", () => ({
   })
 }));
 
+vi.mock("@/hooks/useAIProviders", () => ({
+  useAIProviders: () => ({
+    defaultProvider: { provider: "codex", model: "codex-default" }
+  })
+}));
+
 vi.mock("@/components/workspace/BuildStageCard", () => ({
   BuildStageCard: () => <div>stage-card</div>
 }));

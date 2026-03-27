@@ -30,12 +30,18 @@ const technicalFields = [
   ["platformConstraints", "Platform Constraints"]
 ] as const;
 
+type TechnicalFieldKey = (typeof technicalFields)[number][0];
+
 const TECHNICAL_STARTER_FIELDS = [
   "saveSystem",
   "contentPipeline",
   "namingConventions",
   "folderStructure"
-] as const;
+] as const satisfies readonly TechnicalFieldKey[];
+
+const TECHNICAL_ALL_FIELDS = technicalFields.map(
+  ([field]) => field
+) as TechnicalFieldKey[];
 
 const GENERIC_TECHNICAL_STARTERS: Pick<
   TechnicalDesignSection,
@@ -130,24 +136,29 @@ const TechnicalDesignEditor = ({
   const templateSuggestions =
     getTemplateDefinition(templateId).defaultDoc.technicalDesign ??
     GENERIC_TECHNICAL_STARTERS;
+  const starterSuggestions: Partial<TechnicalDesignSection> = {
+    ...GENERIC_TECHNICAL_STARTERS,
+    ...templateSuggestions
+  };
 
   useEffect(() => {
     setEngineSelection(getEngineSelectValue(currentEnginePreference));
   }, [currentEnginePreference]);
 
   const applyTechnicalStarterState = (
-    mode: "starter" | "not-sure-yet"
+    mode: "starter" | "not-sure-yet",
+    fields: readonly TechnicalFieldKey[]
   ): void => {
     const updates: Partial<TechnicalDesignSection> = {};
 
-    TECHNICAL_STARTER_FIELDS.forEach((field) => {
+    fields.forEach((field) => {
       if (technicalDesign[field].trim().length > 0) {
         return;
       }
 
       updates[field] =
         mode === "starter"
-          ? templateSuggestions[field] || GENERIC_TECHNICAL_STARTERS[field]
+          ? starterSuggestions[field] ?? NOT_SURE_YET_VALUE
           : NOT_SURE_YET_VALUE;
     });
 
@@ -175,17 +186,30 @@ const TechnicalDesignEditor = ({
         <div className="mt-4 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={() => applyTechnicalStarterState("starter")}
+            onClick={() =>
+              applyTechnicalStarterState("starter", TECHNICAL_STARTER_FIELDS)
+            }
             className="rounded-2xl border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/30 hover:bg-primary/15"
           >
             Fill blank fields with starter suggestions
           </button>
           <button
             type="button"
-            onClick={() => applyTechnicalStarterState("not-sure-yet")}
+            onClick={() =>
+              applyTechnicalStarterState("not-sure-yet", TECHNICAL_STARTER_FIELDS)
+            }
             className="rounded-2xl border border-outline-variant/15 bg-surface-container px-4 py-2 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high"
           >
-            Mark blank fields for later
+            Mark key planning fields for later
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              applyTechnicalStarterState("not-sure-yet", TECHNICAL_ALL_FIELDS)
+            }
+            className="rounded-2xl border border-outline-variant/15 bg-surface-container px-4 py-2 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high"
+          >
+            Mark all blank technical fields for later
           </button>
         </div>
       </div>

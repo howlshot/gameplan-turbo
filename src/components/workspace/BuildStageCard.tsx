@@ -1,9 +1,14 @@
 import { memo, useState } from "react";
 import { CopyButton } from "@/components/shared/CopyButton";
+import { useToast } from "@/hooks/useToast";
+import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
 import { cn } from "@/lib/utils";
 import type { BuildStage } from "@/types";
 
 interface BuildStageCardProps {
+  directSendLabel?: string;
+  isNextRecommended?: boolean;
+  onDirectSend?: (stage: BuildStage) => Promise<string>;
   onStatusChange: (stage: BuildStage) => void;
   stage: BuildStage;
   totalStages: number;
@@ -24,12 +29,19 @@ const STATUS_TONES: Record<BuildStage["status"], string> = {
 };
 
 const BuildStageCardComponent = ({
+  directSendLabel,
+  isNextRecommended = false,
+  onDirectSend,
   onStatusChange,
   stage,
   totalStages
 }: BuildStageCardProps): JSX.Element => {
   const [isExpanded, setIsExpanded] = useState(stage.status === "in-progress");
+  const [isSending, setIsSending] = useState(false);
+  const [toolResponse, setToolResponse] = useState("");
   const isLocked = stage.status === "locked";
+  const platformLabel = getAgentPlatformLabel(stage.platform);
+  const toast = useToast();
   const stageProgress = totalStages === 0 ? 0 : stage.stageNumber / totalStages;
   const stageTone =
     stageProgress <= 0.33
@@ -98,13 +110,39 @@ const BuildStageCardComponent = ({
             </span>
           </div>
 
+          {isNextRecommended && !isLocked ? (
+            <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-sm leading-6 text-on-surface">
+              Next:{" "}
+              {onDirectSend ? (
+                <>
+                  click <span className="font-semibold">{directSendLabel}</span>{" "}
+                  below to run this stage with{" "}
+                  <span className="font-semibold">{platformLabel}</span>, or
+                  copy the prompt if you want to inspect or paste it manually.
+                </>
+              ) : (
+                <>
+                  copy this prompt into{" "}
+                  <span className="font-semibold">{platformLabel}</span>, start
+                  the work there, then come back and mark this stage as started.
+                </>
+              )}
+            </div>
+          ) : null}
+
           <div className="mt-4 rounded-xl bg-surface-container-lowest">
             <div className="flex items-center justify-between border-b border-outline-variant/10 px-4 py-3">
               <span className="rounded-full bg-surface px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">
                 {stage.name.replace(/\s+/g, "-").toUpperCase()}.txt
               </span>
               <div className="flex items-center gap-2">
-                {!isLocked ? <CopyButton text={stage.promptContent} size="sm" /> : null}
+                {!isLocked ? (
+                  <CopyButton
+                    text={stage.promptContent}
+                    size="sm"
+                    label={`Copy prompt for ${platformLabel}`}
+                  />
+                ) : null}
                 <button
                   type="button"
                   onClick={() => setIsExpanded((current) => !current)}
@@ -124,14 +162,50 @@ const BuildStageCardComponent = ({
             ) : null}
           </div>
 
+          {toolResponse ? (
+            <div className="mt-4 rounded-xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                Connected tool response
+              </p>
+              <pre className="mt-3 overflow-x-auto whitespace-pre-wrap font-mono text-sm text-on-surface">
+                {toolResponse}
+              </pre>
+            </div>
+          ) : null}
+
           <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+            {onDirectSend ? (
+              <button
+                type="button"
+                disabled={isLocked || isSending}
+                onClick={async () => {
+                  try {
+                    setIsSending(true);
+                    const response = await onDirectSend(stage);
+                    setToolResponse(response);
+                    toast.success(`${platformLabel} responded for ${stage.name}.`);
+                  } catch (error) {
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : `Could not send this stage to ${platformLabel}.`
+                    );
+                  } finally {
+                    setIsSending(false);
+                  }
+                }}
+                className="rounded-xl border border-primary/25 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition hover:border-primary/35 hover:bg-primary/15 disabled:opacity-50"
+              >
+                {isSending ? "Sending…" : directSendLabel ?? `Send to ${platformLabel}`}
+              </button>
+            ) : null}
             <button
               type="button"
               disabled={isLocked}
               onClick={() => onStatusChange(stage)}
               className="gradient-cta glow-primary rounded-xl px-4 py-2 text-sm font-semibold text-on-primary disabled:opacity-50"
             >
-              {stage.status === "not-started" && "Start Stage"}
+              {stage.status === "not-started" && "Mark as Started"}
               {stage.status === "in-progress" && "Mark Complete"}
               {stage.status === "complete" && "Mark In Progress"}
               {stage.status === "locked" && "Locked"}
