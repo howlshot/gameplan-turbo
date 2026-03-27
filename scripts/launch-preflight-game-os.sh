@@ -34,7 +34,7 @@ if ! is_listening "$BRIDGE_PORT"; then
 fi
 
 for _ in {1..30}; do
-  if is_listening "$DEV_PORT"; then
+  if is_listening "$DEV_PORT" && is_listening "$BRIDGE_PORT"; then
     break
   fi
   sleep 1
