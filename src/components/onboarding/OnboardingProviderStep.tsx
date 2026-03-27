@@ -93,18 +93,38 @@ export const OnboardingProviderStep = ({
         </div>
 
         {isLocalBridgeProvider ? (
-          <div className="space-y-3 rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-sm leading-6 text-on-surface-variant">
+          <div className="space-y-4 rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-sm leading-6 text-on-surface-variant">
             <p>
               No API key is needed here. Preflight Game OS will use your local Codex CLI
               session instead.
             </p>
-            <p>
-              1. Run <code>{getCodexLoginCommand()}</code>
+            <div className="space-y-2">
+              <p className="font-semibold text-on-surface">Do this exactly once:</p>
+              <p>1. Open Terminal.</p>
+              <p>
+                2. Run <code>{getCodexLoginCommand()}</code>
+              </p>
+              <p>3. Finish the ChatGPT sign-in flow that opens in your browser.</p>
+              <p>
+                4. In Terminal, run <code>cd &quot;<workspace-root>&quot;</code>
+              </p>
+              <p>
+                5. Run <code>{getCodexBridgeStartCommand()}</code>
+              </p>
+              <p>6. Leave that Terminal window open while you use the app.</p>
+              <p>7. Come back here and click <strong>Continue with Codex</strong>.</p>
+            </div>
+            <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3">
+              <p className="font-semibold text-on-surface">What success looks like</p>
+              <p className="mt-2">
+                The bridge terminal should stay running, and Settings will show
+                <strong> Bridge Ready</strong> once connected.
+              </p>
+            </div>
+            <p className="text-xs">
+              If you launched the app using the Desktop icon, the bridge may already be
+              running. In that case, just click continue.
             </p>
-            <p>
-              2. Run <code>{getCodexBridgeStartCommand()}</code>
-            </p>
-            <p>3. Click continue below</p>
           </div>
         ) : (
           <div className="relative">

@@ -148,10 +148,21 @@ export const DiagnosticsCard = (): JSX.Element => {
             Local Commands
           </p>
           <p className="text-sm text-on-surface-variant">
-            Start bridge: <code>{getCodexBridgeStartCommand()}</code>
+            1. Login: <code>{getCodexLoginCommand()}</code>
           </p>
           <p className="text-sm text-on-surface-variant">
-            Login if needed: <code>{getCodexLoginCommand()}</code>
+            2. Start bridge: <code>{getCodexBridgeStartCommand()}</code>
+          </p>
+          <p className="text-sm text-on-surface-variant">
+            3. Keep that Terminal window open while using Preflight Game OS
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">
+          <p className="font-semibold text-on-surface">What success looks like</p>
+          <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+            This panel should show <strong>Bridge Ready</strong> and a login method of
+            <strong> ChatGPT</strong> or another detected Codex auth method.
           </p>
         </div>
       </div>

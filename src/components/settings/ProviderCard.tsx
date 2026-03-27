@@ -174,9 +174,20 @@ export const ProviderCard = ({
             <p className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 font-mono text-[11px] leading-5 text-on-surface-variant">
               {bridgeStatusMessage || "Checking local Codex bridge status..."}
             </p>
-            <div className="space-y-2 font-mono text-[10px] uppercase tracking-[0.16em] text-on-surface-variant">
-              <p>Start bridge: {getCodexBridgeStartCommand()}</p>
-              <p>Login if needed: {getCodexLoginCommand()}</p>
+            <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
+              <p className="font-semibold text-on-surface">First-time setup</p>
+              <p>1. Open Terminal.</p>
+              <p>
+                2. Run <code>{getCodexLoginCommand()}</code>
+              </p>
+              <p>3. Finish the ChatGPT sign-in in your browser.</p>
+              <p>
+                4. Run <code>cd &quot;<workspace-root>&quot;</code>
+              </p>
+              <p>
+                5. Run <code>{getCodexBridgeStartCommand()}</code>
+              </p>
+              <p>6. Leave that Terminal window open.</p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -200,6 +211,9 @@ export const ProviderCard = ({
                 {isCheckingBridge ? "Checking..." : "Check Status"}
               </button>
             </div>
+            <p className="text-xs leading-5 text-on-surface-variant">
+              If you use the Desktop launcher, it will usually start the bridge for you.
+            </p>
           </div>
         ) : isEditing ? (
           <div className="mt-4 space-y-3">
