@@ -61,6 +61,10 @@ describe("NewProjectModal", () => {
       expect(titleInput).toHaveFocus();
     });
 
+    expect(
+      screen.queryByText(/Choose the game identity first/i)
+    ).not.toBeInTheDocument();
+
     fireEvent.change(titleInput, { target: { value: "Nightline Zero" } });
     fireEvent.change(pitchInput, {
       target: { value: "A compact action prototype." }
@@ -164,6 +168,61 @@ describe("NewProjectModal", () => {
           sessionLength: "20-40 minutes",
           platformTargets: ["pc", "console"],
           agentTargets: ["codex", "claude-code", "cursor"]
+        })
+      );
+    });
+  });
+
+  it("surfaces the expanded genre families and maps new subgenres to hidden profiles", async () => {
+    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+
+    fireEvent.change(screen.getByLabelText(/Game Title/i), {
+      target: { value: "Wayfinder Drift" }
+    });
+
+    expect(
+      screen.getByRole("option", { name: "Adventure" })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "RPG" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Simulation" })
+    ).toBeInTheDocument();
+
+    fireEvent.change(getGenreFamilySelect(), {
+      target: { value: "action" }
+    });
+
+    expect(
+      screen.getByRole("option", { name: "Arena Shooter" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "Character Action Lite" })
+    ).toBeInTheDocument();
+
+    fireEvent.change(getSubgenreSelect(), {
+      target: { value: "arena-shooter" }
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Next: Production Setup/i })
+    );
+
+    expect(screen.getByText(/Action -> Arena Shooter/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Typical Session/i)).toHaveValue(
+      "10-20 minutes"
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create Game Project/i })
+    );
+
+    await waitFor(() => {
+      expect(mocks.createProject).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Wayfinder Drift",
+          templateId: "twin-stick-shooter",
+          genre: "Action",
+          subgenre: "Arena Shooter"
         })
       );
     });

@@ -1,6 +1,8 @@
 export const APP_NAME = "Gameplan Turbo";
 export const APP_SLUG = "gameplan-turbo";
 export const APP_TAGLINE = "Idea to first playable";
+export const APP_WORKSPACE_STRAPLINE =
+  "Local-first game preproduction workspace";
 export const APP_DESCRIPTION =
   "Gameplan Turbo is a local-first game design operating system for AI-assisted builders.";
 export const APP_ICON_PATH = "/gameplan-turbo-icon.png";

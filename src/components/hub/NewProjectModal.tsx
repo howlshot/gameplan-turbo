@@ -69,12 +69,12 @@ const CREATION_STEPS: CreationStep[] = [
   {
     id: 1,
     label: "Core Identity",
-    description: "Title, pitch, and genre framing."
+    description: "Title, pitch, genre."
   },
   {
     id: 2,
     label: "Production Setup",
-    description: "Recommended scope, platforms, tools, and shipping setup."
+    description: "Scope, platforms, tools."
   }
 ];
 
@@ -538,7 +538,7 @@ export const NewProjectModal = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-surface-dim/80 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center overscroll-contain bg-surface-dim/80 px-4 py-6 backdrop-blur-sm"
       onClick={closeModal}
     >
       <div
@@ -546,10 +546,10 @@ export const NewProjectModal = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-project-title"
-        className="glass-panel flex max-h-[calc(100vh-4rem)] w-full max-w-6xl flex-col overflow-hidden rounded-3xl border border-outline-variant/15 bg-surface-container shadow-2xl"
+        className="glass-panel flex max-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col overflow-hidden overscroll-contain rounded-3xl border border-outline-variant/15 bg-surface-container shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="border-b border-outline-variant/10 bg-surface-container px-6 py-5">
+        <div className="border-b border-outline-variant/10 bg-surface-container px-6 py-4">
           <div className="flex items-start justify-between gap-4">
             <div className="max-w-3xl">
               <p className="font-mono text-xs uppercase tracking-[0.22em] text-primary">
@@ -557,14 +557,10 @@ export const NewProjectModal = ({
               </p>
               <h2
                 id="new-project-title"
-                className="mt-2 font-headline text-3xl font-bold tracking-tight text-on-surface"
+                className="mt-2 font-headline text-2xl font-bold tracking-tight text-on-surface"
               >
                 Start a new game design workspace
               </h2>
-              <p className="mt-3 text-sm leading-6 text-on-surface-variant">
-                Choose the game identity first, then lock production decisions with
-                recommendations you can override field by field.
-              </p>
             </div>
             <button
               type="button"
@@ -575,7 +571,7 @@ export const NewProjectModal = ({
             </button>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap gap-2.5">
             {CREATION_STEPS.map((creationStep) => {
               const isActive = creationStep.id === step;
               const isComplete = creationStep.id < step;
@@ -584,7 +580,7 @@ export const NewProjectModal = ({
                 <div
                   key={creationStep.id}
                   className={cn(
-                    "min-w-[220px] rounded-2xl border px-4 py-3 transition",
+                    "min-w-[200px] rounded-2xl border px-4 py-2.5 transition",
                     isActive
                       ? "border-primary/30 bg-primary/10"
                       : isComplete
@@ -595,10 +591,10 @@ export const NewProjectModal = ({
                   <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
                     Step {creationStep.id}
                   </p>
-                  <p className="mt-2 font-headline text-base font-semibold text-on-surface">
+                  <p className="mt-1.5 font-headline text-sm font-semibold text-on-surface sm:text-[15px]">
                     {creationStep.label}
                   </p>
-                  <p className="mt-1 text-xs leading-5 text-on-surface-variant">
+                  <p className="mt-1 text-[11px] leading-5 text-on-surface-variant">
                     {creationStep.description}
                   </p>
                 </div>
@@ -607,10 +603,10 @@ export const NewProjectModal = ({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
           {step === 1 ? (
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
-              <div className="space-y-5">
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+              <div className="space-y-4">
                 <GameField label="Game Title">
                   <GameTextInput
                     ref={titleRef}
@@ -641,7 +637,7 @@ export const NewProjectModal = ({
                   />
                 </GameField>
 
-                <div className="grid gap-5 md:grid-cols-2">
+                <div className="grid gap-4 md:grid-cols-2">
                   <GameField
                     label="Genre Family"
                     description="Choose a broad category first. Recommendations stay editable."
@@ -703,11 +699,11 @@ export const NewProjectModal = ({
                 </div>
 
                 {isOtherGenrePath ? (
-                  <div className="rounded-3xl border border-primary/15 bg-surface px-5 py-5">
+                  <div className="rounded-3xl border border-primary/15 bg-surface px-5 py-4">
                     <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
                       Other / Custom
                     </p>
-                    <div className="mt-4 grid gap-5 md:grid-cols-2">
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
                       <GameField label="Subgenre">
                         <GameTextInput
                           type="text"
@@ -718,7 +714,7 @@ export const NewProjectModal = ({
                       </GameField>
                     </div>
 
-                    <div className="mt-5 grid gap-5">
+                    <div className="mt-4 grid gap-4">
                       <GameField label="Player Fantasy">
                         <GameTextInput
                           type="text"
@@ -750,7 +746,7 @@ export const NewProjectModal = ({
                             setCustomFeelKeywords(event.target.value)
                           }
                         />
-                        <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+                        <p className="mt-2 text-sm leading-6 text-on-surface-variant">
                           Use comma-separated keywords. These seed the feel statement
                           and tone vocabulary if you stay on the custom path.
                         </p>
@@ -760,19 +756,19 @@ export const NewProjectModal = ({
                 ) : null}
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="rounded-3xl border border-outline-variant/10 bg-surface p-5">
                   <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
                     Recommended Setup
                   </p>
-                  <p className="mt-3 font-headline text-xl font-semibold text-on-surface">
+                  <p className="mt-3 font-headline text-lg font-semibold text-on-surface">
                     {recommendationTitle}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-on-surface-variant">
                     {recommendationDescription}
                   </p>
 
-                  <div className="mt-5 space-y-3 text-sm leading-6 text-on-surface-variant">
+                  <div className="mt-4 space-y-2.5 text-sm leading-6 text-on-surface-variant">
                     <p>
                       <span className="font-semibold text-on-surface">
                         Recommended scope:
@@ -802,24 +798,23 @@ export const NewProjectModal = ({
 
                 <div className="rounded-3xl border border-outline-variant/10 bg-surface px-5 py-4">
                   <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
-                    How Recommendations Work
+                    Recommendation Rules
                   </p>
-                  <p className="mt-3 text-sm leading-6 text-on-surface-variant">
-                    Step 2 starts from the current genre recommendation. Once you edit
-                    a production field yourself, Gameplan Turbo stops overwriting that
-                    field until you reset it.
+                  <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                    Step 2 starts from the current genre recommendation. Manual edits
+                    become user-owned until you reset them.
                   </p>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="flex flex-col gap-4 rounded-3xl border border-outline-variant/10 bg-surface px-5 py-5 lg:flex-row lg:items-start lg:justify-between">
+            <div className="space-y-5">
+              <div className="flex flex-col gap-4 rounded-3xl border border-outline-variant/10 bg-surface px-5 py-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="max-w-3xl">
                   <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
                     Recommendation Profile
                   </p>
-                  <p className="mt-3 font-headline text-xl font-semibold text-on-surface">
+                  <p className="mt-2.5 font-headline text-lg font-semibold text-on-surface">
                     {recommendationTitle}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-on-surface-variant">
@@ -840,7 +835,7 @@ export const NewProjectModal = ({
                     </span>
                   </div>
                 </div>
-                <div className="space-y-3 lg:min-w-[220px]">
+                <div className="space-y-2.5 lg:min-w-[220px]">
                   <button
                     type="button"
                     onClick={handleResetToRecommendations}
@@ -905,8 +900,8 @@ export const NewProjectModal = ({
                 </div>
               </GameField>
 
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-                <div className="space-y-6">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+                <div className="space-y-5">
                   <GameField
                     label="Typical Session"
                     description="Typical one-sitting play time, not total completion time."
@@ -961,7 +956,7 @@ export const NewProjectModal = ({
                     </p>
                   </GameField>
 
-                  <div className="grid gap-5 md:grid-cols-2">
+                  <div className="grid gap-4 md:grid-cols-2">
                     <GameField label="Target Audience">
                       <GameTextInput
                         type="text"
@@ -988,7 +983,7 @@ export const NewProjectModal = ({
                   </div>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <GameField
                     label="Game Platform Targets"
                     description="Recommended from genre, but fully editable."
@@ -1021,7 +1016,7 @@ export const NewProjectModal = ({
                     <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
                       What This Workspace Optimizes For
                     </p>
-                    <ul className="mt-4 space-y-2 text-sm leading-6 text-on-surface-variant">
+                    <ul className="mt-3 space-y-2 text-sm leading-6 text-on-surface-variant">
                       <li>Local-first planning before any AI key is added.</li>
                       <li>Clear first-playable framing and prompt-ready build stages.</li>
                       <li>Genre-led recommendations that stay under user control.</li>
@@ -1033,16 +1028,16 @@ export const NewProjectModal = ({
           )}
         </div>
 
-        <div className="border-t border-outline-variant/10 bg-surface-container px-6 py-4">
+        <div className="border-t border-outline-variant/10 bg-surface-container px-6 py-3.5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">
                 Step {step} of {CREATION_STEPS.length}
               </p>
-              <p className="mt-2 text-sm text-on-surface-variant">
+              <p className="mt-1.5 text-sm text-on-surface-variant">
                 {step === 1
-                  ? "Lock the project identity before moving into production decisions."
-                  : "Finish the production setup, then create the project shell."}
+                  ? "Lock the project identity first."
+                  : "Review production defaults, then create the shell."}
               </p>
             </div>
 

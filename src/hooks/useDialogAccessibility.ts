@@ -12,6 +12,10 @@ const FOCUSABLE_SELECTOR = [
 
 const AUTOFOCUS_SELECTOR = "[data-autofocus]";
 
+let activeDialogCount = 0;
+let previousBodyOverflow = "";
+let previousHtmlOverflow = "";
+
 const getFocusableElements = (container: HTMLElement): HTMLElement[] =>
   Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
     (element) => !element.hasAttribute("disabled") && element.tabIndex !== -1
@@ -32,6 +36,15 @@ export const useDialogAccessibility = <T extends HTMLElement>(
     if (!isOpen) {
       return;
     }
+
+    if (activeDialogCount === 0) {
+      previousBodyOverflow = document.body.style.overflow;
+      previousHtmlOverflow = document.documentElement.style.overflow;
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    }
+
+    activeDialogCount += 1;
 
     const previousActiveElement =
       document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -97,6 +110,13 @@ export const useDialogAccessibility = <T extends HTMLElement>(
     return () => {
       window.cancelAnimationFrame(frameId);
       document.removeEventListener("keydown", handleKeyDown);
+
+      activeDialogCount = Math.max(0, activeDialogCount - 1);
+      if (activeDialogCount === 0) {
+        document.body.style.overflow = previousBodyOverflow;
+        document.documentElement.style.overflow = previousHtmlOverflow;
+      }
+
       previousActiveElement?.focus();
     };
   }, [isOpen, onClose]);

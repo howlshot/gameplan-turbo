@@ -33,6 +33,9 @@ export type GenreFamilyId =
   | "horror"
   | "strategy"
   | "puzzle"
+  | "adventure"
+  | "rpg"
+  | "simulation"
   | "other";
 
 export interface SubgenreDefinition {
@@ -345,11 +348,16 @@ export const getBuildStageSequence = (
 export const STARTER_MODE_ORDER: TemplateId[] = [
   "blank-game-project",
   "arcade-action-rail-shooter",
+  "action-lite",
   "platformer",
   "twin-stick-shooter",
   "survival-horror-lite",
   "tactics-lite",
+  "strategy-lite",
   "puzzle-action",
+  "adventure-lite",
+  "rpg-lite",
+  "sim-lite",
   "custom-guided"
 ];
 
@@ -374,6 +382,30 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
         rationale:
           "Use this when the game lives or dies on arena clarity, enemy pressure, and satisfying weapon-driven repeat runs.",
         profileTemplateId: "twin-stick-shooter"
+      },
+      {
+        id: "arena-shooter",
+        label: "Arena Shooter",
+        description: "High-readability combat spaces with movement pressure and reusable enemy mixes.",
+        rationale:
+          "Use this when the core promise is readable arena combat, crowd-control decisions, and repeatable combat mastery.",
+        profileTemplateId: "twin-stick-shooter"
+      },
+      {
+        id: "character-action-lite",
+        label: "Character Action Lite",
+        description: "Feel-first melee or hybrid combat with compact encounter depth and controlled scope.",
+        rationale:
+          "Use this when combat feel, expressive player verbs, and stylish readable encounters matter more than huge content breadth.",
+        profileTemplateId: "action-lite"
+      },
+      {
+        id: "run-and-gun",
+        label: "Run-and-Gun",
+        description: "Forward-driving action with pressure, clean target reads, and fast encounter rhythm.",
+        rationale:
+          "Use this when you want aggressive momentum, snappy weapon feel, and compact stages that reward constant action.",
+        profileTemplateId: "action-lite"
       }
     ]
   },
@@ -388,6 +420,22 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
         description: "Precise movement, readable hazards, and compact challenge escalation.",
         rationale:
           "Use this when jump feel, clean resets, and traversal readability matter more than broad system complexity.",
+        profileTemplateId: "platformer"
+      },
+      {
+        id: "precision-platformer",
+        label: "Precision Platformer",
+        description: "Tighter jump asks, cleaner hazard language, and retry-first challenge rooms.",
+        rationale:
+          "Use this when exact movement, fast resets, and highly readable challenge beats are the core appeal.",
+        profileTemplateId: "platformer"
+      },
+      {
+        id: "metroidvania-lite",
+        label: "Metroidvania Lite",
+        description: "Compact exploration gating, traversal upgrades, and readable world re-use.",
+        rationale:
+          "Use this when you want backtracking and traversal unlocks, but need a tightly bounded scope and smaller content surface.",
         profileTemplateId: "platformer"
       }
     ]
@@ -404,6 +452,22 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
         rationale:
           "Use this when the game should center on tension, meaningful scarcity, and careful route planning instead of raw combat volume.",
         profileTemplateId: "survival-horror-lite"
+      },
+      {
+        id: "action-horror",
+        label: "Action Horror",
+        description: "Tension-first horror with more frequent combat and cleaner threat escalation.",
+        rationale:
+          "Use this when the game should feel tense and dangerous, but still support readable combat pressure as part of the loop.",
+        profileTemplateId: "survival-horror-lite"
+      },
+      {
+        id: "horror-adventure",
+        label: "Horror Adventure",
+        description: "Atmosphere, exploration, and narrative tension in a compact, readable structure.",
+        rationale:
+          "Use this when you want dread, exploration, and progression clarity without leaning fully on combat or giant maps.",
+        profileTemplateId: "survival-horror-lite"
       }
     ]
   },
@@ -419,6 +483,22 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
         rationale:
           "Use this when the game should reward foresight, clear enemy intent reads, and compact mission structure over sprawling campaign breadth.",
         profileTemplateId: "tactics-lite"
+      },
+      {
+        id: "tower-defense",
+        label: "Tower Defense",
+        description: "Readable lane pressure, build decisions, and compact escalation planning.",
+        rationale:
+          "Use this when the appeal is clear threat routing, strong placement decisions, and compact defensive progression.",
+        profileTemplateId: "strategy-lite"
+      },
+      {
+        id: "deckbuilder-lite",
+        label: "Deckbuilder Lite",
+        description: "Small-card pools, readable synergies, and tightly bounded run structure.",
+        rationale:
+          "Use this when you want meaningful build decisions and replayable runs without a giant card-content burden.",
+        profileTemplateId: "strategy-lite"
       }
     ]
   },
@@ -434,6 +514,91 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
         rationale:
           "Use this when the core appeal is readable rules, short solve loops, and just enough pressure to keep the puzzle dynamic.",
         profileTemplateId: "puzzle-action"
+      },
+      {
+        id: "logic-puzzle",
+        label: "Logic Puzzle",
+        description: "Rule-driven problem solving with minimal action noise and clean escalation.",
+        rationale:
+          "Use this when the game should focus on clarity, deduction, and elegant rule mastery above all else.",
+        profileTemplateId: "puzzle-action"
+      },
+      {
+        id: "physics-puzzle",
+        label: "Physics Puzzle",
+        description: "Readable simulation interactions, cause-and-effect setups, and short solve loops.",
+        rationale:
+          "Use this when the hook is manipulating space, momentum, or objects through understandable physical outcomes.",
+        profileTemplateId: "puzzle-action"
+      }
+    ]
+  },
+  {
+    id: "adventure",
+    label: "Adventure",
+    description: "Exploration and progression-first games built around pacing, discovery, and readable narrative context.",
+    subgenres: [
+      {
+        id: "narrative-adventure",
+        label: "Narrative Adventure",
+        description: "Story-forward progression with compact interaction loops and strong scene clarity.",
+        rationale:
+          "Use this when the project centers on scene-to-scene momentum, player discovery, and readable narrative stakes.",
+        profileTemplateId: "adventure-lite"
+      },
+      {
+        id: "exploration-adventure",
+        label: "Exploration Adventure",
+        description: "Environmental discovery, light systemic friction, and compact route-based progression.",
+        rationale:
+          "Use this when the game is about exploring spaces, uncovering paths, and maintaining a strong sense of discovery.",
+        profileTemplateId: "adventure-lite"
+      }
+    ]
+  },
+  {
+    id: "rpg",
+    label: "RPG",
+    description: "Progression-first games built around character growth, readable encounters, and bounded systems depth.",
+    subgenres: [
+      {
+        id: "action-rpg-lite",
+        label: "Action RPG Lite",
+        description: "Progression and gear motivation wrapped around compact real-time combat loops.",
+        rationale:
+          "Use this when you want readable combat plus light progression and build identity without a huge content burden.",
+        profileTemplateId: "rpg-lite"
+      },
+      {
+        id: "turn-based-rpg-lite",
+        label: "Turn-Based RPG Lite",
+        description: "Readable party progression, compact encounter loops, and bounded menu complexity.",
+        rationale:
+          "Use this when the project needs party growth and tactical pacing, but should stay far smaller than a full classic RPG.",
+        profileTemplateId: "rpg-lite"
+      }
+    ]
+  },
+  {
+    id: "simulation",
+    label: "Simulation",
+    description: "System-driven games built around upkeep loops, player expression, and readable resource pressure.",
+    subgenres: [
+      {
+        id: "survival-craft-lite",
+        label: "Survival Craft Lite",
+        description: "Resource gathering, survival pressure, and compact build loops without sandbox sprawl.",
+        rationale:
+          "Use this when the project depends on survival/resource loops but needs a tightly bounded content surface.",
+        profileTemplateId: "sim-lite"
+      },
+      {
+        id: "management-lite",
+        label: "Management Lite",
+        description: "Readable systems, queue or staffing decisions, and compact scenario-based optimization.",
+        rationale:
+          "Use this when you want satisfying management decisions and visible system response without a giant simulation stack.",
+        profileTemplateId: "sim-lite"
       }
     ]
   },
@@ -615,6 +780,149 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
         "Keep target readability, combo visibility, touch-button mirroring, and score reward cadence readable on small screens.",
       "first-playable":
         "Ship one short rail-shooter mission with full start-to-fail-to-score loop before expanding content."
+    }
+  },
+  "action-lite": {
+    id: "action-lite",
+    kind: "preset",
+    label: "Action Lite",
+    description:
+      "Internal recommendation profile for compact feel-first action projects with readable encounters and controlled scope.",
+    genreLabel: "Action Lite",
+    defaultProject: {
+      genre: "Action",
+      subgenre: "Character Action Lite",
+      scopeCategory: "small",
+      platformTargets: ["pc", "web", "console"],
+      agentTargets: ["codex", "cursor", "claude-code"],
+      targetPlatforms: ["codex", "cursor", "claude-code"],
+      targetAudience:
+        "Players who want responsive combat, readable pressure, and short-to-medium sessions.",
+      sessionLength: "10-20 minutes",
+      monetizationModel: "Premium",
+      comparableGames: ["Hades", "Hyper Light Drifter", "Broforce"],
+      enginePreference: "",
+      techStack: []
+    },
+    defaultDoc: {
+      concept: {
+        ...createBaseConcept("small", ["pc", "web", "console"]),
+        genre: "Action",
+        subgenre: "Character Action Lite",
+        playerFantasy:
+          "Cut through readable enemy pressure with expressive actions and confident movement.",
+        targetAudience:
+          "Players who want responsive combat feel and readable short-form action mastery.",
+        sessionLength: "10-20 minutes",
+        monetizationModel: "Premium",
+        comparableGames: ["Hades", "Hyper Light Drifter", "Broforce"],
+        scopeCategory: "small",
+        differentiators:
+          "Compact encounter structure, strong combat readability, and a tightly bounded action verb set."
+      },
+      designPillars: {
+        pillars: [
+          "Action feel must land before content breadth expands.",
+          "Every enemy or hazard should communicate pressure cleanly.",
+          "Player verbs should stay expressive without exploding scope."
+        ],
+        feelStatement:
+          "Responsive, punchy, and readable with compact encounters built around satisfying actions.",
+        antiGoals: [
+          "Never turn into unreadable crowd chaos.",
+          "Never add move-list complexity that outruns production scope.",
+          "Never bury feel under slow or muddy feedback."
+        ],
+        emotionalTargets: ["Momentum", "confidence", "pressure", "release"],
+        readabilityPrinciples:
+          "Enemy intent, incoming danger, and player action payoff should stay understandable at full speed."
+      },
+      coreLoop: {
+        secondToSecond:
+          "Read the next threat, commit to an action, confirm impact, and reposition before pressure spikes.",
+        minuteToMinute:
+          "Clear encounter sets, adapt to changing pressure, and sharpen execution through repeated short runs.",
+        sessionLoop:
+          "Play one concise combat slice, improve execution, unlock light variation, and run again.",
+        longTermProgression:
+          "Unlock small combat options, stage variations, and score or completion milestones.",
+        failureStates:
+          "Overcommitting into unreadable pressure, dropping control of space, or missing key defensive timings.",
+        rewardCadence:
+          "Immediate hit feedback and encounter clears, with larger rewards at stage or run completion."
+      },
+      controlsFeel: {
+        controlScheme:
+          "Direct movement plus a compact action set tuned around responsiveness and readable cooldown or timing windows.",
+        cameraRules:
+          "Frame pressure clearly and preserve player orientation during fast exchanges.",
+        movementPhilosophy:
+          "Movement should support confident aggression and quick recovery, not hesitation.",
+        combatFeelGoals:
+          "Every core action should feel immediate, legible, and worth using repeatedly.",
+        responsivenessStandards:
+          "Inputs should resolve cleanly with minimal delay and strong audio-visual confirmation.",
+        platformInputNotes:
+          "Controller and keyboard should both support confident action execution without awkward remapping pressure.",
+        accessibilityConsiderations:
+          "Readable incoming-threat cues, optional aim or input assists, and reduced flash or shake settings."
+      },
+      contentBible: {
+        playerVerbs: "Move, attack, evade, interrupt, finish, recover, and push tempo.",
+        enemies:
+          "Readable melee pressure units, ranged disruptors, armored anchors, and mobility checks.",
+        weaponsAbilities:
+          "Compact weapon or move-set options with strong feel contrast and low overlap.",
+        encounters:
+          "Short combat beats, elite mixes, pacing spikes, and readable escalation layers.",
+        levelsMissions:
+          "Compact stages or arenas that prove combat feel without requiring giant content libraries.",
+        bossesSpecialEvents:
+          "Small multi-phase bosses or pressure events that test timing, space control, and clarity.",
+        pickupsRewards:
+          "Health, cooldown relief, temporary boosts, score rewards, and unlock tokens.",
+        uiHudElements:
+          "Health, cooldown or resource state, enemy warnings, score or performance feedback, and clear fail messaging."
+      },
+      artTone: {
+        artDirection:
+          "Clean silhouettes, strong impact language, and readable foreground action over decorative noise.",
+        toneKeywords: ["Punchy", "kinetic", "readable", "confident"],
+        visualReferences: ["indie action readability", "clear combat silhouettes"],
+        negativeReferences: ["muddy impacts", "crowded effect stacks", "indistinct enemy shapes"],
+        animationStyle:
+          "Snappy anticipation, clear hit reaction, and readable recoveries that teach timing.",
+        vfxDirection:
+          "Short, high-clarity effects that emphasize timing and impact without obscuring space.",
+        audioMusicDirection:
+          "Strong impact cues, energetic pacing, and feedback that reinforces action timing."
+      },
+      technicalDesign: {
+        engine: "",
+        renderingConstraints:
+          "Prioritize combat clarity, frame pacing, and consistent hit readability over heavy presentation layers.",
+        targetFramerate: "60 FPS on target platforms",
+        memoryPerformanceBudget:
+          "Reusable encounter ingredients, pooled feedback effects, and compact enemy variant sets.",
+        saveSystem:
+          "Light progression flags, settings, and score or run-history persistence as needed.",
+        contentPipeline:
+          "Author combat beats, enemy role data, and tuning tables through reusable lightweight content definitions.",
+        namingConventions:
+          "Name encounters, enemy roles, and combat tuning assets by pressure function and stage context.",
+        folderStructure:
+          "Separate combat systems, enemies, encounters, progression, UI, and feedback assets.",
+        platformConstraints:
+          "Combat readability and stable response timing should take priority over visual density."
+      }
+    },
+    stageFocus: {
+      "first-playable":
+        "Ship one compact combat loop with clear fail-recover flow before expanding stage count or move-set breadth.",
+      "combat-feel":
+        "Prioritize responsiveness, impact language, and readable timing windows before adding more content.",
+      "enemy-behavior":
+        "Focus on clear threat roles and readable pressure instead of large enemy rosters."
     }
   },
   platformer: {
@@ -1170,6 +1478,149 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
         "Keep roster growth compact and meaningful so mission tuning stays manageable."
     }
   },
+  "strategy-lite": {
+    id: "strategy-lite",
+    kind: "preset",
+    label: "Strategy Lite",
+    description:
+      "Internal recommendation profile for compact system-driven strategy projects with readable decisions and bounded content scope.",
+    genreLabel: "Strategy Lite",
+    defaultProject: {
+      genre: "Strategy",
+      subgenre: "Strategy Lite",
+      scopeCategory: "medium",
+      platformTargets: ["pc", "web", "switch"],
+      agentTargets: ["codex", "cursor", "claude-code"],
+      targetPlatforms: ["codex", "cursor", "claude-code"],
+      targetAudience:
+        "Players who want readable strategy, compact systems depth, and repeatable decision loops.",
+      sessionLength: "20-40 minutes",
+      monetizationModel: "Premium",
+      comparableGames: ["Into the Breach", "Luck be a Landlord", "Mini Motorways"],
+      enginePreference: "",
+      techStack: []
+    },
+    defaultDoc: {
+      concept: {
+        ...createBaseConcept("medium", ["pc", "web", "switch"]),
+        genre: "Strategy",
+        subgenre: "Strategy Lite",
+        playerFantasy:
+          "Solve pressure through foresight, small-scope systems mastery, and clean strategic tradeoffs.",
+        targetAudience:
+          "Players who want readable strategy systems and compact but meaningful decision depth.",
+        sessionLength: "20-40 minutes",
+        monetizationModel: "Premium",
+        comparableGames: ["Into the Breach", "Luck be a Landlord", "Mini Motorways"],
+        scopeCategory: "medium",
+        differentiators:
+          "Strategy-first readability with bounded content, compact system loops, and clear player ownership of outcomes."
+      },
+      designPillars: {
+        pillars: [
+          "Core decisions must stay readable under pressure.",
+          "Systems depth should come from interaction quality, not sheer quantity.",
+          "Production scope should stay small enough to tune cleanly."
+        ],
+        feelStatement:
+          "Clear, deliberate, and systemically satisfying without sprawling into management bloat.",
+        antiGoals: [
+          "Never bury decisions under unreadable rule stacks.",
+          "Never explode content breadth beyond what can be balanced well.",
+          "Never make the player fight the interface to understand state."
+        ],
+        emotionalTargets: ["Control", "foresight", "tension", "satisfaction"],
+        readabilityPrinciples:
+          "Threat state, resource state, and next-best options should remain legible in one scan."
+      },
+      coreLoop: {
+        secondToSecond:
+          "Read the current state, commit to one strong decision, and watch the system respond clearly.",
+        minuteToMinute:
+          "Stabilize pressure, optimize a small strategic engine, and adapt to the next escalation.",
+        sessionLoop:
+          "Run one compact strategic scenario, unlock light variation, and replay with sharper decisions.",
+        longTermProgression:
+          "Unlock small strategic modifiers, new scenario twists, and deeper but bounded mastery goals.",
+        failureStates:
+          "State collapse from poor prioritization, opaque risk management, or overextended system complexity.",
+        rewardCadence:
+          "Frequent tactical feedback with stronger scenario-clear or run-complete payoff."
+      },
+      controlsFeel: {
+        controlScheme:
+          "Direct selection, clear previews, and low-friction controls that support quick strategic decisions.",
+        cameraRules:
+          "Camera and UI should prioritize board or state readability over decorative movement.",
+        movementPhilosophy:
+          "Any movement or placement decision should communicate consequence before commitment.",
+        combatFeelGoals:
+          "If combat exists, it should resolve clearly and support strategy readability instead of overpowering it.",
+        responsivenessStandards:
+          "Selections, previews, and confirmations should feel immediate and low-risk to inspect.",
+        platformInputNotes:
+          "Mouse and controller input both need strong focus states, quick inspection, and readable overlays.",
+        accessibilityConsiderations:
+          "Readable data layers, color-safe state markers, and scalable UI density for long sessions."
+      },
+      contentBible: {
+        playerVerbs: "Inspect, place, commit, optimize, reroute, defend, and recover.",
+        enemies:
+          "Pressure systems, timed threats, or role-based opponents that create readable strategic choices.",
+        weaponsAbilities:
+          "Compact upgrade, placement, or card-like verbs with clear interaction value.",
+        encounters:
+          "Short strategic scenarios, escalation events, and replayable combinations of known rules.",
+        levelsMissions:
+          "Compact maps, challenge sets, or runs built around one strong strategic hook each.",
+        bossesSpecialEvents:
+          "Capstone scenarios that test system understanding and prioritization clarity.",
+        pickupsRewards:
+          "Upgrade choices, strategic modifiers, scenario unlocks, and mastery milestones.",
+        uiHudElements:
+          "Resource state, threat previews, objective or survival status, and quick-inspection affordances."
+      },
+      artTone: {
+        artDirection:
+          "Readable state language, clean system visualization, and low-noise presentation that supports decision-making.",
+        toneKeywords: ["Readable", "deliberate", "systemic", "controlled"],
+        visualReferences: ["clean strategy UI", "compact systemic readability"],
+        negativeReferences: ["spreadsheet clutter", "opaque overlays", "overdecorated state presentation"],
+        animationStyle:
+          "Fast, readable transitions that clarify system response and decision results.",
+        vfxDirection:
+          "Restrained, information-first feedback that never obscures critical state.",
+        audioMusicDirection:
+          "Measured feedback and pacing cues that support concentration and escalation."
+      },
+      technicalDesign: {
+        engine: "",
+        renderingConstraints:
+          "Prioritize UI readability, state clarity, and stable simulation response over visual spectacle.",
+        targetFramerate: "60 FPS on target platforms",
+        memoryPerformanceBudget:
+          "Compact scenario sets, reusable system modules, and minimal presentation overhead.",
+        saveSystem:
+          "Scenario progress, settings, unlocks, and lightweight run-state persistence where needed.",
+        contentPipeline:
+          "Author scenarios, upgrades, rules, and progression modifiers through structured, reusable data.",
+        namingConventions:
+          "Name rules, upgrades, scenarios, and pressure systems by purpose and player-facing meaning.",
+        folderStructure:
+          "Separate rules, scenarios, progression, UI, and content definitions for clean iteration.",
+        platformConstraints:
+          "Maintain readable state presentation on desktop and couch-distance displays."
+      }
+    },
+    stageFocus: {
+      "first-playable":
+        "Ship one compact strategic scenario with a complete decision-to-outcome loop before expanding system breadth.",
+      "progression-meta":
+        "Keep unlocks and modifiers bounded so tuning remains manageable.",
+      "content-slice":
+        "Use one tight scenario set to prove that the strategic loop is readable and worth repeating."
+    }
+  },
   "puzzle-action": {
     id: "puzzle-action",
     kind: "preset",
@@ -1311,12 +1762,441 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
         "Use one compact mechanic family to prove teach-test-twist pacing and action pressure readability."
     }
   },
+  "adventure-lite": {
+    id: "adventure-lite",
+    kind: "preset",
+    label: "Adventure Lite",
+    description:
+      "Internal recommendation profile for compact exploration and narrative projects with readable progression and discovery.",
+    genreLabel: "Adventure Lite",
+    defaultProject: {
+      genre: "Adventure",
+      subgenre: "Narrative Adventure",
+      scopeCategory: "small",
+      platformTargets: ["pc", "web", "switch"],
+      agentTargets: ["codex", "cursor", "claude-code"],
+      targetPlatforms: ["codex", "cursor", "claude-code"],
+      targetAudience:
+        "Players who want exploration, narrative momentum, and readable progression in compact sessions.",
+      sessionLength: "20-40 minutes",
+      monetizationModel: "Premium",
+      comparableGames: ["Oxenfree", "A Short Hike", "Firewatch"],
+      enginePreference: "",
+      techStack: []
+    },
+    defaultDoc: {
+      concept: {
+        ...createBaseConcept("small", ["pc", "web", "switch"]),
+        genre: "Adventure",
+        subgenre: "Narrative Adventure",
+        playerFantasy:
+          "Uncover the next meaningful place, clue, or story beat through deliberate exploration.",
+        targetAudience:
+          "Players who want clear progression, atmosphere, and memorable small-scope exploration.",
+        sessionLength: "20-40 minutes",
+        monetizationModel: "Premium",
+        comparableGames: ["Oxenfree", "A Short Hike", "Firewatch"],
+        scopeCategory: "small",
+        differentiators:
+          "Compact spaces, clean progression logic, and strong scene-to-scene momentum over giant world scale."
+      },
+      designPillars: {
+        pillars: [
+          "Exploration must always reveal meaningful next-state information.",
+          "Story or atmosphere should reinforce progression clarity instead of slowing it down.",
+          "Spaces should be memorable without requiring giant content breadth."
+        ],
+        feelStatement:
+          "Calm, focused, and discovery-driven with clear progression and strong sense-of-place.",
+        antiGoals: [
+          "Never hide progression in opaque adventure-game logic.",
+          "Never sprawl into oversized maps that weaken authored pacing.",
+          "Never let narrative density bury the playable loop."
+        ],
+        emotionalTargets: ["Curiosity", "presence", "relief", "discovery"],
+        readabilityPrinciples:
+          "Routes, interactables, and progression clues should stay readable without exhaustive re-scanning."
+      },
+      coreLoop: {
+        secondToSecond:
+          "Observe, move, interact, interpret the response, and choose the next place or clue to pursue.",
+        minuteToMinute:
+          "Advance through a compact environment, solve light progression gates, and reach the next meaningful reveal.",
+        sessionLoop:
+          "Complete one exploration or story slice, unlock the next chapter, and return for the next authored beat.",
+        longTermProgression:
+          "Open new paths, reveal story layers, and unlock small traversal or interaction extensions.",
+        failureStates:
+          "Progression confusion, pacing drag, or low-value exploration that weakens player momentum.",
+        rewardCadence:
+          "Frequent micro-discoveries with stronger payoff at chapter beats, reveals, or new-space unlocks."
+      },
+      controlsFeel: {
+        controlScheme:
+          "Low-friction movement and interaction tuned around readability, comfort, and scene pacing.",
+        cameraRules:
+          "Camera should frame space, characters, and routes clearly without fighting exploration.",
+        movementPhilosophy:
+          "Movement should support curiosity and presence, not friction or speed pressure.",
+        combatFeelGoals:
+          "If combat exists, it should be rare and subordinate to the exploration loop.",
+        responsivenessStandards:
+          "Interactions and traversal should respond cleanly without feeling over-tuned or twitchy.",
+        platformInputNotes:
+          "Controller and mouse input should both preserve comfortable navigation and clear interaction prompts.",
+        accessibilityConsiderations:
+          "Readable prompts, subtitle-safe pacing, contrast support, and low-motion camera options."
+      },
+      contentBible: {
+        playerVerbs: "Explore, inspect, converse, collect, unlock, route, and interpret.",
+        enemies:
+          "Optional environmental pressure, light antagonists, or rare blockers that reinforce exploration stakes.",
+        weaponsAbilities:
+          "Light utility verbs, traversal helpers, or story-context actions rather than combat kits.",
+        encounters:
+          "Exploration beats, interaction clusters, route reveals, and authored scene transitions.",
+        levelsMissions:
+          "Compact environments or chapters with strong identity and readable progression arcs.",
+        bossesSpecialEvents:
+          "High-tension reveals, chase moments, or capstone interaction sequences rather than stat-based bosses.",
+        pickupsRewards:
+          "Story artifacts, route keys, traversal unlocks, optional discoveries, and chapter rewards.",
+        uiHudElements:
+          "Objective cues, interaction prompts, map or route clarity, dialogue state, and minimal progression reminders."
+      },
+      artTone: {
+        artDirection:
+          "Strong place-making, readable interactables, and composition that rewards curiosity without clutter.",
+        toneKeywords: ["Atmospheric", "readable", "curious", "authored"],
+        visualReferences: ["small-scale narrative exploration", "clear route framing"],
+        negativeReferences: ["cluttered scene dressing", "opaque adventure item logic", "overbearing HUDs"],
+        animationStyle:
+          "Measured interactions and movement that support presence and readability.",
+        vfxDirection:
+          "Subtle guidance and scene punctuation rather than aggressive effect-heavy feedback.",
+        audioMusicDirection:
+          "Atmospheric cues, place-defining ambience, and restrained emotional escalation."
+      },
+      technicalDesign: {
+        engine: "",
+        renderingConstraints:
+          "Prioritize legible spaces, stable scene transitions, and clean interaction feedback.",
+        targetFramerate: "60 FPS on target platforms",
+        memoryPerformanceBudget:
+          "Compact authored spaces, reusable interaction systems, and restrained cinematic overhead.",
+        saveSystem:
+          "Chapter progress, settings, collectible state, and lightweight checkpoint persistence.",
+        contentPipeline:
+          "Author environments, interaction nodes, progression flags, and narrative beats through reusable data structures.",
+        namingConventions:
+          "Name scenes, interaction clusters, routes, and progression gates by chapter and purpose.",
+        folderStructure:
+          "Separate scenes, narrative content, interactions, progression flags, UI, and audio cues.",
+        platformConstraints:
+          "Exploration readability and subtitle-safe presentation should hold across desktop and handheld-class displays."
+      }
+    },
+    stageFocus: {
+      "first-playable":
+        "Ship one compact exploration slice with clear progression, scene payoff, and a complete start-to-finish loop before broadening content.",
+      "content-slice":
+        "Use one tightly authored chapter or area to prove atmosphere, route clarity, and pacing.",
+      "hud-feedback":
+        "Keep interaction prompts, route guidance, and objective state readable without over-HUDing the screen."
+    }
+  },
+  "rpg-lite": {
+    id: "rpg-lite",
+    kind: "preset",
+    label: "RPG Lite",
+    description:
+      "Internal recommendation profile for bounded character-growth projects with readable combat and progression systems.",
+    genreLabel: "RPG Lite",
+    defaultProject: {
+      genre: "RPG",
+      subgenre: "Action RPG Lite",
+      scopeCategory: "medium",
+      platformTargets: ["pc", "switch", "console"],
+      agentTargets: ["codex", "cursor", "claude-code"],
+      targetPlatforms: ["codex", "cursor", "claude-code"],
+      targetAudience:
+        "Players who want readable progression, character growth, and compact combat or encounter loops.",
+      sessionLength: "20-40 minutes",
+      monetizationModel: "Premium",
+      comparableGames: ["CrossCode", "Sea of Stars", "Bastion"],
+      enginePreference: "",
+      techStack: []
+    },
+    defaultDoc: {
+      concept: {
+        ...createBaseConcept("medium", ["pc", "switch", "console"]),
+        genre: "RPG",
+        subgenre: "Action RPG Lite",
+        playerFantasy:
+          "Grow a character through readable combat, meaningful upgrades, and compact quest or encounter arcs.",
+        targetAudience:
+          "Players who want progression and identity-building without a massive campaign footprint.",
+        sessionLength: "20-40 minutes",
+        monetizationModel: "Premium",
+        comparableGames: ["CrossCode", "Sea of Stars", "Bastion"],
+        scopeCategory: "medium",
+        differentiators:
+          "Compact progression systems, bounded content scope, and readable combat or encounter loops."
+      },
+      designPillars: {
+        pillars: [
+          "Progression should create clear identity, not spreadsheet sprawl.",
+          "Combat and growth systems must stay readable together.",
+          "Content volume should remain small enough to polish well."
+        ],
+        feelStatement:
+          "Readable, rewarding, and progression-driven with strong player identity and bounded scope.",
+        antiGoals: [
+          "Never balloon into a content-heavy campaign that outpaces production limits.",
+          "Never bury upgrade value behind opaque math or menu friction.",
+          "Never make narrative, combat, and progression all expand at once."
+        ],
+        emotionalTargets: ["Ownership", "growth", "clarity", "momentum"],
+        readabilityPrinciples:
+          "Build choices, combat consequences, and next progression steps should remain easy to understand."
+      },
+      coreLoop: {
+        secondToSecond:
+          "Engage an encounter or challenge, spend abilities or actions, and convert success into growth.",
+        minuteToMinute:
+          "Clear compact objectives, gather progression value, and make one or two meaningful build decisions.",
+        sessionLoop:
+          "Complete a short quest chain, improve the character, and push into the next bounded content slice.",
+        longTermProgression:
+          "Unlock class flavor, gear or skill choices, and a compact end-state build arc without giant system sprawl.",
+        failureStates:
+          "Unclear build consequences, pacing drag, or combat complexity that overwhelms the progression loop.",
+        rewardCadence:
+          "Frequent encounter rewards with stronger build or chapter payoffs at steady intervals."
+      },
+      controlsFeel: {
+        controlScheme:
+          "Direct movement or menu input with low-friction combat or ability selection and clear progression affordances.",
+        cameraRules:
+          "Camera should keep encounters, routes, and important pickup or interaction state readable.",
+        movementPhilosophy:
+          "Traversal should support progression pacing, not become an unrelated complexity sink.",
+        combatFeelGoals:
+          "Combat should reinforce character identity and reward growth without becoming unreadable.",
+        responsivenessStandards:
+          "Input, menu, and combat feedback should all feel immediate enough to keep growth loops satisfying.",
+        platformInputNotes:
+          "Controller-first readability with clear menu focus and low-friction input switching where needed.",
+        accessibilityConsiderations:
+          "Readable numbers and state indicators, scalable text, and reduced visual clutter in combat and menus."
+      },
+      contentBible: {
+        playerVerbs: "Fight, defend, cast, interact, upgrade, equip, and progress.",
+        enemies:
+          "Compact enemy families with readable roles and enough variation to support player-growth decisions.",
+        weaponsAbilities:
+          "Small skill trees, gear options, or class verbs with strong identity and manageable overlap.",
+        encounters:
+          "Short quests, compact dungeons, or bounded battles built around clear progression payoff.",
+        levelsMissions:
+          "Small hubs, routes, or chapters that support character growth without a giant world map burden.",
+        bossesSpecialEvents:
+          "Identity-testing boss fights or narrative capstones that pay off build decisions.",
+        pickupsRewards:
+          "Experience, gear, upgrade currency, quest rewards, and unlock milestones.",
+        uiHudElements:
+          "Health or resource state, cooldowns or turn info, quest clarity, and build or equipment feedback."
+      },
+      artTone: {
+        artDirection:
+          "Readable combat and progression state with enough style to support character identity and world flavor.",
+        toneKeywords: ["Rewarding", "readable", "heroic", "compact"],
+        visualReferences: ["compact indie RPG readability", "clean progression UI"],
+        negativeReferences: ["menu overload", "muddy item readability", "bloated world presentation"],
+        animationStyle:
+          "Clear action or turn resolution with strong upgrade payoff feedback.",
+        vfxDirection:
+          "Readable ability feedback that supports identity without flooding the screen.",
+        audioMusicDirection:
+          "Progression-forward reward cues, clear combat signals, and strong area identity through music."
+      },
+      technicalDesign: {
+        engine: "",
+        renderingConstraints:
+          "Prioritize progression readability, stable combat feedback, and menu clarity over high-complexity presentation.",
+        targetFramerate: "60 FPS on target platforms",
+        memoryPerformanceBudget:
+          "Compact enemy sets, bounded gear or skill catalogs, and reusable encounter spaces.",
+        saveSystem:
+          "Character progress, quest state, settings, and lightweight checkpoint or chapter persistence.",
+        contentPipeline:
+          "Author encounters, progression data, item tables, and quest states through reusable structured content.",
+        namingConventions:
+          "Name skills, gear, encounters, and progression states by role and player-facing meaning.",
+        folderStructure:
+          "Separate combat, progression, quest content, UI, and inventory or ability systems.",
+        platformConstraints:
+          "Text readability, menu clarity, and stable combat pacing should hold across couch and desktop play."
+      }
+    },
+    stageFocus: {
+      "first-playable":
+        "Ship one compact progression loop with readable combat and one meaningful build decision before adding more content families.",
+      "progression-meta":
+        "Keep build choices strong and bounded so progression remains readable and tuneable.",
+      "content-slice":
+        "Use one short quest or dungeon slice to prove that combat, progression, and pacing reinforce each other."
+    }
+  },
+  "sim-lite": {
+    id: "sim-lite",
+    kind: "preset",
+    label: "Simulation Lite",
+    description:
+      "Internal recommendation profile for bounded simulation projects with readable resource loops and manageable systems depth.",
+    genreLabel: "Simulation Lite",
+    defaultProject: {
+      genre: "Simulation",
+      subgenre: "Management Lite",
+      scopeCategory: "medium",
+      platformTargets: ["pc", "web"],
+      agentTargets: ["codex", "cursor", "claude-code"],
+      targetPlatforms: ["codex", "cursor", "claude-code"],
+      targetAudience:
+        "Players who want satisfying resource loops, visible system response, and compact simulation depth.",
+      sessionLength: "20-40 minutes",
+      monetizationModel: "Premium",
+      comparableGames: ["Mini Motorways", "Potion Craft", "Against the Storm"],
+      enginePreference: "",
+      techStack: []
+    },
+    defaultDoc: {
+      concept: {
+        ...createBaseConcept("medium", ["pc", "web"]),
+        genre: "Simulation",
+        subgenre: "Management Lite",
+        playerFantasy:
+          "Stabilize a living system through smart prioritization, readable resource pressure, and compact optimization loops.",
+        targetAudience:
+          "Players who want visible simulation feedback and manageable but satisfying systems depth.",
+        sessionLength: "20-40 minutes",
+        monetizationModel: "Premium",
+        comparableGames: ["Mini Motorways", "Potion Craft", "Against the Storm"],
+        scopeCategory: "medium",
+        differentiators:
+          "Readable systems, bounded content demands, and tight scenario loops that foreground player decisions."
+      },
+      designPillars: {
+        pillars: [
+          "System response must stay legible while complexity grows.",
+          "The player should always know which pressure is currently most important.",
+          "Simulation depth should remain production-friendly and tuneable."
+        ],
+        feelStatement:
+          "Readable, absorbing, and systemically satisfying without becoming a giant spreadsheet sandbox.",
+        antiGoals: [
+          "Never bury player decisions under invisible simulation rules.",
+          "Never add more systems than can be explained and tuned clearly.",
+          "Never let long-session drag replace meaningful decision cadence."
+        ],
+        emotionalTargets: ["Control", "optimization", "pressure", "relief"],
+        readabilityPrinciples:
+          "Resource state, bottlenecks, and system consequences should remain understandable in one scan."
+      },
+      coreLoop: {
+        secondToSecond:
+          "Inspect system state, fix the biggest bottleneck, and observe how the loop stabilizes or escalates.",
+        minuteToMinute:
+          "Balance resources, unlock small improvements, and adapt to the next pressure event.",
+        sessionLoop:
+          "Complete one compact scenario or run, improve efficiency, and retry with sharper priorities.",
+        longTermProgression:
+          "Unlock small systemic variations, new scenario modifiers, and optimized play patterns.",
+        failureStates:
+          "System collapse from missed bottlenecks, unreadable feedback, or poorly paced escalation.",
+        rewardCadence:
+          "Frequent micro-relief from stabilizing systems, with stronger payoff at scenario clears and milestone unlocks."
+      },
+      controlsFeel: {
+        controlScheme:
+          "Direct management actions, quick inspection tools, and low-friction feedback on system changes.",
+        cameraRules:
+          "Camera or viewport should prioritize bottleneck visibility and easy state scanning.",
+        movementPhilosophy:
+          "Navigation should be quick and subordinate to system understanding rather than a challenge of its own.",
+        combatFeelGoals:
+          "If conflict exists, it should serve the management loop rather than dominate it.",
+        responsivenessStandards:
+          "System updates and player actions should feel immediate enough to support rapid iteration and learning.",
+        platformInputNotes:
+          "Mouse-first clarity with controller support only if it can preserve fast inspection and action loops.",
+        accessibilityConsiderations:
+          "Readable metrics, color-safe state signaling, scalable text, and low-noise alert hierarchies."
+      },
+      contentBible: {
+        playerVerbs: "Inspect, allocate, build, route, optimize, stabilize, and react.",
+        enemies:
+          "Environmental pressure, demand spikes, shortages, or hostile systems that create readable management tension.",
+        weaponsAbilities:
+          "Tools, upgrades, policies, or construction verbs instead of traditional combat kits.",
+        encounters:
+          "Escalation events, bottleneck spikes, survival phases, and compact optimization scenarios.",
+        levelsMissions:
+          "Short runs, scenarios, or maps built around one dominant management problem each.",
+        bossesSpecialEvents:
+          "Large pressure spikes, timed crises, or end-of-run survival tests that validate system mastery.",
+        pickupsRewards:
+          "Upgrade currency, new build options, efficiency boosts, and scenario completion rewards.",
+        uiHudElements:
+          "Resource state, bottleneck alerts, timers, demand curves, and clear action affordances."
+      },
+      artTone: {
+        artDirection:
+          "Readable systems visualization and low-noise presentation that helps the player scan state quickly.",
+        toneKeywords: ["Systemic", "clean", "absorbing", "readable"],
+        visualReferences: ["compact management UI", "clear simulation dashboards"],
+        negativeReferences: ["metric overload", "tiny unreadable labels", "noisy alert spam"],
+        animationStyle:
+          "Clear cause-and-effect changes that reinforce how the simulation responds.",
+        vfxDirection:
+          "Information-first feedback that highlights state changes and critical alerts without clutter.",
+        audioMusicDirection:
+          "Steady system cues, clear alert hierarchies, and music that supports concentration."
+      },
+      technicalDesign: {
+        engine: "",
+        renderingConstraints:
+          "Prioritize state readability, quick simulation response, and UI clarity over decorative density.",
+        targetFramerate: "60 FPS on target platforms",
+        memoryPerformanceBudget:
+          "Bounded scenario count, reusable simulation rules, and restrained visual layering.",
+        saveSystem:
+          "Scenario progress, unlocks, settings, and lightweight run or checkpoint persistence.",
+        contentPipeline:
+          "Author rules, scenarios, resources, and event tables through reusable data-driven systems.",
+        namingConventions:
+          "Name resources, rules, alerts, and scenarios by function and player-facing meaning.",
+        folderStructure:
+          "Separate simulation rules, scenarios, UI, progression, and alerting or tutorial systems.",
+        platformConstraints:
+          "Text, metrics, and alert readability must remain strong on standard desktop displays."
+      }
+    },
+    stageFocus: {
+      foundation:
+        "Prioritize readable core systems, instrumentation, and stable simulation feedback before layering more content.",
+      "progression-meta":
+        "Keep unlocks and scenario modifiers small enough that the core system remains comprehensible.",
+      "content-slice":
+        "Use one compact scenario to prove the simulation loop is readable, absorbing, and repeatable."
+    }
+  },
   "custom-guided": {
     id: "custom-guided",
     kind: "custom",
     label: "Custom",
     description:
-      "Guided setup for a one-off game idea when none of the curated starter modes fit cleanly.",
+      "Guided setup for a one-off game idea when none of the curated genre recommendations fit cleanly.",
     genreLabel: "Custom",
     defaultProject: {
       genre: "",

@@ -142,11 +142,16 @@ export type AppTheme = "dark" | "light" | "system";
 export type TemplateId =
   | "blank-game-project"
   | "arcade-action-rail-shooter"
+  | "action-lite"
   | "platformer"
   | "twin-stick-shooter"
   | "survival-horror-lite"
   | "tactics-lite"
+  | "strategy-lite"
   | "puzzle-action"
+  | "adventure-lite"
+  | "rpg-lite"
+  | "sim-lite"
   | "custom-guided";
 
 export interface CoreFeature {

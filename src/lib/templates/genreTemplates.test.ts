@@ -40,6 +40,8 @@ describe("genreTemplates", () => {
 
   it("recognizes all supported template ids", () => {
     expect(isTemplateId("puzzle-action")).toBe(true);
+    expect(isTemplateId("action-lite")).toBe(true);
+    expect(isTemplateId("adventure-lite")).toBe(true);
     expect(isTemplateId("custom-guided")).toBe(true);
     expect(isTemplateId("unknown-template")).toBe(false);
   });
@@ -51,6 +53,9 @@ describe("genreTemplates", () => {
       "horror",
       "strategy",
       "puzzle",
+      "adventure",
+      "rpg",
+      "simulation",
       "other"
     ]);
 
@@ -60,6 +65,20 @@ describe("genreTemplates", () => {
         subgenreId: "survival-horror"
       })
     ).toBe("survival-horror-lite");
+
+    expect(
+      inferTemplateIdFromGenreSelection({
+        genreFamilyId: "adventure",
+        subgenreId: "narrative-adventure"
+      })
+    ).toBe("adventure-lite");
+
+    expect(
+      inferTemplateIdFromGenreSelection({
+        genreFamilyId: "simulation",
+        subgenreId: "management-lite"
+      })
+    ).toBe("sim-lite");
   });
 
   it("falls back to blank and custom-guided templates appropriately for the other path", () => {
