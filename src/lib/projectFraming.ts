@@ -5,6 +5,8 @@ export interface ScopeProfile {
   label: string;
   summary: string;
   guardrails: string[];
+  tone?: "default" | "warning";
+  warningMessage?: string;
 }
 
 export interface SessionLengthPreset {
@@ -12,6 +14,8 @@ export interface SessionLengthPreset {
   label: string;
   summary: string;
 }
+
+export const SCOPE_ORDER: ScopeCategory[] = ["tiny", "small", "medium", "large"];
 
 export const SCOPE_PROFILES: ScopeProfile[] = [
   {
@@ -46,6 +50,21 @@ export const SCOPE_PROFILES: ScopeProfile[] = [
       "More asset burden and balancing passes",
       "Needs stronger cut discipline to avoid slipping past v1"
     ]
+  },
+  {
+    id: "large",
+    label: "Large",
+    summary:
+      "Broad game scope with a high risk of slipping past v1. Valid for planning, but not the default target for this tool.",
+    guardrails: [
+      "Expect multiple systems, content families, and production dependencies",
+      "Requires aggressive milestone cuts to stay shippable",
+      "Needs stronger scheduling, asset discipline, and fallback plans",
+      "Treat this as a warning sign unless the team and runway are clearly real"
+    ],
+    tone: "warning",
+    warningMessage:
+      "Large is allowed for honest planning, but Preflight Game OS is still optimized for finishable tiny-to-medium projects."
   }
 ];
 

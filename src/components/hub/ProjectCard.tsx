@@ -7,6 +7,7 @@ import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProjects } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/useToast";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
+import { getScopeProfile, SCOPE_ORDER } from "@/lib/projectFraming";
 import { cn, formatDate } from "@/lib/utils";
 import { useProjectStore } from "@/stores/projectStore";
 import type {
@@ -40,7 +41,6 @@ const getGradientForProject = (projectId: string): string => {
   return gradients[Math.abs(hash) % gradients.length];
 };
 
-const scopeOrder: ScopeCategory[] = ["tiny", "small", "medium"];
 const statusOptions: ProjectStatus[] = [
   "concept",
   "preproduction",
@@ -85,6 +85,7 @@ export const ProjectCard = memo(
     );
 
     const cardGradient = useMemo(() => getGradientForProject(project.id), [project.id]);
+    const draftScopeProfile = useMemo(() => getScopeProfile(draftScope), [draftScope]);
     const completedStages = stages.filter((stage) => stage.status === "complete").length;
     const progress = stages.length === 0 ? 0 : Math.round((completedStages / stages.length) * 100);
     const artifactCount = artifacts.length;
@@ -211,14 +212,24 @@ export const ProjectCard = memo(
                 <select
                   value={draftScope}
                   onChange={(event) => setDraftScope(event.target.value as ScopeCategory)}
-                  className="mt-2 w-full rounded-xl border border-outline-variant/15 bg-surface px-3 py-2 text-sm text-on-surface outline-none focus:border-primary/40"
+                  className={cn(
+                    "mt-2 w-full rounded-xl border bg-surface px-3 py-2 text-sm text-on-surface outline-none",
+                    draftScopeProfile.tone === "warning"
+                      ? "border-amber-300/25 focus:border-amber-300/50"
+                      : "border-outline-variant/15 focus:border-primary/40"
+                  )}
                 >
-                  {scopeOrder.map((scope) => (
+                  {SCOPE_ORDER.map((scope) => (
                     <option key={scope} value={scope}>
-                      {scope}
+                      {getScopeProfile(scope).label}
                     </option>
                   ))}
                 </select>
+                {draftScopeProfile.warningMessage ? (
+                  <p className="mt-2 text-xs leading-5 text-amber-100/90">
+                    {draftScopeProfile.warningMessage}
+                  </p>
+                ) : null}
               </label>
               <label className="block">
                 <span className="text-[11px] uppercase tracking-[0.22em] text-on-surface-variant">
@@ -414,9 +425,14 @@ export const ProjectCard = memo(
               .map((chip) => (
                 <span
                   key={chip}
-                  className="rounded-full bg-surface px-3 py-1 text-[11px] uppercase tracking-[0.18em] text-on-surface-variant"
+                  className={cn(
+                    "rounded-full px-3 py-1 text-[11px] uppercase tracking-[0.18em]",
+                    chip === "large"
+                      ? "bg-amber-500/10 text-amber-100"
+                      : "bg-surface text-on-surface-variant"
+                  )}
                 >
-                  {chip}
+                  {chip === project.scopeCategory ? getScopeProfile(project.scopeCategory).label : chip}
                 </span>
               ))}
           </div>

@@ -70,7 +70,8 @@ const normalizeProject = (item: Record<string, unknown>): ImportedProjectBundleS
     scopeCategory:
       item.scopeCategory === "tiny" ||
       item.scopeCategory === "small" ||
-      item.scopeCategory === "medium"
+      item.scopeCategory === "medium" ||
+      item.scopeCategory === "large"
         ? item.scopeCategory
         : "small",
     genre: typeof item.genre === "string" ? item.genre : "",

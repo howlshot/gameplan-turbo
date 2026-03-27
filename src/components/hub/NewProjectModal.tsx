@@ -18,7 +18,7 @@ import {
 } from "@/components/workspace/game/GameSectionLayout";
 import {
   getScopeProfile,
-  SCOPE_PROFILES,
+  SCOPE_ORDER,
   SESSION_LENGTH_PRESETS,
   getSessionPreset
 } from "@/lib/projectFraming";
@@ -277,16 +277,36 @@ export const NewProjectModal = ({
                 <SingleSelectCards
                   selectedValue={scopeCategory}
                   onSelect={(value) => setScopeCategory(value as ScopeCategory)}
-                  cards={SCOPE_PROFILES.map((profile) => ({
-                    value: profile.id,
-                    title: profile.label,
-                    description: profile.summary
-                  }))}
+                  cards={SCOPE_ORDER.map((scopeCategoryValue) => {
+                    const profile = getScopeProfile(scopeCategoryValue);
+
+                    return {
+                      value: profile.id,
+                      title: profile.label,
+                      description: profile.summary,
+                      tone: profile.tone,
+                      eyebrow:
+                        profile.tone === "warning" ? "Warning Tier" : undefined
+                    };
+                  })}
                 />
-                <div className="mt-3 rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+                <div
+                  className={
+                    activeScopeProfile.tone === "warning"
+                      ? "mt-3 rounded-2xl border border-amber-300/20 bg-amber-500/5 px-4 py-4"
+                      : "mt-3 rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4"
+                  }
+                >
                   <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
-                    Scope Guardrails
+                    {activeScopeProfile.tone === "warning"
+                      ? "Large Scope Warning"
+                      : "Scope Guardrails"}
                   </p>
+                  {activeScopeProfile.warningMessage ? (
+                    <p className="mt-3 text-sm leading-6 text-amber-100/90">
+                      {activeScopeProfile.warningMessage}
+                    </p>
+                  ) : null}
                   <ul className="mt-3 space-y-2 text-sm leading-6 text-on-surface-variant">
                     {activeScopeProfile.guardrails.map((guardrail) => (
                       <li key={guardrail}>{guardrail}</li>

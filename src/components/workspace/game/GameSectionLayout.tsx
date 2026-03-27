@@ -153,7 +153,9 @@ export const MultiSelectPills = ({
 
 interface ChoiceCard {
   description: string;
+  eyebrow?: string;
   title: string;
+  tone?: "default" | "warning";
   value: string;
 }
 
@@ -169,9 +171,10 @@ export const SingleSelectCards = ({
   selectedValue
 }: SingleSelectCardsProps): JSX.Element => {
   return (
-    <div className="grid gap-3 md:grid-cols-3">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => {
         const isSelected = card.value === selectedValue;
+        const isWarning = card.tone === "warning";
         return (
           <button
             key={card.value}
@@ -180,14 +183,29 @@ export const SingleSelectCards = ({
             className={cn(
               "rounded-2xl border p-4 text-left transition",
               isSelected
-                ? "border-primary/40 bg-primary/10 shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
-                : "border-outline-variant/10 bg-surface hover:border-primary/20 hover:bg-surface-container-lowest"
+                ? isWarning
+                  ? "border-amber-400/40 bg-amber-500/10 shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
+                  : "border-primary/40 bg-primary/10 shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
+                : isWarning
+                  ? "border-amber-300/15 bg-surface hover:border-amber-300/35 hover:bg-surface-container-lowest"
+                  : "border-outline-variant/10 bg-surface hover:border-primary/20 hover:bg-surface-container-lowest"
             )}
           >
+            {card.eyebrow ? (
+              <p
+                className={cn(
+                  "font-mono text-[10px] uppercase tracking-[0.18em]",
+                  isWarning ? "text-amber-200" : "text-primary"
+                )}
+              >
+                {card.eyebrow}
+              </p>
+            ) : null}
             <p
               className={cn(
                 "font-headline text-base font-semibold",
-                isSelected ? "text-on-surface" : "text-on-surface"
+                isWarning && isSelected ? "text-amber-50" : "text-on-surface",
+                card.eyebrow ? "mt-2" : ""
               )}
             >
               {card.title}

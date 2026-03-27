@@ -63,6 +63,23 @@ describe("projectStore", () => {
     expect(db.gameDesignDocs.add).toHaveBeenCalled();
   });
 
+  it("persists large scope into the mirrored game design doc", async () => {
+    const project = await useProjectStore.getState().createProject({
+      title: "Mega Ops",
+      scopeCategory: "large"
+    });
+
+    expect(project.scopeCategory).toBe("large");
+    expect(db.gameDesignDocs.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectId: project.id,
+        concept: expect.objectContaining({
+          scopeCategory: "large"
+        })
+      })
+    );
+  });
+
   it("loads projects from the database", async () => {
     const mockProjects: Project[] = [
       {

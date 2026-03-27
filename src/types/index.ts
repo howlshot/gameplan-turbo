@@ -13,7 +13,7 @@ export type ProjectStatus =
   | "playtesting"
   | "release-prep";
 
-export type ScopeCategory = "tiny" | "small" | "medium";
+export type ScopeCategory = "tiny" | "small" | "medium" | "large";
 
 export type GamePlatformTarget =
   | "ios"
