@@ -139,7 +139,15 @@ export type CredentialCategory = "api_key" | "database" | "oauth" | "other";
 
 export type AppTheme = "dark" | "light" | "system";
 
-export type TemplateId = "blank-game-project" | "arcade-action-rail-shooter";
+export type TemplateId =
+  | "blank-game-project"
+  | "arcade-action-rail-shooter"
+  | "platformer"
+  | "twin-stick-shooter"
+  | "survival-horror-lite"
+  | "tactics-lite"
+  | "puzzle-action"
+  | "custom-guided";
 
 export interface CoreFeature {
   id: string;
@@ -268,6 +276,19 @@ export interface GameDesignDoc {
   artTone: ArtToneSection;
   technicalDesign: TechnicalDesignSection;
   updatedAt: number;
+}
+
+export interface GameDesignDocSeed {
+  id?: string;
+  projectId?: string;
+  concept?: Partial<ConceptSection>;
+  designPillars?: Partial<DesignPillarsSection>;
+  coreLoop?: Partial<CoreLoopSection>;
+  controlsFeel?: Partial<ControlsFeelSection>;
+  contentBible?: Partial<ContentBibleSection>;
+  artTone?: Partial<ArtToneSection>;
+  technicalDesign?: Partial<TechnicalDesignSection>;
+  updatedAt?: number;
 }
 
 export interface GeneratedArtifact {

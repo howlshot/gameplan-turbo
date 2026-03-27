@@ -7,7 +7,8 @@ import { useProjectStore } from "@/stores/projectStore";
 import {
   AGENT_PLATFORM_OPTIONS,
   GAME_PLATFORM_OPTIONS,
-  GAME_TEMPLATES
+  getStarterModeDefinitions,
+  getTemplateDefinition
 } from "@/lib/templates/genreTemplates";
 import {
   GameField,
@@ -45,7 +46,7 @@ const CREATION_STEPS: CreationStep[] = [
   {
     id: 1,
     label: "Core Identity",
-    description: "Template, title, pitch, and genre framing."
+    description: "Starter mode, title, pitch, and genre framing."
   },
   {
     id: 2,
@@ -53,6 +54,45 @@ const CREATION_STEPS: CreationStep[] = [
     description: "Scope, platforms, tools, and shipping setup."
   }
 ];
+
+const DEFAULT_STARTER_MODE: TemplateId = "arcade-action-rail-shooter";
+
+interface FormDefaults {
+  agentTargets: AgentPlatform[];
+  enginePreference: string;
+  genre: string;
+  platformTargets: GamePlatformTarget[];
+  scopeCategory: ScopeCategory;
+  sessionLength: string;
+  subgenre: string;
+  targetAudience: string;
+}
+
+const toTrimmedArray = (value: string): string[] =>
+  Array.from(
+    new Set(
+      value
+        .split(/[\n,]/)
+        .map((token) => token.trim())
+        .filter(Boolean)
+    )
+  );
+
+const getStarterModeDefaults = (templateId: TemplateId): FormDefaults => {
+  const template = getTemplateDefinition(templateId);
+  const defaultProject = template.defaultProject;
+
+  return {
+    genre: defaultProject.genre ?? "",
+    subgenre: defaultProject.subgenre ?? "",
+    targetAudience: defaultProject.targetAudience ?? "",
+    enginePreference: defaultProject.enginePreference ?? "",
+    scopeCategory: defaultProject.scopeCategory ?? "small",
+    sessionLength: defaultProject.sessionLength ?? "10-20 minutes",
+    platformTargets: [...(defaultProject.platformTargets ?? ["pc", "web"])],
+    agentTargets: [...(defaultProject.agentTargets ?? ["codex", "cursor"])]
+  };
+};
 
 export const NewProjectModal = ({
   isOpen,
@@ -65,46 +105,67 @@ export const NewProjectModal = ({
 
   const titleRef = useRef<HTMLInputElement>(null);
   const customSessionRef = useRef<HTMLInputElement>(null);
+  const customGenreRef = useRef<HTMLInputElement>(null);
+
+  const starterModes = useMemo(() => getStarterModeDefinitions(), []);
+  const defaultStarterMode = useMemo(
+    () => getStarterModeDefaults(DEFAULT_STARTER_MODE),
+    []
+  );
 
   const [step, setStep] = useState<1 | 2>(1);
-  const [templateId, setTemplateId] = useState<TemplateId>("arcade-action-rail-shooter");
+  const [templateId, setTemplateId] = useState<TemplateId>(DEFAULT_STARTER_MODE);
   const [title, setTitle] = useState("");
   const [pitch, setPitch] = useState("");
-  const [genre, setGenre] = useState("Action");
-  const [subgenre, setSubgenre] = useState("Rail Shooter");
-  const [targetAudience, setTargetAudience] = useState("");
-  const [enginePreference, setEnginePreference] = useState("");
-  const [scopeCategory, setScopeCategory] = useState<ScopeCategory>("small");
-  const [sessionLength, setSessionLength] = useState("5-12 minutes");
-  const [platformTargets, setPlatformTargets] = useState<GamePlatformTarget[]>([
-    "ios",
-    "android",
-    "pc"
-  ]);
-  const [agentTargets, setAgentTargets] = useState<AgentPlatform[]>([
-    "codex",
-    "cursor",
-    "claude-code"
-  ]);
+  const [genre, setGenre] = useState(defaultStarterMode.genre);
+  const [subgenre, setSubgenre] = useState(defaultStarterMode.subgenre);
+  const [targetAudience, setTargetAudience] = useState(
+    defaultStarterMode.targetAudience
+  );
+  const [enginePreference, setEnginePreference] = useState(
+    defaultStarterMode.enginePreference
+  );
+  const [scopeCategory, setScopeCategory] = useState<ScopeCategory>(
+    defaultStarterMode.scopeCategory
+  );
+  const [sessionLength, setSessionLength] = useState(
+    defaultStarterMode.sessionLength
+  );
+  const [platformTargets, setPlatformTargets] = useState<GamePlatformTarget[]>(
+    defaultStarterMode.platformTargets
+  );
+  const [agentTargets, setAgentTargets] = useState<AgentPlatform[]>(
+    defaultStarterMode.agentTargets
+  );
+  const [customGenre, setCustomGenre] = useState("");
+  const [customSubgenre, setCustomSubgenre] = useState("");
+  const [customPlayerFantasy, setCustomPlayerFantasy] = useState("");
+  const [customPlayPattern, setCustomPlayPattern] = useState("");
+  const [customFeelKeywords, setCustomFeelKeywords] = useState("");
   const [showTitleError, setShowTitleError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resetForm = useCallback((): void => {
     setStep(1);
-    setTemplateId("arcade-action-rail-shooter");
+    setTemplateId(DEFAULT_STARTER_MODE);
     setTitle("");
     setPitch("");
-    setGenre("Action");
-    setSubgenre("Rail Shooter");
-    setTargetAudience("");
-    setEnginePreference("");
-    setScopeCategory("small");
-    setSessionLength("5-12 minutes");
-    setPlatformTargets(["ios", "android", "pc"]);
-    setAgentTargets(["codex", "cursor", "claude-code"]);
+    setGenre(defaultStarterMode.genre);
+    setSubgenre(defaultStarterMode.subgenre);
+    setTargetAudience(defaultStarterMode.targetAudience);
+    setEnginePreference(defaultStarterMode.enginePreference);
+    setScopeCategory(defaultStarterMode.scopeCategory);
+    setSessionLength(defaultStarterMode.sessionLength);
+    setPlatformTargets(defaultStarterMode.platformTargets);
+    setAgentTargets(defaultStarterMode.agentTargets);
+    setCustomGenre("");
+    setCustomSubgenre("");
+    setCustomPlayerFantasy("");
+    setCustomPlayPattern("");
+    setCustomFeelKeywords("");
     setShowTitleError(false);
     setIsSubmitting(false);
-  }, []);
+  }, [defaultStarterMode]);
 
   const closeModal = useCallback((): void => {
     resetForm();
@@ -128,9 +189,10 @@ export const NewProjectModal = ({
   }, [isOpen, step]);
 
   const selectedTemplate = useMemo(
-    () => GAME_TEMPLATES[templateId],
+    () => getTemplateDefinition(templateId),
     [templateId]
   );
+  const isCustomStarterMode = selectedTemplate.kind === "custom";
   const activeScopeProfile = useMemo(
     () => getScopeProfile(scopeCategory),
     [scopeCategory]
@@ -147,6 +209,25 @@ export const NewProjectModal = ({
     [selectedTemplate.defaultProject.scopeCategory]
   );
   const isCustomSession = activeSessionPreset === null;
+
+  const handleStarterModeChange = useCallback((nextTemplateId: TemplateId): void => {
+    const defaults = getStarterModeDefaults(nextTemplateId);
+    setTemplateId(nextTemplateId);
+    setGenre(defaults.genre);
+    setSubgenre(defaults.subgenre);
+    setTargetAudience(defaults.targetAudience);
+    setEnginePreference(defaults.enginePreference);
+    setScopeCategory(defaults.scopeCategory);
+    setSessionLength(defaults.sessionLength);
+    setPlatformTargets(defaults.platformTargets);
+    setAgentTargets(defaults.agentTargets);
+
+    if (nextTemplateId === "custom-guided") {
+      window.setTimeout(() => {
+        customGenreRef.current?.focus();
+      }, 0);
+    }
+  }, []);
 
   const togglePlatform = (platform: string): void => {
     setPlatformTargets((current) =>
@@ -178,6 +259,9 @@ export const NewProjectModal = ({
   const handleSubmit = useCallback(async (): Promise<void> => {
     const trimmedTitle = title.trim();
     const trimmedPitch = pitch.trim();
+    const trimmedGenre = (isCustomStarterMode ? customGenre : genre).trim();
+    const trimmedSubgenre = (isCustomStarterMode ? customSubgenre : subgenre).trim();
+    const customToneKeywords = toTrimmedArray(customFeelKeywords);
 
     if (!trimmedTitle) {
       setShowTitleError(true);
@@ -193,8 +277,8 @@ export const NewProjectModal = ({
       name: trimmedTitle,
       oneLinePitch: trimmedPitch,
       description: trimmedPitch,
-      genre: genre.trim(),
-      subgenre: subgenre.trim(),
+      genre: trimmedGenre,
+      subgenre: trimmedSubgenre,
       scopeCategory,
       templateId,
       platformTargets,
@@ -205,7 +289,23 @@ export const NewProjectModal = ({
       monetizationModel:
         selectedTemplate.defaultProject.monetizationModel ?? "Premium",
       enginePreference: enginePreference.trim(),
-      comparableGames: selectedTemplate.defaultProject.comparableGames ?? []
+      comparableGames: selectedTemplate.defaultProject.comparableGames ?? [],
+      gameDesignDoc: isCustomStarterMode
+        ? {
+            concept: {
+              playerFantasy: customPlayerFantasy.trim()
+            },
+            coreLoop: {
+              secondToSecond: customPlayPattern.trim()
+            },
+            designPillars: {
+              feelStatement: customToneKeywords.join(", ")
+            },
+            artTone: {
+              toneKeywords: customToneKeywords
+            }
+          }
+        : undefined
     });
 
     if (!project) {
@@ -221,9 +321,15 @@ export const NewProjectModal = ({
     navigate(`/project/${project.id}`);
   }, [
     agentTargets,
+    customFeelKeywords,
+    customGenre,
+    customPlayPattern,
+    customPlayerFantasy,
+    customSubgenre,
     createProject,
     enginePreference,
     genre,
+    isCustomStarterMode,
     navigate,
     onOpenChange,
     pitch,
@@ -318,19 +424,36 @@ export const NewProjectModal = ({
           {step === 1 ? (
             <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
               <div className="space-y-5">
-                <GameField label="Template">
-                  <GameSelect
-                    value={templateId}
-                    onChange={(event) =>
-                      setTemplateId(event.target.value as TemplateId)
+                <GameField
+                  label="Starter Mode"
+                  description="Pick a curated mode bias or start from a guided custom setup."
+                >
+                  <SingleSelectCards
+                    layoutVariant="starter-mode"
+                    selectedValue={templateId}
+                    onSelect={(value) =>
+                      handleStarterModeChange(value as TemplateId)
                     }
-                  >
-                    {Object.values(GAME_TEMPLATES).map((template) => (
-                      <option key={template.id} value={template.id}>
-                        {template.label}
-                      </option>
-                    ))}
-                  </GameSelect>
+                    cards={starterModes.map((starterMode) => {
+                      const scopeProfile = starterMode.defaultProject.scopeCategory
+                        ? getScopeProfile(starterMode.defaultProject.scopeCategory)
+                        : null;
+
+                      return {
+                        value: starterMode.id,
+                        title: starterMode.label,
+                        description: starterMode.description,
+                        eyebrow:
+                          starterMode.kind === "custom"
+                            ? "Guided Setup"
+                            : undefined,
+                        meta: [
+                          scopeProfile?.label ?? "Flexible",
+                          starterMode.defaultProject.sessionLength ?? "TBD"
+                        ]
+                      };
+                    })}
+                  />
                 </GameField>
 
                 <GameField label="Game Title">
@@ -363,27 +486,96 @@ export const NewProjectModal = ({
                   />
                 </GameField>
 
-                <div className="grid gap-5 md:grid-cols-2">
-                  <GameField label="Genre">
-                    <GameTextInput
-                      type="text"
-                      value={genre}
-                      onChange={(event) => setGenre(event.target.value)}
-                    />
-                  </GameField>
-                  <GameField label="Subgenre">
-                    <GameTextInput
-                      type="text"
-                      value={subgenre}
-                      onChange={(event) => setSubgenre(event.target.value)}
-                    />
-                  </GameField>
-                </div>
+                {isCustomStarterMode ? (
+                  <div className="rounded-3xl border border-primary/15 bg-surface px-5 py-5">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
+                      Guided Custom Setup
+                    </p>
+                    <div className="mt-4 grid gap-5 md:grid-cols-2">
+                      <GameField label="Genre">
+                        <GameTextInput
+                          ref={customGenreRef}
+                          type="text"
+                          value={customGenre}
+                          placeholder="Strategy"
+                          onChange={(event) => setCustomGenre(event.target.value)}
+                        />
+                      </GameField>
+                      <GameField label="Subgenre">
+                        <GameTextInput
+                          type="text"
+                          value={customSubgenre}
+                          placeholder="Deckbuilder Lite"
+                          onChange={(event) => setCustomSubgenre(event.target.value)}
+                        />
+                      </GameField>
+                    </div>
+
+                    <div className="mt-5 grid gap-5">
+                      <GameField label="Player Fantasy">
+                        <GameTextInput
+                          type="text"
+                          value={customPlayerFantasy}
+                          placeholder="Outsmart escalating threats with clever chain reactions."
+                          onChange={(event) =>
+                            setCustomPlayerFantasy(event.target.value)
+                          }
+                        />
+                      </GameField>
+
+                      <GameField label="Primary Play Pattern">
+                        <GameTextInput
+                          type="text"
+                          value={customPlayPattern}
+                          placeholder="Read the arena, trigger one strong interaction, and reposition before the next twist."
+                          onChange={(event) =>
+                            setCustomPlayPattern(event.target.value)
+                          }
+                        />
+                      </GameField>
+
+                      <GameField label="Feel Keywords">
+                        <GameTextInput
+                          type="text"
+                          value={customFeelKeywords}
+                          placeholder="tense, readable, punchy"
+                          onChange={(event) =>
+                            setCustomFeelKeywords(event.target.value)
+                          }
+                        />
+                        <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+                          Use comma-separated keywords. These seed the feel statement
+                          and tone vocabulary for the new project.
+                        </p>
+                      </GameField>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <GameField label="Genre">
+                      <GameTextInput
+                        type="text"
+                        value={genre}
+                        onChange={(event) => setGenre(event.target.value)}
+                      />
+                    </GameField>
+                    <GameField label="Subgenre">
+                      <GameTextInput
+                        type="text"
+                        value={subgenre}
+                        onChange={(event) => setSubgenre(event.target.value)}
+                      />
+                    </GameField>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
                 <div className="rounded-3xl border border-outline-variant/10 bg-surface p-5">
-                  <p className="font-headline text-xl font-semibold text-on-surface">
+                  <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
+                    Selected Starter Mode
+                  </p>
+                  <p className="mt-3 font-headline text-xl font-semibold text-on-surface">
                     {selectedTemplate.label}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-on-surface-variant">
@@ -393,13 +585,13 @@ export const NewProjectModal = ({
                   <div className="mt-5 space-y-3 text-sm leading-6 text-on-surface-variant">
                     <p>
                       <span className="font-semibold text-on-surface">
-                        Suggested scope:
+                        Default scope:
                       </span>{" "}
                       {templateScopeProfile?.label ?? "Flexible"}.
                     </p>
                     <p>
                       <span className="font-semibold text-on-surface">
-                        Suggested session:
+                        Typical session:
                       </span>{" "}
                       {selectedTemplate.defaultProject.sessionLength || "TBD"}.
                     </p>
@@ -416,11 +608,12 @@ export const NewProjectModal = ({
 
                 <div className="rounded-3xl border border-outline-variant/10 bg-surface px-5 py-4">
                   <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
-                    Fast Path
+                    {isCustomStarterMode ? "Custom Mode" : "Fast Path"}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-on-surface-variant">
-                    Only the game title is required to keep moving. Step 2 handles
-                    production setup, tools, and scope framing.
+                    {isCustomStarterMode
+                      ? "Custom stays lightweight: define the fantasy, loop seed, and tone keywords here, then shape production constraints in Step 2."
+                      : "Only the game title is required to keep moving. Step 2 handles production setup, tools, and scope framing."}
                   </p>
                 </div>
               </div>

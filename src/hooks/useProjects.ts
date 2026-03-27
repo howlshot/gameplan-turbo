@@ -8,6 +8,7 @@ import type {
   AgentPlatform,
   BuildStage,
   GameDesignDoc,
+  GameDesignDocSeed,
   GamePlatformTarget,
   GeneratedArtifact,
   Project,
@@ -36,13 +37,13 @@ interface CreateProjectInput {
   templateId?: TemplateId;
   enginePreference?: string;
   techStack?: string[];
-  gameDesignDoc?: Partial<GameDesignDoc>;
+  gameDesignDoc?: GameDesignDocSeed;
 }
 
 export interface ImportProjectBundleInput {
   project: Partial<Project> &
     Pick<Project, "title" | "oneLinePitch" | "scopeCategory" | "templateId">;
-  gameDesignDoc?: Partial<GameDesignDoc> | null;
+  gameDesignDoc?: GameDesignDocSeed | null;
   artifacts?: GeneratedArtifact[];
   buildStages?: BuildStage[];
   vaultFiles?: VaultFile[];
@@ -115,7 +116,7 @@ const buildProjectRecord = (input: CreateProjectInput, id?: string): Project => 
 
 const syncProjectIntoGameDesignDoc = (
   project: Project,
-  seed?: Partial<GameDesignDoc> | null
+  seed?: GameDesignDocSeed | null
 ): GameDesignDoc => {
   const template = getTemplateDefinition(project.templateId);
   const seedConcept: Partial<GameDesignDoc["concept"]> = seed?.concept ?? {};

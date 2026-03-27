@@ -29,4 +29,20 @@ describe("parseImportedProjects", () => {
     expect(parsed).toHaveLength(1);
     expect(parsed[0]?.project.scopeCategory).toBe("large");
   });
+
+  it("preserves newly supported starter mode ids on import", () => {
+    const parsed = parseImportedProjects({
+      projects: [
+        {
+          id: "project-mode",
+          title: "Silent Circuit",
+          oneLinePitch: "A compact survival horror project.",
+          scopeCategory: "small",
+          templateId: "survival-horror-lite"
+        }
+      ]
+    });
+
+    expect(parsed[0]?.project.templateId).toBe("survival-horror-lite");
+  });
 });

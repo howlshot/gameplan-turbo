@@ -1,7 +1,8 @@
 import { mapLegacyBriefToGameDesignDoc } from "@/lib/appData";
+import { isTemplateId } from "@/lib/templates/genreTemplates";
 import type {
   BuildStage,
-  GameDesignDoc,
+  GameDesignDocSeed,
   GeneratedArtifact,
   Project,
   ProjectStatus,
@@ -24,7 +25,7 @@ export const FILTER_OPTIONS: { label: string; value: FilterValue }[] = [
 export interface ImportedProjectBundleShape {
   project: Partial<Project> &
     Pick<Project, "title" | "oneLinePitch" | "scopeCategory" | "templateId">;
-  gameDesignDoc?: Partial<GameDesignDoc> | null;
+  gameDesignDoc?: GameDesignDocSeed | null;
   artifacts?: GeneratedArtifact[];
   buildStages?: BuildStage[];
   vaultFiles?: VaultFile[];
@@ -96,10 +97,9 @@ const normalizeProject = (item: Record<string, unknown>): ImportedProjectBundleS
     comparableGames: Array.isArray(item.comparableGames)
       ? item.comparableGames.filter((value): value is string => typeof value === "string")
       : [],
-    templateId:
-      item.templateId === "arcade-action-rail-shooter"
-        ? "arcade-action-rail-shooter"
-        : "blank-game-project",
+    templateId: isTemplateId(item.templateId)
+      ? item.templateId
+      : "blank-game-project",
     enginePreference:
       typeof item.enginePreference === "string" ? item.enginePreference : "",
     techStack: Array.isArray(item.techStack)

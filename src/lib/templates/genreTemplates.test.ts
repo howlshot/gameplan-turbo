@@ -1,34 +1,44 @@
 import { describe, expect, it } from "vitest";
-import { getBuildStageSequence } from "@/lib/templates/genreTemplates";
+import {
+  GAME_TEMPLATES,
+  getStarterModeDefinitions,
+  isTemplateId,
+  STARTER_MODE_ORDER
+} from "@/lib/templates/genreTemplates";
 
-describe("getBuildStageSequence", () => {
-  it("keeps the standard 12-stage sequence for small projects", () => {
-    const sequence = getBuildStageSequence("small");
-
-    expect(sequence).toHaveLength(12);
-    expect(sequence[0]?.key).toBe("foundation");
-    expect(sequence[sequence.length - 1]?.key).toBe("packaging-release-prep");
+describe("genreTemplates", () => {
+  it("returns the curated starter modes in stable order", () => {
+    expect(getStarterModeDefinitions().map((template) => template.id)).toEqual(
+      STARTER_MODE_ORDER
+    );
   });
 
-  it("returns the expanded 15-stage sequence for large projects", () => {
-    const sequence = getBuildStageSequence("large");
-
-    expect(sequence.map((stage) => stage.key)).toEqual([
-      "scope-lock",
-      "foundation",
-      "first-playable",
-      "core-controls",
-      "camera-movement",
-      "combat-feel",
-      "systems-foundation",
-      "enemy-behavior",
-      "hud-feedback",
-      "progression-meta",
-      "content-pipeline",
-      "content-production",
-      "vertical-slice-integration",
-      "polish",
-      "qa-release-prep"
+  it("defines the new preset defaults with the intended bias", () => {
+    expect(GAME_TEMPLATES.platformer.defaultProject.scopeCategory).toBe("small");
+    expect(GAME_TEMPLATES.platformer.defaultProject.platformTargets).toEqual([
+      "pc",
+      "web",
+      "switch"
     ]);
+    expect(GAME_TEMPLATES["survival-horror-lite"].defaultProject.sessionLength).toBe(
+      "20-40 minutes"
+    );
+    expect(GAME_TEMPLATES["tactics-lite"].defaultProject.scopeCategory).toBe(
+      "medium"
+    );
+  });
+
+  it("marks guided custom separately from curated presets", () => {
+    expect(GAME_TEMPLATES["custom-guided"].kind).toBe("custom");
+    expect(GAME_TEMPLATES["custom-guided"].defaultProject.platformTargets).toEqual([
+      "pc",
+      "web"
+    ]);
+  });
+
+  it("recognizes all supported template ids", () => {
+    expect(isTemplateId("puzzle-action")).toBe(true);
+    expect(isTemplateId("custom-guided")).toBe(true);
+    expect(isTemplateId("unknown-template")).toBe(false);
   });
 });

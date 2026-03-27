@@ -32,7 +32,8 @@ export const SCOPE_PROFILES: ScopeProfile[] = [
   {
     id: "small",
     label: "Small",
-    summary: "One polished core loop with limited variety and realistic v1 scope for a small team.",
+    summary:
+      "One polished core loop with limited variety and realistic v1 scope for an individual or small team.",
     guardrails: [
       "1 main mode with a clear first-playable path",
       "2-4 environment or chapter variants",

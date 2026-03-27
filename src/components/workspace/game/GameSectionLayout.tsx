@@ -154,6 +154,7 @@ export const MultiSelectPills = ({
 interface ChoiceCard {
   description: string;
   eyebrow?: string;
+  meta?: string[];
   title: string;
   tone?: "default" | "warning";
   value: string;
@@ -161,7 +162,7 @@ interface ChoiceCard {
 
 interface SingleSelectCardsProps {
   cards: ChoiceCard[];
-  layoutVariant?: "default" | "modal-compact";
+  layoutVariant?: "default" | "modal-compact" | "starter-mode";
   onSelect: (value: string) => void;
   selectedValue: string;
 }
@@ -178,6 +179,8 @@ export const SingleSelectCards = ({
         "grid gap-3",
         layoutVariant === "modal-compact"
           ? "grid-cols-1 md:grid-cols-2"
+          : layoutVariant === "starter-mode"
+            ? "grid-cols-1 md:grid-cols-2"
           : "md:grid-cols-2 xl:grid-cols-4"
       )}
     >
@@ -222,6 +225,25 @@ export const SingleSelectCards = ({
             <p className="mt-2 text-sm leading-6 text-on-surface-variant">
               {card.description}
             </p>
+            {card.meta && card.meta.length > 0 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {card.meta.map((meta) => (
+                  <span
+                    key={`${card.value}-${meta}`}
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em]",
+                      isSelected
+                        ? isWarning
+                          ? "border-amber-300/30 bg-amber-400/10 text-amber-50"
+                          : "border-primary/30 bg-primary/10 text-primary"
+                        : "border-outline-variant/10 bg-surface-container-low text-on-surface-variant"
+                    )}
+                  >
+                    {meta}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </button>
         );
       })}

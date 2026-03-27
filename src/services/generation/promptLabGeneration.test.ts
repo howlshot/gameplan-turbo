@@ -135,4 +135,27 @@ describe("buildOfflineOutput", () => {
     expect(content).not.toContain("## Production Assumptions");
     expect(content).not.toContain("## Content Budgets");
   });
+
+  it("threads starter-mode roadmap bias into offline outputs", () => {
+    const content = buildOfflineOutput({
+      gameDesignDoc: {
+        ...createGameDesignDoc("small"),
+        concept: {
+          ...createGameDesignDoc("small").concept,
+          genre: "Horror",
+          subgenre: "Survival-Horror-Lite"
+        }
+      },
+      outputType: "milestone_roadmap",
+      project: {
+        ...createProject("small"),
+        genre: "Horror",
+        subgenre: "Survival-Horror-Lite",
+        templateId: "survival-horror-lite"
+      }
+    });
+
+    expect(content).toContain("safe-room");
+    expect(content).toContain("tension");
+  });
 });

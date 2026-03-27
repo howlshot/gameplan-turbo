@@ -117,4 +117,32 @@ describe("generateBuildStages", () => {
     expect(stages[0]?.promptContent).toContain("## Large Project Mode Requirements");
     expect(stages[0]?.promptContent).toContain("cut boundary");
   });
+
+  it("applies light template bias for new starter modes", async () => {
+    const project = {
+      ...createProject("small"),
+      genre: "Platformer",
+      subgenre: "Action Platformer",
+      templateId: "platformer" as const
+    };
+    const gameDesignDoc = {
+      ...createGameDesignDoc("small"),
+      concept: {
+        ...createGameDesignDoc("small").concept,
+        genre: "Platformer",
+        subgenre: "Action Platformer"
+      }
+    };
+
+    const stages = await generateBuildStages({
+      gameDesignDoc,
+      project,
+      targetPlatform: "codex"
+    });
+
+    const cameraStage = stages.find((stage) => stage.stageKey === "camera-movement");
+
+    expect(cameraStage?.promptContent).toContain("jump feel");
+    expect(cameraStage?.promptContent).toContain("landing zones");
+  });
 });
