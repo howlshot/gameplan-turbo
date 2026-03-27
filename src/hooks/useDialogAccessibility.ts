@@ -10,8 +10,15 @@ const FOCUSABLE_SELECTOR = [
   "[tabindex]:not([tabindex='-1'])"
 ].join(", ");
 
+const AUTOFOCUS_SELECTOR = "[data-autofocus]";
+
 const getFocusableElements = (container: HTMLElement): HTMLElement[] =>
   Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)).filter(
+    (element) => !element.hasAttribute("disabled") && element.tabIndex !== -1
+  );
+
+const getAutofocusElements = (container: HTMLElement): HTMLElement[] =>
+  Array.from(container.querySelectorAll<HTMLElement>(AUTOFOCUS_SELECTOR)).filter(
     (element) => !element.hasAttribute("disabled") && element.tabIndex !== -1
   );
 
@@ -32,6 +39,12 @@ export const useDialogAccessibility = <T extends HTMLElement>(
     const focusFirstElement = (): void => {
       const container = containerRef.current;
       if (!container) {
+        return;
+      }
+
+      const [autofocusElement] = getAutofocusElements(container);
+      if (autofocusElement) {
+        autofocusElement.focus();
         return;
       }
 

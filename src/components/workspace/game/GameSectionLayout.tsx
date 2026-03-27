@@ -161,17 +161,26 @@ interface ChoiceCard {
 
 interface SingleSelectCardsProps {
   cards: ChoiceCard[];
+  layoutVariant?: "default" | "modal-compact";
   onSelect: (value: string) => void;
   selectedValue: string;
 }
 
 export const SingleSelectCards = ({
   cards,
+  layoutVariant = "default",
   onSelect,
   selectedValue
 }: SingleSelectCardsProps): JSX.Element => {
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <div
+      className={cn(
+        "grid gap-3",
+        layoutVariant === "modal-compact"
+          ? "grid-cols-1 md:grid-cols-2"
+          : "md:grid-cols-2 xl:grid-cols-4"
+      )}
+    >
       {cards.map((card) => {
         const isSelected = card.value === selectedValue;
         const isWarning = card.tone === "warning";
@@ -181,7 +190,7 @@ export const SingleSelectCards = ({
             type="button"
             onClick={() => onSelect(card.value)}
             className={cn(
-              "rounded-2xl border p-4 text-left transition",
+              "flex min-h-[168px] flex-col justify-start rounded-2xl border p-4 text-left transition",
               isSelected
                 ? isWarning
                   ? "border-amber-400/40 bg-amber-500/10 shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
