@@ -4,6 +4,7 @@ import { NewProjectModal } from "@/components/hub/NewProjectModal";
 
 const mocks = vi.hoisted(() => ({
   createProject: vi.fn(),
+  defaultProvider: null as { provider: string } | null,
   navigate: vi.fn(),
   onOpenChange: vi.fn(),
   selectProject: vi.fn(),
@@ -18,6 +19,12 @@ vi.mock("react-router-dom", () => ({
 vi.mock("@/hooks/useProjects", () => ({
   useProjects: () => ({
     createProject: mocks.createProject
+  })
+}));
+
+vi.mock("@/hooks/useAIProviders", () => ({
+  useAIProviders: () => ({
+    defaultProvider: mocks.defaultProvider
   })
 }));
 
@@ -40,6 +47,7 @@ vi.mock("@/stores/projectStore", () => ({
 describe("NewProjectModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.defaultProvider = null;
     mocks.createProject.mockResolvedValue({
       id: "project-123"
     });
@@ -168,6 +176,41 @@ describe("NewProjectModal", () => {
           sessionLength: "20-40 minutes",
           platformTargets: ["pc", "console"],
           agentTargets: ["codex", "claude-code", "cursor"]
+        })
+      );
+    });
+  });
+
+  it("defaults to a single connected provider tool target when one maps cleanly", async () => {
+    mocks.defaultProvider = { provider: "anthropic" };
+
+    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+
+    fireEvent.change(screen.getByLabelText(/Game Title/i), {
+      target: { value: "Station Nine" }
+    });
+    fireEvent.change(getGenreFamilySelect(), {
+      target: { value: "horror" }
+    });
+    fireEvent.change(getSubgenreSelect(), {
+      target: { value: "survival-horror" }
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Next: Production Setup/i })
+    );
+
+    expect(screen.getByText(/1 tool targets/i)).toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create Game Project/i })
+    );
+
+    await waitFor(() => {
+      expect(mocks.createProject).toHaveBeenCalledWith(
+        expect.objectContaining({
+          agentTargets: ["claude-code"],
+          targetPlatforms: ["claude-code"]
         })
       );
     });

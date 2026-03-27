@@ -1,4 +1,4 @@
-import type { AIProvider } from "@/types";
+import type { AIProvider, AgentPlatform } from "@/types";
 
 export interface ProviderCatalogEntry {
   provider: AIProvider;
@@ -111,3 +111,22 @@ export const PLATFORM_TOGGLE_OPTIONS = [
 
 export const getProviderLabel = (provider: AIProvider): string =>
   PROVIDER_CATALOG[provider].label;
+
+export const getPreferredAgentPlatformForProvider = (
+  provider: AIProvider
+): AgentPlatform | null => {
+  switch (provider) {
+    case "codex":
+      return "codex";
+    case "anthropic":
+      return "claude-code";
+    case "google":
+      return "gemini";
+    case "qwen":
+      return "qwen-code";
+    case "openai":
+      return "chatgpt";
+    default:
+      return null;
+  }
+};

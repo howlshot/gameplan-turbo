@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
+import { useAIProviders } from "@/hooks/useAIProviders";
 import { useProjects } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/useToast";
 import { useProjectStore } from "@/stores/projectStore";
@@ -14,6 +15,7 @@ import {
   getTemplateDefinition,
   inferTemplateIdFromGenreSelection
 } from "@/lib/templates/genreTemplates";
+import { getPreferredAgentPlatformForProvider } from "@/lib/ai/providerCatalog";
 import {
   GameField,
   GameSelect,
@@ -109,9 +111,15 @@ const areArraysEqual = (left: string[], right: string[]): boolean =>
   left.length === right.length &&
   left.every((value, index) => value === right[index]);
 
-const getRecommendationDefaults = (templateId: TemplateId): FormDefaults => {
+const getRecommendationDefaults = (
+  templateId: TemplateId,
+  preferredAgentTarget?: AgentPlatform | null
+): FormDefaults => {
   const template = getTemplateDefinition(templateId);
   const defaultProject = template.defaultProject;
+  const defaultAgentTargets = preferredAgentTarget
+    ? [preferredAgentTarget]
+    : [...(defaultProject.agentTargets ?? ["codex", "cursor"])];
 
   return {
     targetAudience: defaultProject.targetAudience ?? "",
@@ -119,7 +127,7 @@ const getRecommendationDefaults = (templateId: TemplateId): FormDefaults => {
     scopeCategory: defaultProject.scopeCategory ?? "small",
     sessionLength: defaultProject.sessionLength ?? "10-20 minutes",
     platformTargets: [...(defaultProject.platformTargets ?? ["pc", "web"])],
-    agentTargets: [...(defaultProject.agentTargets ?? ["codex", "cursor"])]
+    agentTargets: defaultAgentTargets
   };
 };
 
@@ -129,6 +137,7 @@ export const NewProjectModal = ({
 }: NewProjectModalProps): JSX.Element | null => {
   const navigate = useNavigate();
   const { createProject } = useProjects();
+  const { defaultProvider } = useAIProviders();
   const toast = useToast();
   const selectProject = useProjectStore((state) => state.selectProject);
 
@@ -137,9 +146,16 @@ export const NewProjectModal = ({
   const customGenreRef = useRef<HTMLInputElement>(null);
 
   const genreFamilies = useMemo(() => getGenreFamilyDefinitions(), []);
+  const preferredAgentTarget = useMemo(
+    () =>
+      defaultProvider
+        ? getPreferredAgentPlatformForProvider(defaultProvider.provider)
+        : null,
+    [defaultProvider]
+  );
   const defaultRecommendation = useMemo(
-    () => getRecommendationDefaults(DEFAULT_TEMPLATE_ID),
-    []
+    () => getRecommendationDefaults(DEFAULT_TEMPLATE_ID, preferredAgentTarget),
+    [preferredAgentTarget]
   );
 
   const [step, setStep] = useState<1 | 2>(1);
@@ -218,8 +234,8 @@ export const NewProjectModal = ({
     [resolvedTemplateId]
   );
   const recommendedDefaults = useMemo(
-    () => getRecommendationDefaults(resolvedTemplateId),
-    [resolvedTemplateId]
+    () => getRecommendationDefaults(resolvedTemplateId, preferredAgentTarget),
+    [preferredAgentTarget, resolvedTemplateId]
   );
   const recommendedScopeProfile = useMemo(
     () => getScopeProfile(recommendedDefaults.scopeCategory),
@@ -566,9 +582,9 @@ export const NewProjectModal = ({
         className="glass-panel flex max-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col overflow-hidden overscroll-contain rounded-3xl border border-outline-variant/15 bg-surface-container shadow-2xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="border-b border-outline-variant/10 bg-surface-container px-6 py-4">
-          <div className="flex items-start justify-between gap-4">
-            <div className="max-w-3xl">
+        <div className="border-b border-outline-variant/10 bg-surface-container px-6 py-3">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0 max-w-3xl flex-1">
               <p className="font-mono text-xs uppercase tracking-[0.22em] text-primary">
                 New Game Project
               </p>
@@ -579,44 +595,44 @@ export const NewProjectModal = ({
                 Start a new game design workspace
               </h2>
             </div>
-            <button
-              type="button"
-              onClick={closeModal}
-              className="rounded-full p-2 text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
-            >
-              <span className="material-symbols-outlined">close</span>
-            </button>
-          </div>
 
-          <div className="mt-4 flex flex-wrap gap-2.5">
-            {CREATION_STEPS.map((creationStep) => {
-              const isActive = creationStep.id === step;
-              const isComplete = creationStep.id < step;
+            <div className="flex flex-col items-stretch gap-3 lg:w-[360px] lg:items-end">
+              <button
+                type="button"
+                onClick={closeModal}
+                className="self-end rounded-full p-2 text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
 
-              return (
-                <div
-                  key={creationStep.id}
-                  className={cn(
-                    "min-w-[200px] rounded-2xl border px-4 py-2.5 transition",
-                    isActive
-                      ? "border-primary/30 bg-primary/10"
-                      : isComplete
-                        ? "border-secondary/25 bg-secondary/10"
-                        : "border-outline-variant/10 bg-surface"
-                  )}
-                >
-                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
-                    Step {creationStep.id}
-                  </p>
-                  <p className="mt-1.5 font-headline text-sm font-semibold text-on-surface sm:text-[15px]">
-                    {creationStep.label}
-                  </p>
-                  <p className="mt-1 text-[11px] leading-5 text-on-surface-variant">
-                    {creationStep.description}
-                  </p>
-                </div>
-              );
-            })}
+              <div className="grid w-full gap-2 sm:grid-cols-2">
+                {CREATION_STEPS.map((creationStep) => {
+                  const isActive = creationStep.id === step;
+                  const isComplete = creationStep.id < step;
+
+                  return (
+                    <div
+                      key={creationStep.id}
+                      className={cn(
+                        "rounded-2xl border px-3.5 py-2.5 transition",
+                        isActive
+                          ? "border-primary/30 bg-primary/10"
+                          : isComplete
+                            ? "border-secondary/25 bg-secondary/10"
+                            : "border-outline-variant/10 bg-surface"
+                      )}
+                    >
+                      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                        Step {creationStep.id}
+                      </p>
+                      <p className="mt-1 font-headline text-sm font-semibold text-on-surface">
+                        {creationStep.label}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1041,7 +1057,7 @@ export const NewProjectModal = ({
 
                   <GameField
                     label="Preferred AI Build Tools"
-                    description="Recommended from the hidden profile, but fully editable."
+                    description="Defaults to your connected provider when it maps cleanly, then stays fully editable."
                   >
                     <MultiSelectPills
                       selectedValues={agentTargets}
