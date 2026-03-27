@@ -143,14 +143,14 @@ describe("buildOfflineOutput", () => {
         concept: {
           ...createGameDesignDoc("small").concept,
           genre: "Horror",
-          subgenre: "Survival-Horror-Lite"
+          subgenre: "Survival Horror"
         }
       },
       outputType: "milestone_roadmap",
       project: {
         ...createProject("small"),
         genre: "Horror",
-        subgenre: "Survival-Horror-Lite",
+        subgenre: "Survival Horror",
         templateId: "survival-horror-lite"
       }
     });

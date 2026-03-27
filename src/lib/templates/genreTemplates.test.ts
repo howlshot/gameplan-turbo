@@ -68,6 +68,13 @@ describe("genreTemplates", () => {
 
     expect(
       inferTemplateIdFromGenreSelection({
+        genreFamilyId: "action",
+        subgenreId: "fps"
+      })
+    ).toBe("action-lite");
+
+    expect(
+      inferTemplateIdFromGenreSelection({
         genreFamilyId: "adventure",
         subgenreId: "narrative-adventure"
       })

@@ -6,6 +6,8 @@ interface CodexBridgeResponse {
   content: string;
 }
 
+const CODEX_BRIDGE_REQUEST_TIMEOUT_MS = 95_000;
+
 const buildPrompt = (params: AICompleteParams): string => {
   const messageBlock = params.messages
     .map(
@@ -32,6 +34,11 @@ const requestCodexBridge = async (
   params: AICompleteParams,
   bridgeUrl?: string
 ): Promise<string> => {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => {
+    controller.abort("codex-bridge-timeout");
+  }, CODEX_BRIDGE_REQUEST_TIMEOUT_MS);
+
   try {
     const response = await fetch(`${bridgeUrl ?? getCodexBridgeUrl()}/generate`, {
       method: "POST",
@@ -39,6 +46,7 @@ const requestCodexBridge = async (
         "Content-Type": "application/json",
         Accept: "application/json"
       },
+      signal: controller.signal,
       body: JSON.stringify({
         model: params.model,
         prompt: buildPrompt(params)
@@ -49,7 +57,8 @@ const requestCodexBridge = async (
       const message = await response.text();
       throw new AIServiceError(
         "PROVIDER",
-        message || "The Codex bridge request failed.",
+        message ||
+          "The local Codex bridge could not complete the request.",
         { status: response.status }
       );
     }
@@ -57,6 +66,17 @@ const requestCodexBridge = async (
     const payload = (await response.json()) as CodexBridgeResponse;
     return payload.content.trim();
   } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new AIServiceError(
+        "PROVIDER",
+        "The local Codex bridge took longer than 95 seconds to respond. Try a smaller output or retry.",
+        {
+          cause: error,
+          status: 504
+        }
+      );
+    }
+
     if (error instanceof TypeError) {
       throw new AIServiceError(
         "PROVIDER",
@@ -71,6 +91,8 @@ const requestCodexBridge = async (
       error,
       "The local Codex bridge could not complete the request."
     );
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 };
 

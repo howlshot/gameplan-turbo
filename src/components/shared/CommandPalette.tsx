@@ -14,25 +14,43 @@ import { useProjectStore } from "@/stores/projectStore";
 import { useUIStore } from "@/stores/uiStore";
 
 export const CommandPalette = (): JSX.Element | null => {
+  const isOpen = useUIStore((state) => state.isCommandPaletteOpen);
+  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
+
+  if (!isOpen && !isNewProjectOpen) {
+    return null;
+  }
+
+  return (
+    <>
+      {isOpen ? (
+        <CommandPaletteDialog onOpenNewProject={() => setIsNewProjectOpen(true)} />
+      ) : null}
+      <NewProjectModal isOpen={isNewProjectOpen} onOpenChange={setIsNewProjectOpen} />
+    </>
+  );
+};
+
+interface CommandPaletteDialogProps {
+  onOpenNewProject: () => void;
+}
+
+const CommandPaletteDialog = ({
+  onOpenNewProject
+}: CommandPaletteDialogProps): JSX.Element => {
   const navigate = useNavigate();
   const { projects, isLoading } = useProjects();
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
   const { project } = useProject(selectedProjectId ?? undefined);
   const { artifacts } = useArtifacts(selectedProjectId ?? undefined);
   const { stages } = useBuildStages(selectedProjectId ?? undefined);
-  const isOpen = useUIStore((state) => state.isCommandPaletteOpen);
   const setCommandPaletteOpen = useUIStore((state) => state.setCommandPaletteOpen);
   const setActiveTab = useUIStore((state) => state.setActiveTab);
   const [query, setQuery] = useState("");
-  const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
-  const dialogRef = useDialogAccessibility<HTMLDivElement>(isOpen, () => {
+  const dialogRef = useDialogAccessibility<HTMLDivElement>(true, () => {
     setQuery("");
     setCommandPaletteOpen(false);
   });
-
-  if (!isOpen) {
-    return null;
-  }
 
   const closePalette = (): void => {
     setQuery("");
@@ -44,47 +62,43 @@ export const CommandPalette = (): JSX.Element | null => {
     useCommandPaletteActions({
       closePalette,
       latestArtifact,
-      onOpenNewProject: () => setIsNewProjectOpen(true),
+      onOpenNewProject,
       project: project ?? undefined,
       selectedProjectId: selectedProjectId ?? undefined,
       stages
     });
 
   return (
-    <>
-      <div
-        className="fixed inset-0 z-50 bg-surface-dim/80 backdrop-blur-sm"
-        onClick={closePalette}
-      >
-        <div className="flex min-h-screen items-start justify-center px-4 pt-24">
-          <div
-            ref={dialogRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Global command palette"
-            className="glass-panel w-full max-w-2xl rounded-xl border border-outline-variant/15 bg-surface-container shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <CommandPaletteContent
-              actions={quickActions}
-              isLoading={isLoading}
-              navigationItems={navigationItems}
-              onProjectSelect={(projectId) => {
-                setActiveTab("concept");
-                navigate(`/project/${projectId}`);
-                closePalette();
-              }}
-              onQueryChange={setQuery}
-              platformLinks={platformLinks}
-              projectTabs={projectTabs}
-              projects={projects}
-              query={query}
-            />
-          </div>
+    <div
+      className="fixed inset-0 z-50 bg-surface-dim/80 backdrop-blur-sm"
+      onClick={closePalette}
+    >
+      <div className="flex min-h-screen items-start justify-center px-4 pt-24">
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Global command palette"
+          className="glass-panel w-full max-w-2xl rounded-xl border border-outline-variant/15 bg-surface-container shadow-2xl"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <CommandPaletteContent
+            actions={quickActions}
+            isLoading={isLoading}
+            navigationItems={navigationItems}
+            onProjectSelect={(projectId) => {
+              setActiveTab("concept");
+              navigate(`/project/${projectId}`);
+              closePalette();
+            }}
+            onQueryChange={setQuery}
+            platformLinks={platformLinks}
+            projectTabs={projectTabs}
+            projects={projects}
+            query={query}
+          />
         </div>
       </div>
-
-      <NewProjectModal isOpen={isNewProjectOpen} onOpenChange={setIsNewProjectOpen} />
-    </>
+    </div>
   );
 };

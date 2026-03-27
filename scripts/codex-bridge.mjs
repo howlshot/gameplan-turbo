@@ -15,6 +15,7 @@ const PORT = Number(
 const MAX_BODY_BYTES = 1024 * 1024;
 const BRIDGE_VERSION = "0.1.0";
 const ALLOWED_ORIGIN = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/;
+const CODEX_GENERATE_TIMEOUT_MS = 90_000;
 
 const isAllowedOrigin = (origin) =>
   typeof origin === "string" && ALLOWED_ORIGIN.test(origin);
@@ -60,6 +61,21 @@ const runCommand = (command, args, options = {}) =>
 
     let stdout = "";
     let stderr = "";
+    let timedOut = false;
+    let timeoutId = null;
+    let killTimerId = null;
+
+    const clearTimers = () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
+      if (killTimerId) {
+        clearTimeout(killTimerId);
+        killTimerId = null;
+      }
+    };
 
     child.stdout.on("data", (chunk) => {
       stdout += chunk.toString();
@@ -75,14 +91,28 @@ const runCommand = (command, args, options = {}) =>
     child.stdin.end();
 
     child.on("error", (error) => {
+      clearTimers();
       reject(error);
     });
 
+    if (typeof options.timeoutMs === "number" && options.timeoutMs > 0) {
+      timeoutId = setTimeout(() => {
+        timedOut = true;
+        stderr = `${stderr}${stderr ? "\n" : ""}Command timed out after ${options.timeoutMs}ms.`;
+        child.kill("SIGTERM");
+        killTimerId = setTimeout(() => {
+          child.kill("SIGKILL");
+        }, 1_000);
+      }, options.timeoutMs);
+    }
+
     child.on("close", (code) => {
+      clearTimers();
       resolve({
-        code: code ?? 1,
+        code: timedOut ? 124 : code ?? 1,
         stdout,
-        stderr
+        stderr,
+        timedOut
       });
     });
   });
@@ -281,9 +311,18 @@ const server = http.createServer(async (req, res) => {
       }
 
       const result = await runCommand("codex", buildExecArgs({ model }), {
-        input: prompt
+        input: prompt,
+        timeoutMs: CODEX_GENERATE_TIMEOUT_MS
       });
       const content = extractAgentMessage(result.stdout);
+
+      if (result.timedOut) {
+        sendJson(req, res, 504, {
+          error:
+            "Codex took longer than 90 seconds to respond. Try a smaller output, reduce context, or retry."
+        });
+        return;
+      }
 
       if (result.code !== 0 || !content) {
         sendJson(req, res, 502, {

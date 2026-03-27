@@ -393,10 +393,18 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
       },
       {
         id: "character-action-lite",
-        label: "Character Action Lite",
+        label: "Character Action",
         description: "Feel-first melee or hybrid combat with compact encounter depth and controlled scope.",
         rationale:
           "Use this when combat feel, expressive player verbs, and stylish readable encounters matter more than huge content breadth.",
+        profileTemplateId: "action-lite"
+      },
+      {
+        id: "fps",
+        label: "First-Person Shooter",
+        description: "First-person combat built around readable target acquisition, weapon feel, and spatial pressure.",
+        rationale:
+          "Use this when the game depends on first-person shooting, readable combat spaces, and strong weapon feel.",
         profileTemplateId: "action-lite"
       },
       {
@@ -432,7 +440,7 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
       },
       {
         id: "metroidvania-lite",
-        label: "Metroidvania Lite",
+        label: "Metroidvania",
         description: "Compact exploration gating, traversal upgrades, and readable world re-use.",
         rationale:
           "Use this when you want backtracking and traversal unlocks, but need a tightly bounded scope and smaller content surface.",
@@ -494,7 +502,7 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
       },
       {
         id: "deckbuilder-lite",
-        label: "Deckbuilder Lite",
+        label: "Deckbuilder",
         description: "Small-card pools, readable synergies, and tightly bounded run structure.",
         rationale:
           "Use this when you want meaningful build decisions and replayable runs without a giant card-content burden.",
@@ -563,7 +571,7 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
     subgenres: [
       {
         id: "action-rpg-lite",
-        label: "Action RPG Lite",
+        label: "Action RPG",
         description: "Progression and gear motivation wrapped around compact real-time combat loops.",
         rationale:
           "Use this when you want readable combat plus light progression and build identity without a huge content burden.",
@@ -571,7 +579,7 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
       },
       {
         id: "turn-based-rpg-lite",
-        label: "Turn-Based RPG Lite",
+        label: "Turn-Based RPG",
         description: "Readable party progression, compact encounter loops, and bounded menu complexity.",
         rationale:
           "Use this when the project needs party growth and tactical pacing, but should stay far smaller than a full classic RPG.",
@@ -586,7 +594,7 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
     subgenres: [
       {
         id: "survival-craft-lite",
-        label: "Survival Craft Lite",
+        label: "Survival Craft",
         description: "Resource gathering, survival pressure, and compact build loops without sandbox sprawl.",
         rationale:
           "Use this when the project depends on survival/resource loops but needs a tightly bounded content surface.",
@@ -594,7 +602,7 @@ const GENRE_FAMILIES: GenreFamilyDefinition[] = [
       },
       {
         id: "management-lite",
-        label: "Management Lite",
+        label: "Management",
         description: "Readable systems, queue or staffing decisions, and compact scenario-based optimization.",
         rationale:
           "Use this when you want satisfying management decisions and visible system response without a giant simulation stack.",
@@ -785,13 +793,13 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
   "action-lite": {
     id: "action-lite",
     kind: "preset",
-    label: "Action Lite",
+    label: "Action",
     description:
       "Internal recommendation profile for compact feel-first action projects with readable encounters and controlled scope.",
-    genreLabel: "Action Lite",
+    genreLabel: "Action",
     defaultProject: {
       genre: "Action",
-      subgenre: "Character Action Lite",
+      subgenre: "Character Action",
       scopeCategory: "small",
       platformTargets: ["pc", "web", "console"],
       agentTargets: ["codex", "cursor", "claude-code"],
@@ -808,7 +816,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
       concept: {
         ...createBaseConcept("small", ["pc", "web", "console"]),
         genre: "Action",
-        subgenre: "Character Action Lite",
+        subgenre: "Character Action",
         playerFantasy:
           "Cut through readable enemy pressure with expressive actions and confident movement.",
         targetAudience:
@@ -1200,13 +1208,13 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
   "survival-horror-lite": {
     id: "survival-horror-lite",
     kind: "preset",
-    label: "Survival-Horror-Lite",
+    label: "Survival Horror",
     description:
       "Built for compact tension, resource pressure, route planning, and safe-room pacing without ballooning into a giant campaign.",
-    genreLabel: "Survival-Horror-Lite",
+    genreLabel: "Survival Horror",
     defaultProject: {
       genre: "Horror",
-      subgenre: "Survival-Horror-Lite",
+      subgenre: "Survival Horror",
       scopeCategory: "small",
       platformTargets: ["pc", "console"],
       agentTargets: ["codex", "claude-code", "cursor"],
@@ -1222,7 +1230,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
       concept: {
         ...createBaseConcept("small", ["pc", "console"]),
         genre: "Horror",
-        subgenre: "Survival-Horror-Lite",
+        subgenre: "Survival Horror",
         playerFantasy: "Stay alive through caution, route planning, and tense resource tradeoffs.",
         targetAudience:
           "Players who want oppressive atmosphere, meaningful scarcity, and compact horror runs.",
@@ -1340,13 +1348,13 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
   "tactics-lite": {
     id: "tactics-lite",
     kind: "preset",
-    label: "Tactics-Lite",
+    label: "Tactics",
     description:
       "Built for readable turn decisions, compact mission structure, and a deliberately small tactical roster.",
-    genreLabel: "Tactics-Lite",
+    genreLabel: "Tactics",
     defaultProject: {
       genre: "Strategy",
-      subgenre: "Tactics-Lite",
+      subgenre: "Tactics",
       scopeCategory: "medium",
       platformTargets: ["pc", "switch"],
       agentTargets: ["codex", "cursor", "claude-code"],
@@ -1362,7 +1370,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
       concept: {
         ...createBaseConcept("medium", ["pc", "switch"]),
         genre: "Strategy",
-        subgenre: "Tactics-Lite",
+        subgenre: "Tactics",
         playerFantasy: "Solve hostile board states by reading enemy intent and committing to efficient tactical trades.",
         targetAudience:
           "Players who want a compact tactics game with clear enemy intent and manageable roster complexity.",
@@ -1481,13 +1489,13 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
   "strategy-lite": {
     id: "strategy-lite",
     kind: "preset",
-    label: "Strategy Lite",
+    label: "Strategy",
     description:
       "Internal recommendation profile for compact system-driven strategy projects with readable decisions and bounded content scope.",
-    genreLabel: "Strategy Lite",
+    genreLabel: "Strategy",
     defaultProject: {
       genre: "Strategy",
-      subgenre: "Strategy Lite",
+      subgenre: "Strategy",
       scopeCategory: "medium",
       platformTargets: ["pc", "web", "switch"],
       agentTargets: ["codex", "cursor", "claude-code"],
@@ -1504,7 +1512,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
       concept: {
         ...createBaseConcept("medium", ["pc", "web", "switch"]),
         genre: "Strategy",
-        subgenre: "Strategy Lite",
+        subgenre: "Strategy",
         playerFantasy:
           "Solve pressure through foresight, small-scope systems mastery, and clean strategic tradeoffs.",
         targetAudience:
@@ -1765,10 +1773,10 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
   "adventure-lite": {
     id: "adventure-lite",
     kind: "preset",
-    label: "Adventure Lite",
+    label: "Adventure",
     description:
       "Internal recommendation profile for compact exploration and narrative projects with readable progression and discovery.",
-    genreLabel: "Adventure Lite",
+    genreLabel: "Adventure",
     defaultProject: {
       genre: "Adventure",
       subgenre: "Narrative Adventure",
@@ -1908,13 +1916,13 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
   "rpg-lite": {
     id: "rpg-lite",
     kind: "preset",
-    label: "RPG Lite",
+    label: "RPG",
     description:
       "Internal recommendation profile for bounded character-growth projects with readable combat and progression systems.",
-    genreLabel: "RPG Lite",
+    genreLabel: "RPG",
     defaultProject: {
       genre: "RPG",
-      subgenre: "Action RPG Lite",
+      subgenre: "Action RPG",
       scopeCategory: "medium",
       platformTargets: ["pc", "switch", "console"],
       agentTargets: ["codex", "cursor", "claude-code"],
@@ -1931,7 +1939,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
       concept: {
         ...createBaseConcept("medium", ["pc", "switch", "console"]),
         genre: "RPG",
-        subgenre: "Action RPG Lite",
+        subgenre: "Action RPG",
         playerFantasy:
           "Grow a character through readable combat, meaningful upgrades, and compact quest or encounter arcs.",
         targetAudience:
@@ -2051,13 +2059,13 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
   "sim-lite": {
     id: "sim-lite",
     kind: "preset",
-    label: "Simulation Lite",
+    label: "Simulation",
     description:
       "Internal recommendation profile for bounded simulation projects with readable resource loops and manageable systems depth.",
-    genreLabel: "Simulation Lite",
+    genreLabel: "Simulation",
     defaultProject: {
       genre: "Simulation",
-      subgenre: "Management Lite",
+      subgenre: "Management",
       scopeCategory: "medium",
       platformTargets: ["pc", "web"],
       agentTargets: ["codex", "cursor", "claude-code"],
@@ -2074,7 +2082,7 @@ export const GAME_TEMPLATES: Record<TemplateId, GameTemplateDefinition> = {
       concept: {
         ...createBaseConcept("medium", ["pc", "web"]),
         genre: "Simulation",
-        subgenre: "Management Lite",
+        subgenre: "Management",
         playerFantasy:
           "Stabilize a living system through smart prioritization, readable resource pressure, and compact optimization loops.",
         targetAudience:

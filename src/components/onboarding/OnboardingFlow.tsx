@@ -47,6 +47,12 @@ export const OnboardingFlow = ({
     setStep(2);
   };
 
+  const handleSkipProvider = (): void => {
+    setErrorMessage("");
+    setValidationAttempts(0);
+    setStep(3);
+  };
+
   const handleVerifyProvider = async (): Promise<void> => {
     const apiKey = apiKeyRef.current?.value.trim() ?? "";
     const providerConfig = PROVIDER_CATALOG[selectedProvider];
@@ -77,6 +83,7 @@ export const OnboardingFlow = ({
           isDefault: true,
           model: providerConfig.defaultModel
         });
+        setValidationAttempts(0);
         toast.success(`${providerConfig.label} connected.`);
         setStep(3);
       } catch {
@@ -115,6 +122,7 @@ export const OnboardingFlow = ({
         isDefault: true,
         model: providerConfig.defaultModel
       });
+      setValidationAttempts(0);
       toast.success(`${providerConfig.label} verified.`);
       setStep(3);
     } catch (error) {
@@ -174,6 +182,7 @@ export const OnboardingFlow = ({
             errorMessage={errorMessage}
             isStartingCodexLogin={isStartingCodexLogin}
             isVerifying={isVerifying}
+            onSkip={handleSkipProvider}
             onStartCodexLogin={() => void handleStartCodexLogin()}
             onSelectProvider={setSelectedProvider}
             onToggleApiVisibility={() => setShowApiKey((current) => !current)}

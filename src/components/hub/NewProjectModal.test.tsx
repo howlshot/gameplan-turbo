@@ -196,7 +196,10 @@ describe("NewProjectModal", () => {
       screen.getByRole("option", { name: "Arena Shooter" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("option", { name: "Character Action Lite" })
+      screen.getByRole("option", { name: "Character Action" })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("option", { name: "First-Person Shooter" })
     ).toBeInTheDocument();
 
     fireEvent.change(getSubgenreSelect(), {
@@ -223,6 +226,44 @@ describe("NewProjectModal", () => {
           templateId: "twin-stick-shooter",
           genre: "Action",
           subgenre: "Arena Shooter"
+        })
+      );
+    });
+  });
+
+  it("maps FPS to the compact action recommendation profile", async () => {
+    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+
+    fireEvent.change(screen.getByLabelText(/Game Title/i), {
+      target: { value: "Mercury Line" }
+    });
+    fireEvent.change(getGenreFamilySelect(), {
+      target: { value: "action" }
+    });
+    fireEvent.change(getSubgenreSelect(), {
+      target: { value: "fps" }
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Next: Production Setup/i })
+    );
+
+    expect(screen.getByText(/Action -> First-Person Shooter/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Typical Session/i)).toHaveValue(
+      "10-20 minutes"
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create Game Project/i })
+    );
+
+    await waitFor(() => {
+      expect(mocks.createProject).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Mercury Line",
+          templateId: "action-lite",
+          genre: "Action",
+          subgenre: "First-Person Shooter"
         })
       );
     });
@@ -341,6 +382,53 @@ describe("NewProjectModal", () => {
               toneKeywords: ["tense", "readable", "punchy"]
             }
           }
+        })
+      );
+    });
+  });
+
+  it("uses a guided engine dropdown and reveals custom input when needed", async () => {
+    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+
+    fireEvent.change(screen.getByLabelText(/Game Title/i), {
+      target: { value: "Engine Check" }
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Next: Production Setup/i })
+    );
+
+    const engineSelect = screen.getByRole("combobox", {
+      name: /Engine Preference/i
+    });
+
+    fireEvent.change(engineSelect, {
+      target: { value: "Godot" }
+    });
+
+    expect(
+      screen.queryByPlaceholderText(/Use a custom engine or runtime/i)
+    ).not.toBeInTheDocument();
+
+    fireEvent.change(engineSelect, {
+      target: { value: "__custom__" }
+    });
+
+    const customEngineInput = screen.getByPlaceholderText(
+      /Use a custom engine or runtime/i
+    );
+    fireEvent.change(customEngineInput, {
+      target: { value: "Custom ECS Runtime" }
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Create Game Project/i })
+    );
+
+    await waitFor(() => {
+      expect(mocks.createProject).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Engine Check",
+          enginePreference: "Custom ECS Runtime"
         })
       );
     });

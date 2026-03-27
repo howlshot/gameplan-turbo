@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
 import { useProjects } from "@/hooks/useProjects";
@@ -26,6 +27,11 @@ import {
   SCOPE_ORDER,
   SESSION_LENGTH_PRESETS
 } from "@/lib/projectFraming";
+import {
+  CUSTOM_ENGINE_VALUE,
+  ENGINE_OPTIONS,
+  getEngineSelectValue
+} from "@/lib/engineOptions";
 import { cn } from "@/lib/utils";
 import type {
   AgentPlatform,
@@ -147,6 +153,9 @@ export const NewProjectModal = ({
   const [enginePreference, setEnginePreference] = useState(
     defaultRecommendation.enginePreference
   );
+  const [engineSelection, setEngineSelection] = useState(
+    getEngineSelectValue(defaultRecommendation.enginePreference)
+  );
   const [scopeCategory, setScopeCategory] = useState<ScopeCategory>(
     defaultRecommendation.scopeCategory
   );
@@ -229,6 +238,7 @@ export const NewProjectModal = ({
     [sessionLength]
   );
   const isCustomSession = activeSessionPreset === null;
+  const isCustomEngine = engineSelection === CUSTOM_ENGINE_VALUE;
   const hasRecommendationOverrides = useMemo(
     () => Object.values(recommendationOwnership).some(Boolean),
     [recommendationOwnership]
@@ -275,6 +285,7 @@ export const NewProjectModal = ({
     setSubgenreId("");
     setTargetAudience(defaultRecommendation.targetAudience);
     setEnginePreference(defaultRecommendation.enginePreference);
+    setEngineSelection(getEngineSelectValue(defaultRecommendation.enginePreference));
     setScopeCategory(defaultRecommendation.scopeCategory);
     setSessionLength(defaultRecommendation.sessionLength);
     setPlatformTargets(defaultRecommendation.platformTargets);
@@ -353,6 +364,11 @@ export const NewProjectModal = ({
         ? current
         : recommendedDefaults.enginePreference
     );
+    setEngineSelection((current) =>
+      recommendationOwnership.enginePreference
+        ? current
+        : getEngineSelectValue(recommendedDefaults.enginePreference)
+    );
     setPlatformTargets((current) =>
       recommendationOwnership.platformTargets ||
       areArraysEqual(current, recommendedDefaults.platformTargets)
@@ -423,6 +439,7 @@ export const NewProjectModal = ({
     setSessionLength(recommendedDefaults.sessionLength);
     setTargetAudience(recommendedDefaults.targetAudience);
     setEnginePreference(recommendedDefaults.enginePreference);
+    setEngineSelection(getEngineSelectValue(recommendedDefaults.enginePreference));
     setPlatformTargets(recommendedDefaults.platformTargets);
     setAgentTargets(recommendedDefaults.agentTargets);
   }, [recommendedDefaults]);
@@ -536,9 +553,9 @@ export const NewProjectModal = ({
 
   if (!isOpen) return null;
 
-  return (
+  const modal = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center overscroll-contain bg-surface-dim/80 px-4 py-6 backdrop-blur-sm"
+      className="fixed inset-0 z-[80] flex items-center justify-center overscroll-contain bg-surface-dim/80 px-4 py-6 backdrop-blur-sm"
       onClick={closeModal}
     >
       <div
@@ -970,15 +987,39 @@ export const NewProjectModal = ({
                     </GameField>
 
                     <GameField label="Engine Preference">
-                      <GameTextInput
-                        type="text"
-                        value={enginePreference}
-                        placeholder="Leave blank to stay engine-agnostic"
+                      <GameSelect
+                        value={engineSelection}
                         onChange={(event) => {
                           markFieldAsOwned("enginePreference");
-                          setEnginePreference(event.target.value);
+                          const value = event.target.value;
+                          setEngineSelection(value);
+                          setEnginePreference(
+                            value === CUSTOM_ENGINE_VALUE ? "" : value
+                          );
                         }}
-                      />
+                      >
+                        {ENGINE_OPTIONS.map((option) => (
+                          <option key={option.value || "blank"} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </GameSelect>
+                      {isCustomEngine ? (
+                        <GameTextInput
+                          className="mt-3"
+                          type="text"
+                          value={enginePreference}
+                          placeholder="Use a custom engine or runtime"
+                          onChange={(event) => {
+                            markFieldAsOwned("enginePreference");
+                            setEnginePreference(event.target.value);
+                          }}
+                        />
+                      ) : null}
+                      <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+                        Pick a common engine or stay engine-agnostic. Use Custom for
+                        another runtime or proprietary stack.
+                      </p>
                     </GameField>
                   </div>
                 </div>
@@ -1084,4 +1125,6 @@ export const NewProjectModal = ({
       </div>
     </div>
   );
+
+  return createPortal(modal, document.body);
 };
