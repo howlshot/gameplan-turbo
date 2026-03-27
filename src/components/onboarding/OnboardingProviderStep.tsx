@@ -105,8 +105,9 @@ export const OnboardingProviderStep = ({
                 2. Run <code>{getCodexLoginCommand()}</code>
               </p>
               <p>3. Finish the ChatGPT sign-in flow that opens in your browser.</p>
+              <p>4. In Terminal, switch to your Preflight Game OS folder.</p>
               <p>
-                4. In Terminal, run <code>cd &quot;<workspace-root>&quot;</code>
+                If needed, run <code>cd /path/to/preflight-game-os</code>
               </p>
               <p>
                 5. Run <code>{getCodexBridgeStartCommand()}</code>

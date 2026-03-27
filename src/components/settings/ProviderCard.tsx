@@ -181,8 +181,9 @@ export const ProviderCard = ({
                 2. Run <code>{getCodexLoginCommand()}</code>
               </p>
               <p>3. Finish the ChatGPT sign-in in your browser.</p>
+              <p>4. Switch Terminal into your Preflight Game OS folder.</p>
               <p>
-                4. Run <code>cd &quot;<workspace-root>&quot;</code>
+                If needed, run <code>cd /path/to/preflight-game-os</code>
               </p>
               <p>
                 5. Run <code>{getCodexBridgeStartCommand()}</code>

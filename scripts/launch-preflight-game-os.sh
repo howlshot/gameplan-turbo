@@ -2,7 +2,9 @@
 
 set -euo pipefail
 
-PROJECT_DIR="<workspace-root>"
+SCRIPT_PATH="${(%):-%N}"
+SCRIPT_DIR="$(cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd)"
+PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 DEV_PORT="5173"
 BRIDGE_PORT="8765"
 APP_URL="http://127.0.0.1:5173/"
