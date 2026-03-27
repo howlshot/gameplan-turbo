@@ -7,6 +7,11 @@ import { OnboardingTutorialStep } from "@/components/onboarding/OnboardingTutori
 import { useAIProviders } from "@/hooks/useAIProviders";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
 import { useSettings } from "@/hooks/useSettings";
+import {
+  fetchCodexBridgeStatus,
+  getCodexBridgeStartCommand,
+  getCodexLoginCommand
+} from "@/lib/codexBridge";
 import { getGenerationErrorState } from "@/lib/generationErrors";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { createProviderFromConfig } from "@/services/ai";
@@ -42,6 +47,47 @@ export const OnboardingFlow = ({
 
   const handleVerifyProvider = async (): Promise<void> => {
     const apiKey = apiKeyRef.current?.value.trim() ?? "";
+    const providerConfig = PROVIDER_CATALOG[selectedProvider];
+    const isLocalBridgeProvider = providerConfig.authMode === "local-bridge";
+
+    if (isLocalBridgeProvider) {
+      setErrorMessage("");
+      setIsVerifying(true);
+
+      try {
+        const status = await fetchCodexBridgeStatus();
+
+        if (!status.cliAvailable) {
+          setErrorMessage("Codex CLI is not installed on this machine.");
+          return;
+        }
+
+        if (!status.loggedIn) {
+          setErrorMessage(
+            `Codex is not logged in. Run \`${getCodexLoginCommand()}\`, then \`${getCodexBridgeStartCommand()}\`.`
+          );
+          return;
+        }
+
+        await saveProvider({
+          provider: selectedProvider,
+          apiKey: "codex-cli-bridge",
+          isDefault: true,
+          model: providerConfig.defaultModel
+        });
+        toast.success(`${providerConfig.label} connected.`);
+        setStep(3);
+      } catch {
+        setErrorMessage(
+          `Codex bridge is offline. Start it with \`${getCodexBridgeStartCommand()}\` and try again.`
+        );
+      } finally {
+        setIsVerifying(false);
+      }
+
+      return;
+    }
+
     if (!apiKey) {
       setErrorMessage("Enter an API key to continue.");
       return;
@@ -55,7 +101,7 @@ export const OnboardingFlow = ({
         id: "onboarding-provider",
         provider: selectedProvider,
         apiKey,
-        model: PROVIDER_CATALOG[selectedProvider].defaultModel,
+        model: providerConfig.defaultModel,
         isDefault: true,
         createdAt: Date.now()
       });
@@ -65,9 +111,9 @@ export const OnboardingFlow = ({
         provider: selectedProvider,
         apiKey,
         isDefault: true,
-        model: PROVIDER_CATALOG[selectedProvider].defaultModel
+        model: providerConfig.defaultModel
       });
-      toast.success(`${PROVIDER_CATALOG[selectedProvider].label} verified.`);
+      toast.success(`${providerConfig.label} verified.`);
       setStep(3);
     } catch (error) {
       const errorState = getGenerationErrorState(error);

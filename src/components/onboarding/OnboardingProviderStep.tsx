@@ -1,4 +1,8 @@
 import type { RefObject } from "react";
+import {
+  getCodexBridgeStartCommand,
+  getCodexLoginCommand
+} from "@/lib/codexBridge";
 import { PROVIDER_CATALOG, PROVIDER_ORDER } from "@/lib/ai/providerCatalog";
 import type { AIProvider } from "@/types";
 
@@ -24,6 +28,7 @@ export const OnboardingProviderStep = ({
   showApiKey
 }: OnboardingProviderStepProps): JSX.Element => {
   const providerConfig = PROVIDER_CATALOG[selectedProvider];
+  const isLocalBridgeProvider = providerConfig.authMode === "local-bridge";
 
   return (
     <div className="p-10">
@@ -71,36 +76,56 @@ export const OnboardingProviderStep = ({
       <div className="mt-10">
         <div className="mb-2 flex items-center justify-between gap-3">
           <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
-            {providerConfig.keyLabel}
+            {isLocalBridgeProvider ? "Codex Bridge" : providerConfig.keyLabel}
           </label>
-          <a
-            href={providerConfig.helpUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-xs text-primary transition hover:underline"
-          >
-            How to get your API key
-          </a>
+          {isLocalBridgeProvider ? (
+            <span className="text-xs text-primary">Uses local Codex login</span>
+          ) : (
+            <a
+              href={providerConfig.helpUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs text-primary transition hover:underline"
+            >
+              How to get your API key
+            </a>
+          )}
         </div>
 
-        <div className="relative">
-          <input
-            ref={apiKeyRef}
-            data-autofocus
-            type={showApiKey ? "text" : "password"}
-            placeholder={`Paste your ${providerConfig.keyLabel.toLowerCase()}`}
-            className="w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 pr-14 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
-          />
-          <button
-            type="button"
-            onClick={onToggleApiVisibility}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition hover:text-on-surface"
-          >
-            <span className="material-symbols-outlined">
-              {showApiKey ? "visibility_off" : "visibility"}
-            </span>
-          </button>
-        </div>
+        {isLocalBridgeProvider ? (
+          <div className="space-y-3 rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-sm leading-6 text-on-surface-variant">
+            <p>
+              No API key is needed here. Preflight Game OS will use your local Codex CLI
+              session instead.
+            </p>
+            <p>
+              1. Run <code>{getCodexLoginCommand()}</code>
+            </p>
+            <p>
+              2. Run <code>{getCodexBridgeStartCommand()}</code>
+            </p>
+            <p>3. Click continue below</p>
+          </div>
+        ) : (
+          <div className="relative">
+            <input
+              ref={apiKeyRef}
+              data-autofocus
+              type={showApiKey ? "text" : "password"}
+              placeholder={`Paste your ${providerConfig.keyLabel.toLowerCase()}`}
+              className="w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 pr-14 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
+            />
+            <button
+              type="button"
+              onClick={onToggleApiVisibility}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition hover:text-on-surface"
+            >
+              <span className="material-symbols-outlined">
+                {showApiKey ? "visibility_off" : "visibility"}
+              </span>
+            </button>
+          </div>
+        )}
 
         {errorMessage ? (
           <div className="mt-4 rounded-xl border border-tertiary/20 bg-tertiary/10 px-4 py-3 text-sm text-tertiary">
@@ -124,7 +149,7 @@ export const OnboardingProviderStep = ({
           </>
         ) : (
           <>
-            <span>Verify & Continue</span>
+            <span>{isLocalBridgeProvider ? "Continue with Codex" : "Verify & Continue"}</span>
             <span className="material-symbols-outlined text-base">arrow_forward</span>
           </>
         )}
