@@ -7,7 +7,8 @@ export const PROJECT_TABS = [
   { id: "art-tone", icon: "palette", label: "Art & Tone", shortcut: "⌘6" },
   { id: "technical-design", icon: "memory", label: "Technical Design", shortcut: "⌘7" },
   { id: "vault", icon: "inventory_2", label: "Vault", shortcut: "⌘8" },
-  { id: "prompt-lab", icon: "auto_awesome", label: "Prompt Lab", shortcut: "⌘9" }
+  { id: "prompt-lab", icon: "auto_awesome", label: "Prompt Lab", shortcut: "⌘9" },
+  { id: "output-library", icon: "folder_zip", label: "Output Library", shortcut: "⌘0" }
 ] as const;
 
 export const NAVIGATION_ITEMS = [

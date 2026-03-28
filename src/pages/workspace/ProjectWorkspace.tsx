@@ -54,6 +54,11 @@ const PromptLabPage = lazy(() =>
     default: module.PromptLabPage
   }))
 );
+const OutputLibraryPage = lazy(() =>
+  import("@/pages/workspace/OutputLibraryPage").then((module) => ({
+    default: module.OutputLibraryPage
+  }))
+);
 
 const PageLoader = () => (
   <div className="flex h-full items-center justify-center">
@@ -77,7 +82,8 @@ const WORKSPACE_STAGES = [
   { id: "art-tone", label: "Art" },
   { id: "technical-design", label: "Tech" },
   { id: "vault", label: "Vault" },
-  { id: "prompt-lab", label: "Prompt Lab" }
+  { id: "prompt-lab", label: "Prompt Lab" },
+  { id: "output-library", label: "Output Library" }
 ] as const;
 
 const STATUS_STAGE_INDEX: Record<string, number> = {
@@ -90,7 +96,7 @@ const STATUS_STAGE_INDEX: Record<string, number> = {
   building: 7,
   playtesting: 8,
   "release-prep": 9,
-  shipped: 9
+  shipped: 10
 };
 
 export const ProjectWorkspace = (): JSX.Element => {
@@ -111,11 +117,21 @@ export const ProjectWorkspace = (): JSX.Element => {
     }
 
     const params = new URLSearchParams(location.search);
+    if (params.get("tab") === "prompt-lab" && params.get("view") === "library") {
+      navigate(
+        getProjectTabPath(projectId, "output-library", {
+          output: params.get("output") ?? undefined
+        }),
+        { replace: true }
+      );
+      return;
+    }
+
     if (params.get("tab") !== "build-plan") {
       return;
     }
 
-    navigate(getProjectTabPath(projectId, "prompt-lab", { view: "guided" }), {
+    navigate(getProjectTabPath(projectId, "prompt-lab"), {
       replace: true
     });
   }, [location.search, navigate, projectId]);
@@ -171,6 +187,8 @@ export const ProjectWorkspace = (): JSX.Element => {
         <VaultPage />
       ) : resolvedTab === "prompt-lab" ? (
         <PromptLabPage />
+      ) : resolvedTab === "output-library" ? (
+        <OutputLibraryPage />
       ) : (
         <ConceptPage />
       )}

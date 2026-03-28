@@ -15,6 +15,7 @@ describe("sidebarConfig project tab helpers", () => {
   it("extracts valid project tabs from the current URL search", () => {
     expect(getProjectTabFromSearch("?tab=build-plan")).toBe("prompt-lab");
     expect(getProjectTabFromSearch("?foo=bar&tab=prompt-lab")).toBe("prompt-lab");
+    expect(getProjectTabFromSearch("?tab=output-library")).toBe("output-library");
   });
 
   it("rejects unknown or missing tab values", () => {

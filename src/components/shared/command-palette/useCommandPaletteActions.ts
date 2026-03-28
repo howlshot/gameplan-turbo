@@ -62,10 +62,7 @@ export const useCommandPaletteActions = ({
         label: "Open Prompt Lab",
         hidden: !selectedProjectId,
         onSelect: () =>
-          handleNavigate(
-            getProjectTabPath(selectedProjectId!, "prompt-lab", { view: "guided" }),
-            "prompt-lab"
-          )
+          handleNavigate(getProjectTabPath(selectedProjectId!, "prompt-lab"), "prompt-lab")
       },
       {
         id: "export-build",

@@ -7,9 +7,11 @@ import { cn } from "@/lib/utils";
 import type { BuildStage } from "@/types";
 
 interface BuildStageCardProps {
+  connectAiLabel?: string;
   highlightPrimaryAction?: boolean;
   isNextRecommended?: boolean;
   isActionSpotlighted?: boolean;
+  onConnectToAI?: () => void;
   onPlanningAssist?: (stage: BuildStage) => Promise<string>;
   onStatusChange: (stage: BuildStage) => void;
   planningAssistLabel?: string;
@@ -33,9 +35,11 @@ const STATUS_TONES: Record<BuildStage["status"], string> = {
 };
 
 const BuildStageCardComponent = ({
+  connectAiLabel = "Connect AI to generate",
   highlightPrimaryAction = false,
   isNextRecommended = false,
   isActionSpotlighted = false,
+  onConnectToAI,
   onPlanningAssist,
   onStatusChange,
   planningAssistLabel,
@@ -61,6 +65,7 @@ const BuildStageCardComponent = ({
   const answeredPlanningQuestions = parsedPlanningQuestions.filter((question) =>
     (planningAnswers[question.id] ?? "").trim().length > 0
   );
+  const showsConnectAiAction = !onPlanningAssist && Boolean(onConnectToAI) && !isLocked;
   const stageBriefWithAnswers = useMemo(() => {
     if (answeredPlanningQuestions.length === 0) {
       return stage.promptContent;
@@ -168,6 +173,11 @@ const BuildStageCardComponent = ({
                   click <span className="font-semibold">{planningAssistLabel}</span>{" "}
                   below to tighten this stage brief and surface project-specific questions with{" "}
                   <span className="font-semibold">{platformLabel}</span>, or
+                  copy the prompt when you are ready to hand it off in your build environment.
+                </>
+              ) : showsConnectAiAction ? (
+                <>
+                  connect your AI to ask planning questions for this stage, or
                   copy the prompt when you are ready to hand it off in your build environment.
                 </>
               ) : (
@@ -296,15 +306,31 @@ const BuildStageCardComponent = ({
                   ? "Reviewing…"
                   : planningAssistLabel ?? `Polish with ${platformLabel}`}
               </button>
+            ) : showsConnectAiAction ? (
+              <button
+                type="button"
+                data-build-stage-primary-action="true"
+                onClick={onConnectToAI}
+                className={cn(
+                  "rounded-xl px-4 py-2 text-sm font-semibold transition",
+                  highlightPrimaryAction
+                    ? "gradient-cta glow-primary text-on-primary ring-2 ring-primary/30"
+                    : "border border-primary/25 bg-primary/10 text-primary hover:border-primary/35 hover:bg-primary/15"
+                )}
+              >
+                {connectAiLabel}
+              </button>
             ) : null}
             <button
               type="button"
-              data-build-stage-primary-action={!onPlanningAssist ? "true" : undefined}
+              data-build-stage-primary-action={
+                !onPlanningAssist && !showsConnectAiAction ? "true" : undefined
+              }
               disabled={isLocked}
               onClick={() => onStatusChange(stage)}
               className={cn(
                 "rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-50",
-                onPlanningAssist
+                onPlanningAssist || showsConnectAiAction
                   ? "border border-outline-variant/15 bg-surface-container text-on-surface hover:bg-surface-container-high"
                   : highlightPrimaryAction
                     ? "gradient-cta glow-primary text-on-primary ring-2 ring-primary/30"

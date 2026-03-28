@@ -5,6 +5,25 @@ export interface PlanningQuestion {
   rationale: string;
 }
 
+export const buildPlanningNotes = (
+  questions: PlanningQuestion[]
+): string | undefined => {
+  const answeredQuestions = questions.filter(
+    (question) => question.answer.trim().length > 0
+  );
+
+  if (answeredQuestions.length === 0) {
+    return undefined;
+  }
+
+  return answeredQuestions
+    .map(
+      (question) =>
+        `Question: ${question.question}\nAnswer: ${question.answer.trim()}`
+    )
+    .join("\n\n");
+};
+
 export const parsePlanningQuestions = (content: string): PlanningQuestion[] => {
   try {
     const parsed = JSON.parse(content) as Array<{

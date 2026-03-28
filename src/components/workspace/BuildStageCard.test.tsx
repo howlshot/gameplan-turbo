@@ -91,4 +91,22 @@ describe("BuildStageCard", () => {
       screen.getByText(/answers stay on this stage card and do not need a separate submit/i)
     ).toBeInTheDocument();
   });
+
+  it("shows a connect-ai action when planning assist requires a provider", () => {
+    const handleConnectToAI = vi.fn();
+
+    render(
+      <BuildStageCard
+        stage={stage}
+        totalStages={15}
+        connectAiLabel="Connect AI to generate"
+        onConnectToAI={handleConnectToAI}
+        onStatusChange={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /connect ai to generate/i }));
+
+    expect(handleConnectToAI).toHaveBeenCalledTimes(1);
+  });
 });

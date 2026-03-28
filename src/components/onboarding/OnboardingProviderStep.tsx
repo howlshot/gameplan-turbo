@@ -48,9 +48,17 @@ export const OnboardingProviderStep = ({
           Connect your AI provider
         </h1>
         <p className="mt-3 text-on-surface-variant">
-          AI setup is optional. You can connect a provider now or skip this step
-          and keep using {APP_NAME} in local-first mode.
+          AI setup is optional. You can explore {APP_NAME}, generate the build
+          roadmap, and come back to connect AI later in Settings.
         </p>
+        <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 text-left">
+          <p className="font-medium text-on-surface">Just exploring first?</p>
+          <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+            Skip this step for now. Planning, roadmap generation, and tracking
+            still work without AI. Connect a provider later when you want help
+            generating prompts or polishing briefs.
+          </p>
+        </div>
       </div>
 
       <form
@@ -200,33 +208,35 @@ export const OnboardingProviderStep = ({
           ) : null}
         </div>
 
-        <button
-          type="submit"
-          disabled={isVerifying}
-          className="gradient-cta glow-primary mt-10 flex w-full items-center justify-center gap-3 rounded-xl px-5 py-4 font-semibold text-on-primary disabled:opacity-70"
-        >
-          {isVerifying ? (
-            <>
-              <span className="material-symbols-outlined animate-spin text-base">
-                progress_activity
-              </span>
-              <span>Verifying...</span>
-            </>
-          ) : (
-            <>
-              <span>{isLocalBridgeProvider ? "Continue with Codex" : "Verify & Continue"}</span>
-              <span className="material-symbols-outlined text-base">arrow_forward</span>
-            </>
-          )}
-        </button>
+        <div className="mt-10 grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={onSkip}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-outline-variant/15 bg-surface px-5 py-4 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high"
+          >
+            Skip for now
+          </button>
 
-        <button
-          type="button"
-          onClick={onSkip}
-          className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl px-5 py-4 text-sm text-on-surface-variant transition hover:text-on-surface"
-        >
-          Skip for now
-        </button>
+          <button
+            type="submit"
+            disabled={isVerifying}
+            className="gradient-cta glow-primary flex w-full items-center justify-center gap-3 rounded-xl px-5 py-4 font-semibold text-on-primary disabled:opacity-70"
+          >
+            {isVerifying ? (
+              <>
+                <span className="material-symbols-outlined animate-spin text-base">
+                  progress_activity
+                </span>
+                <span>Verifying...</span>
+              </>
+            ) : (
+              <>
+                <span>{isLocalBridgeProvider ? "Continue with Codex" : "Verify & Continue"}</span>
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
+              </>
+            )}
+          </button>
+        </div>
       </form>
 
       <div className="mt-6 flex flex-col gap-3 text-[10px] uppercase tracking-[0.22em] text-outline/60 md:flex-row md:items-center md:justify-between">

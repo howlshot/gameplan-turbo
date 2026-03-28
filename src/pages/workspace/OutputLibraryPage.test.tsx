@@ -1,11 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { PromptLabPage } from "@/pages/workspace/PromptLabPage";
+import { OutputLibraryPage } from "@/pages/workspace/OutputLibraryPage";
 import type { BuildStage, GameDesignDoc, Project } from "@/types";
 
 vi.mock("react-router-dom", () => ({
   useParams: () => ({ projectId: "project-1" }),
-  useNavigate: () => vi.fn()
+  useNavigate: () => vi.fn(),
+  useLocation: () => ({ search: "?tab=output-library&output=full_gdd" })
 }));
 
 vi.mock("@/hooks/useToast", () => ({
@@ -14,10 +15,6 @@ vi.mock("@/hooks/useToast", () => ({
     success: vi.fn(),
     warning: vi.fn()
   })
-}));
-
-vi.mock("@/components/shared/OutputPanel", () => ({
-  OutputPanel: () => <div>output-panel</div>
 }));
 
 vi.mock("@/hooks/useAIProviders", () => ({
@@ -36,7 +33,7 @@ vi.mock("@/hooks/useProject", () => ({
         oneLinePitch: "A staged horror game.",
         description: "A staged horror game.",
         status: "concept",
-        scopeCategory: "large",
+        scopeCategory: "small",
         genre: "Horror",
         subgenre: "Action Horror",
         platformTargets: ["pc"],
@@ -72,7 +69,7 @@ vi.mock("@/hooks/useGameDesignDoc", () => ({
           sessionLength: "20-40 minutes",
           monetizationModel: "Premium",
           comparableGames: [],
-          scopeCategory: "large",
+          scopeCategory: "small",
           differentiators: "Readable tension."
         },
         designPillars: {
@@ -136,35 +133,40 @@ vi.mock("@/hooks/useGameDesignDoc", () => ({
 
 vi.mock("@/hooks/useBuildStages", () => ({
   useBuildStages: () => ({
-    stages: Array.from({ length: 12 }, (_, index) => ({
-      id: `stage-${index + 1}`,
-      projectId: "project-1",
-      stageKey: "foundation",
-      stageNumber: index + 1,
-      name: `Stage ${index + 1}`,
-      description: "Legacy stage",
-      status: index === 0 ? "not-started" : "locked",
-      promptContent: "Prompt",
-      platform: "codex",
-      createdAt: 1,
-      updatedAt: 1
-    })) satisfies BuildStage[],
-    createStages: vi.fn(),
-    updateStageStatus: vi.fn()
+    stages: [
+      {
+        id: "stage-1",
+        projectId: "project-1",
+        stageKey: "foundation",
+        stageNumber: 1,
+        name: "Foundation",
+        description: "Bootstrap the project.",
+        status: "not-started",
+        promptContent: "Prompt",
+        platform: "codex",
+        createdAt: 1,
+        updatedAt: 1
+      }
+    ] satisfies BuildStage[]
   })
 }));
 
 vi.mock("@/hooks/useVaultFiles", () => ({
   useVaultFiles: () => ({
-    files: [],
-    setAllFilesAsContext: vi.fn()
+    files: []
   })
 }));
 
 vi.mock("@/hooks/useArtifacts", () => ({
   useArtifacts: () => ({
-    artifacts: []
+    artifacts: [],
+    createArtifact: vi.fn(),
+    getLatestByType: () => null
   })
+}));
+
+vi.mock("@/components/shared/OutputPanel", () => ({
+  OutputPanel: () => <div>output-panel</div>
 }));
 
 vi.mock("@/stores/promptLabSessionStore", () => ({
@@ -172,38 +174,38 @@ vi.mock("@/stores/promptLabSessionStore", () => ({
     selector({
       sessions: {
         "project-1": {
-          hasSkippedClarifyingRound: true,
+          hasSkippedClarifyingRound: false,
           hasSkippedVaultPreflight: false,
-          planningQuestions: [],
+          planningQuestions: [
+            {
+              id: "planning-question-1",
+              question: "What is the first playable target?",
+              rationale: "Scope clarity matters.",
+              answer: "One floor slice."
+            }
+          ],
           targetPlatform: "codex"
         }
       },
-      setPlanningQuestions: vi.fn(),
-      setHasSkippedVaultPreflight: vi.fn(),
-      setHasSkippedClarifyingRound: vi.fn(),
       setTargetPlatform: vi.fn()
     })
 }));
 
-describe("PromptLabPage", () => {
-  it("shows the guided planning roadmap workflow without the old internal view switcher", () => {
-    render(<PromptLabPage />);
+describe("OutputLibraryPage", () => {
+  it("shows the output library export message and planning package action", () => {
+    render(<OutputLibraryPage />);
 
-    expect(screen.getByText("Build Roadmap")).toBeInTheDocument();
-    expect(screen.getByText("Add references before you generate")).toBeInTheDocument();
     expect(
-      screen.getByText(/you can export a full planning package here/i)
+      screen.getByRole("heading", { name: "Output Library" })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /build roadmap/i })
+      screen.getByText(/download individual files from each output panel here/i)
     ).toBeInTheDocument();
-    expect(
-      screen.getAllByRole("button", { name: /connect ai to generate/i }).length
-    ).toBeGreaterThan(0);
     expect(
       screen.getByRole("button", { name: /export planning package/i })
     ).toBeInTheDocument();
-    expect(screen.getByText("Large Project Mode")).toBeInTheDocument();
-    expect(screen.queryByText("Output Library")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /connect ai to generate/i })
+    ).toBeInTheDocument();
   });
 });
