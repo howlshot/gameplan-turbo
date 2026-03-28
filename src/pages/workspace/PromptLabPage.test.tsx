@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { PromptLabPage } from "@/pages/workspace/PromptLabPage";
 import type { BuildStage, GameDesignDoc, Project } from "@/types";
 
+let defaultProviderValue: { provider: string } | null = null;
+
 vi.mock("react-router-dom", () => ({
   useParams: () => ({ projectId: "project-1" }),
   useNavigate: () => vi.fn()
@@ -22,7 +24,7 @@ vi.mock("@/components/shared/OutputPanel", () => ({
 
 vi.mock("@/hooks/useAIProviders", () => ({
   useAIProviders: () => ({
-    defaultProvider: null
+    defaultProvider: defaultProviderValue
   })
 }));
 
@@ -187,6 +189,7 @@ vi.mock("@/stores/promptLabSessionStore", () => ({
 
 describe("PromptLabPage", () => {
   it("shows the guided planning roadmap workflow without the old internal view switcher", () => {
+    defaultProviderValue = null;
     render(<PromptLabPage />);
 
     expect(screen.getByText("Build Roadmap")).toBeInTheDocument();
@@ -205,5 +208,18 @@ describe("PromptLabPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Large Project Mode")).toBeInTheDocument();
     expect(screen.queryByText("Output Library")).not.toBeInTheDocument();
+  });
+
+  it("uses the connected provider name in planning actions while keeping stage recommendations separate", () => {
+    defaultProviderValue = { provider: "claude-code" };
+
+    render(<PromptLabPage />);
+
+    expect(
+      screen.getAllByRole("button", { name: /ask planning questions with claude code/i })
+        .length
+    ).toBeGreaterThan(0);
+    expect(screen.getByText(/planning help here uses your connected ai:/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/recommended tool: codex/i).length).toBeGreaterThan(0);
   });
 });

@@ -3,6 +3,7 @@ import {
   PROVIDER_CATALOG,
   PROVIDER_ORDER,
   getPreferredAgentPlatformForProvider,
+  getProviderActionLabel,
   getProviderConnectionGroup
 } from "@/lib/ai/providerCatalog";
 
@@ -47,5 +48,12 @@ describe("providerCatalog", () => {
     expect(getPreferredAgentPlatformForProvider("claude-code")).toBe("claude-code");
     expect(getPreferredAgentPlatformForProvider("anthropic")).toBeNull();
     expect(getPreferredAgentPlatformForProvider("openrouter")).toBeNull();
+  });
+
+  it("returns clean action labels for connected-tool UI copy", () => {
+    expect(getProviderActionLabel("codex")).toBe("Codex");
+    expect(getProviderActionLabel("claude-code")).toBe("Claude Code");
+    expect(getProviderActionLabel("openrouter")).toBe("OpenRouter");
+    expect(getProviderActionLabel("google")).toBe("Gemini");
   });
 });

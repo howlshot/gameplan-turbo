@@ -74,7 +74,9 @@ export const ProviderSettingsSection = ({
                 Sign in
               </h3>
               <p className="text-sm leading-6 text-on-surface-variant">
-                Connect through a browser login or local tool bridge.
+                Connect through a browser login or local tool bridge. Browser sign-in
+                opens a normal web flow. Tool-login providers ask you to sign in first,
+                then confirm the running bridge.
               </p>
             </div>
           </div>

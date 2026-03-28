@@ -33,10 +33,11 @@ describe("BuildStageCard", () => {
   it("renders structured planning questions instead of raw JSON", async () => {
     render(
       <BuildStageCard
+        actionToolLabel="Claude Code"
         stage={stage}
         totalStages={15}
-        planningAssistLabel="Ask planning questions with Codex"
-        planningAssistResponseLabel="Codex planning notes"
+        planningAssistLabel="Ask planning questions with Claude Code"
+        planningAssistResponseLabel="Claude Code planning notes"
         onPlanningAssist={vi.fn().mockResolvedValue(
           JSON.stringify([
             {
@@ -49,12 +50,15 @@ describe("BuildStageCard", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /ask planning questions with codex/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /ask planning questions with claude code/i })
+    );
 
     expect(await screen.findByText("Question 1")).toBeInTheDocument();
     expect(
       screen.getByText("What camera format is the first playable using?")
     ).toBeInTheDocument();
+    expect(screen.getByText(/recommended tool: codex/i)).toBeInTheDocument();
     expect(
       screen.queryByText(/\[\s*\{/)
     ).not.toBeInTheDocument();
@@ -63,10 +67,11 @@ describe("BuildStageCard", () => {
   it("lets the user answer stage planning questions inline", async () => {
     render(
       <BuildStageCard
+        actionToolLabel="Claude Code"
         stage={stage}
         totalStages={15}
-        planningAssistLabel="Ask planning questions with Codex"
-        planningAssistResponseLabel="Codex planning notes"
+        planningAssistLabel="Ask planning questions with Claude Code"
+        planningAssistResponseLabel="Claude Code planning notes"
         onPlanningAssist={vi.fn().mockResolvedValue(
           JSON.stringify([
             {
@@ -79,7 +84,9 @@ describe("BuildStageCard", () => {
       />
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /ask planning questions with codex/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /ask planning questions with claude code/i })
+    );
 
     const answerField = await screen.findByPlaceholderText(
       /type your answer here/i

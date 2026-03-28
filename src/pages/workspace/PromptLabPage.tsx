@@ -15,6 +15,7 @@ import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
 import { useToast } from "@/hooks/useToast";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
+import { getAiActionCopy } from "@/lib/ai/aiActionCopy";
 import { getPreferredAgentPlatformForProvider } from "@/lib/ai/providerCatalog";
 import { isLegacyLargeBuildPlan } from "@/lib/buildPlanUtils";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
@@ -156,7 +157,14 @@ export const PromptLabPage = (): JSX.Element => {
   const connectedToolPlatform = defaultProvider
     ? getPreferredAgentPlatformForProvider(defaultProvider.provider)
     : null;
-  const targetLabel = getAgentPlatformLabel(targetPlatform);
+  const aiActionCopy = useMemo(
+    () =>
+      getAiActionCopy({
+        connectedProvider: defaultProvider?.provider ?? null,
+        selectedTargetPlatform: targetPlatform
+      }),
+    [defaultProvider?.provider, targetPlatform]
+  );
   const planningNotes = useMemo(
     () => buildPlanningNotes(planningQuestions),
     [planningQuestions]
@@ -241,7 +249,11 @@ export const PromptLabPage = (): JSX.Element => {
     try {
       const response = await generateWithAgent(
         "planning-questions",
-        buildPlanningQuestionsPrompt(project.title, targetLabel, projectContext),
+        buildPlanningQuestionsPrompt(
+          project.title,
+          aiActionCopy.selectedTargetLabel ?? getAgentPlatformLabel(targetPlatform),
+          projectContext
+        ),
         undefined,
         project.id
       );
@@ -513,7 +525,7 @@ export const PromptLabPage = (): JSX.Element => {
                 >
                   {isLoadingPlanningQuestions
                     ? "Preparing questions…"
-                    : "Ask project-specific questions"}
+                    : aiActionCopy.planningAssistLabel}
                 </button>
                 <button
                   type="button"
@@ -548,54 +560,65 @@ export const PromptLabPage = (): JSX.Element => {
                 Connect your AI if you want project-specific question generation here. Roadmap generation still works without it.
               </p>
             </div>
-          ) : planningQuestions.length > 0 ? (
-            <div className="mt-5 space-y-4">
-              {planningQuestions.map((question, index) => (
-                <div
-                  key={question.id}
-                  className="rounded-2xl border border-outline-variant/10 bg-surface-container p-4"
-                >
-                  <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
-                    Question {index + 1}
-                  </p>
-                  <p className="mt-2 text-base font-medium text-on-surface">
-                    {question.question}
-                  </p>
-                  <p className="mt-2 text-sm text-on-surface-variant">
-                    {question.rationale}
-                  </p>
-                  <textarea
-                    value={question.answer}
-                    onChange={(event) =>
-                      setPlanningQuestions(
-                        project.id,
-                        planningQuestions.map((item) =>
-                          item.id === question.id
-                            ? { ...item, answer: event.target.value }
-                            : item
-                        )
-                      )
-                    }
-                    placeholder="Answer if you know it now. Leave blank if it is still open."
-                    className="mt-3 min-h-28 w-full resize-y rounded-2xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary/40"
-                  />
-                </div>
-              ))}
-              <div className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
-                <p className="font-medium text-on-surface">
-                  Answers are used automatically in the next generation pass.
-                </p>
-                <p className="mt-1">
-                  You do not need to submit them separately. They are kept in this planning round and will be folded into the next roadmap or output generation without overwriting the main design doc.
-                </p>
-              </div>
-            </div>
           ) : (
-            <p className="mt-4 text-sm leading-6 text-on-surface-variant">
-              {hasSkippedClarifyingRound
-                ? "Clarifying round skipped. You can generate the roadmap directly."
-                : "Run this once if you want the roadmap to ask better questions before it locks into a direction."}
-            </p>
+            <div className="mt-4 space-y-4">
+              <p className="rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                Planning help here uses your connected AI:{" "}
+                <span className="font-semibold text-on-surface">
+                  {aiActionCopy.connectedToolLabel}
+                </span>
+                . The roadmap itself still generates locally.
+              </p>
+              {planningQuestions.length > 0 ? (
+                <div className="space-y-4">
+                  {planningQuestions.map((question, index) => (
+                    <div
+                      key={question.id}
+                      className="rounded-2xl border border-outline-variant/10 bg-surface-container p-4"
+                    >
+                      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                        Question {index + 1}
+                      </p>
+                      <p className="mt-2 text-base font-medium text-on-surface">
+                        {question.question}
+                      </p>
+                      <p className="mt-2 text-sm text-on-surface-variant">
+                        {question.rationale}
+                      </p>
+                      <textarea
+                        value={question.answer}
+                        onChange={(event) =>
+                          setPlanningQuestions(
+                            project.id,
+                            planningQuestions.map((item) =>
+                              item.id === question.id
+                                ? { ...item, answer: event.target.value }
+                                : item
+                            )
+                          )
+                        }
+                        placeholder="Answer if you know it now. Leave blank if it is still open."
+                        className="mt-3 min-h-28 w-full resize-y rounded-2xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary/40"
+                      />
+                    </div>
+                  ))}
+                  <div className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
+                    <p className="font-medium text-on-surface">
+                      Answers are used automatically in the next generation pass.
+                    </p>
+                    <p className="mt-1">
+                      You do not need to submit them separately. They are kept in this planning round and will be folded into the next roadmap or output generation without overwriting the main design doc.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm leading-6 text-on-surface-variant">
+                  {hasSkippedClarifyingRound
+                    ? "Clarifying round skipped. You can generate the roadmap directly."
+                    : "Run this once if you want the roadmap to ask better questions before it locks into a direction."}
+                </p>
+              )}
+            </div>
           )}
         </section>
 
@@ -683,20 +706,13 @@ export const PromptLabPage = (): JSX.Element => {
                   Next recommended action
                 </p>
                 <p className="mt-3 text-lg font-semibold leading-8 text-on-surface sm:text-xl">
-                  Open <span className="text-primary">{nextActionStage.name}</span>,
-                  review the stage brief, and{" "}
-                  {connectedToolPlatform === nextActionStage.platform ? (
-                    <span className="text-primary">
-                      ask planning questions with{" "}
-                      {getAgentPlatformLabel(nextActionStage.platform)}
-                    </span>
-                  ) : !defaultProvider ? (
-                    <span className="text-primary">
-                      connect AI if you want planning help, or copy the stage brief
-                    </span>
+                  Open <span className="text-primary">{nextActionStage.name}</span> and
+                  review the stage brief.{" "}
+                  {defaultProvider ? (
+                    <span className="text-primary">{aiActionCopy.planningAssistLabel}</span>
                   ) : (
                     <span className="text-primary">
-                      copy the stage brief for {targetLabel}
+                      Connect AI if you want planning help, or copy the stage brief
                     </span>
                   )}
                   .
@@ -704,6 +720,17 @@ export const PromptLabPage = (): JSX.Element => {
                 <p className="mt-3 max-w-4xl text-sm leading-6 text-on-surface-variant sm:text-base">
                   Use the AI action to tighten the handoff if you want help, but keep implementation in your actual build environment. Mark the stage as started when real build work begins.
                 </p>
+                {defaultProvider &&
+                connectedToolPlatform &&
+                connectedToolPlatform !== nextActionStage.platform ? (
+                  <p className="mt-3 text-sm leading-6 text-on-surface-variant sm:text-base">
+                    This stage still recommends{" "}
+                    <span className="font-semibold text-on-surface">
+                      {getAgentPlatformLabel(nextActionStage.platform)}
+                    </span>{" "}
+                    for implementation handoff. Your connected AI is only being used here for planning help.
+                  </p>
+                ) : null}
                 {!defaultProvider ? (
                   <p className="mt-3 text-sm leading-6 text-on-surface-variant sm:text-base">
                     No provider is connected yet, so stage-level planning help will ask you to connect AI first. Copying briefs and tracking stage status still work now.
@@ -712,46 +739,50 @@ export const PromptLabPage = (): JSX.Element => {
               </div>
             ) : null}
 
-            {stages.map((stage) => (
-              <BuildStageCard
-                connectAiLabel="Connect AI to generate"
-                key={stage.id}
-                planningAssistLabel={
-                  connectedToolPlatform === stage.platform
-                    ? `Ask planning questions with ${getAgentPlatformLabel(
-                        stage.platform
-                      )}`
-                    : undefined
-                }
-                planningAssistResponseLabel={
-                  connectedToolPlatform === stage.platform
-                    ? `${getAgentPlatformLabel(stage.platform)} planning notes`
-                    : undefined
-                }
-                highlightPrimaryAction={highlightedStageId === stage.id}
-                isActionSpotlighted={highlightedStageId === stage.id}
-                isNextRecommended={nextActionStage?.id === stage.id}
-                onConnectToAI={!defaultProvider ? navigateToSettings : undefined}
-                onPlanningAssist={
-                  connectedToolPlatform === stage.platform
-                    ? async (nextStage) =>
-                        generateWithAgent(
-                          "planning-questions",
-                          buildStagePlanningReviewPrompt(
-                            nextStage,
-                            project.title,
-                            getAgentPlatformLabel(nextStage.platform)
-                          ),
-                          undefined,
-                          project.id
-                        )
-                    : undefined
-                }
-                onStatusChange={(nextStage) => void cycleStatus(nextStage)}
-                stage={stage}
-                totalStages={totalStages}
-              />
-            ))}
+            {stages.map((stage) => {
+              const stageActionCopy = getAiActionCopy({
+                connectedProvider: defaultProvider?.provider ?? null,
+                stageRecommendedPlatform: stage.platform
+              });
+
+              return (
+                <BuildStageCard
+                  actionToolLabel={stageActionCopy.connectedToolLabel}
+                  connectAiLabel={stageActionCopy.connectAiLabel}
+                  key={stage.id}
+                  planningAssistLabel={
+                    defaultProvider ? stageActionCopy.planningAssistLabel : undefined
+                  }
+                  planningAssistResponseLabel={
+                    defaultProvider
+                      ? stageActionCopy.planningAssistResponseLabel
+                      : undefined
+                  }
+                  highlightPrimaryAction={highlightedStageId === stage.id}
+                  isActionSpotlighted={highlightedStageId === stage.id}
+                  isNextRecommended={nextActionStage?.id === stage.id}
+                  onConnectToAI={!defaultProvider ? navigateToSettings : undefined}
+                  onPlanningAssist={
+                    defaultProvider
+                      ? async (nextStage) =>
+                          generateWithAgent(
+                            "planning-questions",
+                            buildStagePlanningReviewPrompt(
+                              nextStage,
+                              project.title,
+                              getAgentPlatformLabel(nextStage.platform)
+                            ),
+                            undefined,
+                            project.id
+                          )
+                      : undefined
+                  }
+                  onStatusChange={(nextStage) => void cycleStatus(nextStage)}
+                  stage={stage}
+                  totalStages={totalStages}
+                />
+              );
+            })}
 
             <div className="rounded-3xl border border-outline-variant/10 bg-surface p-5">
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">

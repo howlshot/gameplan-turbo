@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { OutputLibraryPage } from "@/pages/workspace/OutputLibraryPage";
 import type { BuildStage, GameDesignDoc, Project } from "@/types";
 
+let defaultProviderValue: { provider: string } | null = null;
+
 vi.mock("react-router-dom", () => ({
   useParams: () => ({ projectId: "project-1" }),
   useNavigate: () => vi.fn(),
@@ -19,7 +21,7 @@ vi.mock("@/hooks/useToast", () => ({
 
 vi.mock("@/hooks/useAIProviders", () => ({
   useAIProviders: () => ({
-    defaultProvider: null
+    defaultProvider: defaultProviderValue
   })
 }));
 
@@ -193,6 +195,7 @@ vi.mock("@/stores/promptLabSessionStore", () => ({
 
 describe("OutputLibraryPage", () => {
   it("shows the output library export message and planning package action", () => {
+    defaultProviderValue = null;
     render(<OutputLibraryPage />);
 
     expect(
@@ -206,6 +209,20 @@ describe("OutputLibraryPage", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /connect ai to generate/i })
+    ).toBeInTheDocument();
+  });
+
+  it("uses the connected provider name for generation language", () => {
+    defaultProviderValue = { provider: "openrouter" };
+
+    render(<OutputLibraryPage />);
+
+    expect(
+      screen.getByText(/output generation here uses your connected ai:/i)
+    ).toBeInTheDocument();
+    expect(screen.getByText("OpenRouter")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /generate with openrouter/i })
     ).toBeInTheDocument();
   });
 });

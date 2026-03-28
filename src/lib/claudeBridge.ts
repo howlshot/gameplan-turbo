@@ -33,7 +33,7 @@ export const fetchClaudeBridgeStatus = async (): Promise<ClaudeBridgeStatus> => 
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        "Could not reach the local Claude Code bridge. Start it with `corepack pnpm claude:bridge` and try again."
+        "Could not reach the local Claude Code bridge. Relaunch the desktop app or start it with `corepack pnpm claude:bridge`."
       );
     }
 
@@ -62,7 +62,7 @@ export const openClaudeLoginFlow = async (): Promise<void> => {
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        "Could not reach the local Claude Code bridge. Start it with `corepack pnpm claude:bridge` and try again."
+        "Could not reach the local Claude Code bridge. Relaunch the desktop app or start it with `corepack pnpm claude:bridge`, then try again."
       );
     }
 

@@ -75,7 +75,7 @@ export const SettingsPage = (): JSX.Element => {
         }
       } catch {
         toast.error(
-          `${toolLoginProvider.connectionLabel} is offline. Start it with \`${toolLoginProvider.startCommand}\`.`
+          `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
         );
         return;
       }

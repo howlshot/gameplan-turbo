@@ -65,6 +65,9 @@ export const ProviderCard = ({
     : provider.hasKey
       ? "Connected"
       : "Disconnected";
+  const bridgeOfflineMessage = toolLoginProvider
+    ? `Bridge offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
+    : "";
 
   const handleSave = async (): Promise<void> => {
     const value = inputRef.current?.value.trim() ?? "";
@@ -122,14 +125,12 @@ export const ProviderCard = ({
       return status;
     } catch {
       setIsBridgeReady(false);
-      setBridgeStatusMessage(
-        `Bridge offline. Start it with \`${toolLoginProvider.startCommand}\`.`
-      );
+      setBridgeStatusMessage(bridgeOfflineMessage);
       return null;
     } finally {
       setIsCheckingBridge(false);
     }
-  }, [toolLoginProvider]);
+  }, [bridgeOfflineMessage, toolLoginProvider]);
 
   const handleToolLoginConnect = useCallback(async (): Promise<void> => {
     if (!toolLoginProvider) {
@@ -263,6 +264,13 @@ export const ProviderCard = ({
             </p>
             <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
               <p className="font-semibold text-on-surface">First-time setup</p>
+              {toolLoginProvider.launcherUsuallyStartsBridge ? (
+                <p>
+                  If you launched {APP_NAME} from the desktop app, it will usually
+                  start this bridge for you. Use the steps below only if relaunching
+                  the app does not bring the bridge online.
+                </p>
+              ) : null}
               <p>1. Open Terminal.</p>
               <p>
                 2. Run <code>{toolLoginProvider.loginCommand}</code>
@@ -276,6 +284,21 @@ export const ProviderCard = ({
                 5. Run <code>{toolLoginProvider.startCommand}</code>
               </p>
               <p>6. Leave that Terminal window open.</p>
+            </div>
+            <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
+              <p className="font-semibold text-on-surface">What each button does</p>
+              <p>
+                <strong>{toolLoginProvider.openLoginButtonLabel}</strong> opens the
+                {toolLoginProvider.signInLabel} sign-in flow.
+              </p>
+              <p>
+                <strong>Check Status</strong> confirms that the bridge is running and
+                the CLI is logged in.
+              </p>
+              <p>
+                <strong>{toolLoginProvider.connectButtonLabel}</strong> saves that
+                running session into {APP_NAME}.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -308,9 +331,8 @@ export const ProviderCard = ({
               </button>
             </div>
             <p className="text-xs leading-5 text-on-surface-variant">
-              {provider.provider === "codex"
-                ? "If you use the Desktop launcher, it will usually start the bridge for you."
-                : `Start the bridge manually with \`${toolLoginProvider.startCommand}\` before using Claude Code in the app.`}
+              Relaunch the desktop app first if the bridge is offline. If that does not
+              work, start it manually with <code>{toolLoginProvider.startCommand}</code>.
             </p>
           </div>
         ) : isEditing ? (
@@ -397,6 +419,15 @@ export const ProviderCard = ({
                 Connect {config.label} with a browser sign-in, or paste an API key
                 if you prefer to manage credentials manually.
               </p>
+              <div className="mt-4 space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">
+                <p className="font-semibold text-on-surface">What happens next</p>
+                <p>1. Click <strong>Sign in with OpenRouter</strong>.</p>
+                <p>2. Approve the sign-in in your browser or popup window.</p>
+                <p>3. Return here. The connection should complete automatically.</p>
+                <p>
+                  If no browser window appears, allow popups for this app and try again.
+                </p>
+              </div>
               <div className="mt-4 flex flex-wrap gap-2">
                 <button
                   type="button"
@@ -429,6 +460,11 @@ export const ProviderCard = ({
                 <span className="material-symbols-outlined text-base">vpn_key</span>
               </button>
             </div>
+            <p className="text-xs leading-5 text-on-surface-variant">
+              Success looks like a masked key here and a <strong>Connected</strong> status
+              on the card. If you already have an OpenRouter key, you can also paste it
+              manually instead of using browser sign-in.
+            </p>
           </div>
         ) : (
           <div className="mt-4 space-y-3">

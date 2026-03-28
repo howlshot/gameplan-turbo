@@ -82,7 +82,7 @@ export const OnboardingFlow = ({
 
         if (!status.loggedIn) {
           setErrorMessage(
-            `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\`, then \`${toolLoginProvider.startCommand}\`.`
+            `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\`, then click \`${toolLoginProvider.continueButtonLabel}\`. If the bridge is unavailable, relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
           );
           return;
         }
@@ -99,7 +99,7 @@ export const OnboardingFlow = ({
         setStep(3);
       } catch {
         setErrorMessage(
-          `${toolLoginProvider.connectionLabel} is offline. Start it with \`${toolLoginProvider.startCommand}\` and try again.`
+          `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`, then try again.`
         );
       } finally {
         setIsVerifying(false);

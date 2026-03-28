@@ -32,6 +32,7 @@ export interface ToolLoginProviderMeta {
   cliName: string;
   signInLabel: string;
   connectionLabel: string;
+  launcherUsuallyStartsBridge: boolean;
   loginCommand: string;
   startCommand: string;
   sentinelApiKey: string;
@@ -69,6 +70,7 @@ const TOOL_LOGIN_PROVIDERS: Record<ToolLoginProviderId, ToolLoginProviderMeta> =
     cliName: "Codex CLI",
     signInLabel: "ChatGPT",
     connectionLabel: "Codex bridge",
+    launcherUsuallyStartsBridge: true,
     loginCommand: getCodexLoginCommand(),
     startCommand: getCodexBridgeStartCommand(),
     sentinelApiKey: "codex-cli-bridge",
@@ -88,6 +90,7 @@ const TOOL_LOGIN_PROVIDERS: Record<ToolLoginProviderId, ToolLoginProviderMeta> =
     cliName: "Claude Code CLI",
     signInLabel: "Claude",
     connectionLabel: "Claude Code bridge",
+    launcherUsuallyStartsBridge: true,
     loginCommand: getClaudeLoginCommand(),
     startCommand: getClaudeBridgeStartCommand(),
     sentinelApiKey: "claude-code-bridge",

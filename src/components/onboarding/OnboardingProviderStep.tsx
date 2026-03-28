@@ -197,37 +197,20 @@ export const OnboardingProviderStep = ({
               <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
                 <p className="font-semibold text-on-surface">Fastest path</p>
                 <p className="mt-2">
-                  {selectedProvider === "codex" ? (
-                    <>
-                      If you launched the app using the Desktop icon, try{" "}
-                      <button
-                        type="button"
-                        onClick={onStartToolLogin}
-                        disabled={isStartingToolLogin}
-                        className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {toolLoginProvider.openLoginButtonLabel}
-                      </button>{" "}
-                      first. The bridge is usually already running.
-                    </>
-                  ) : (
-                    <>
-                      Start with{" "}
-                      <button
-                        type="button"
-                        onClick={onStartToolLogin}
-                        disabled={isStartingToolLogin}
-                        className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {toolLoginProvider.openLoginButtonLabel}
-                      </button>{" "}
-                      first, then run the bridge command below.
-                    </>
-                  )}
+                  If you launched the app using the Desktop icon, try{" "}
+                  <button
+                    type="button"
+                    onClick={onStartToolLogin}
+                    disabled={isStartingToolLogin}
+                    className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {toolLoginProvider.openLoginButtonLabel}
+                  </button>{" "}
+                  first. The bridge should usually already be running.
                 </p>
               </div>
               <div className="space-y-2">
-                <p className="font-semibold text-on-surface">Manual fallback</p>
+                <p className="font-semibold text-on-surface">If the bridge did not start automatically</p>
                 <p>1. Open Terminal.</p>
                 <p>
                   2. Run <code>{toolLoginProvider.loginCommand}</code>
@@ -245,6 +228,14 @@ export const OnboardingProviderStep = ({
                 <p>6. Leave that Terminal window open while you use the app.</p>
                 <p>
                   7. Come back here and click <strong>{toolLoginProvider.continueButtonLabel}</strong>.
+                </p>
+              </div>
+              <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
+                <p className="font-semibold text-on-surface">What the buttons mean</p>
+                <p className="mt-2">
+                  <strong>{toolLoginProvider.openLoginButtonLabel}</strong> starts the
+                  {toolLoginProvider.signInLabel} sign-in flow. <strong>{toolLoginProvider.continueButtonLabel}</strong>
+                  checks the bridge and saves that running session into {APP_NAME}.
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -265,8 +256,9 @@ export const OnboardingProviderStep = ({
                 </p>
               </div>
               <p className="text-xs">
-                If the sign-in button says it cannot reach the bridge, use the
-                manual fallback steps above, then try the button again.
+                If the sign-in button says it cannot reach the bridge, relaunch the
+                desktop app first. If that still does not work, use the manual
+                fallback steps above.
               </p>
             </div>
           ) : supportsOAuthPkce ? (
@@ -277,6 +269,13 @@ export const OnboardingProviderStep = ({
                   Use browser sign-in if you want the fastest setup. You can also paste
                   an OpenRouter API key below if you already have one.
                 </p>
+                <div className="mt-4 space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">
+                  <p className="font-semibold text-on-surface">What happens next</p>
+                  <p>1. Click <strong>Sign in with OpenRouter</strong>.</p>
+                  <p>2. Approve the sign-in in your browser or popup window.</p>
+                  <p>3. Return here. We will save the connection automatically.</p>
+                  <p>If nothing opens, allow popups for this app and try again.</p>
+                </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -315,6 +314,11 @@ export const OnboardingProviderStep = ({
                   </span>
                 </button>
               </div>
+              <p className="text-xs leading-5 text-on-surface-variant">
+                After a successful browser sign-in, you should move straight to the next
+                onboarding step. If you already have an OpenRouter key, you can paste it
+                below instead.
+              </p>
             </div>
           ) : isCustomProvider ? (
             <div className="space-y-4">

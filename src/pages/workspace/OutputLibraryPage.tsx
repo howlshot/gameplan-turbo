@@ -15,6 +15,7 @@ import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
 import { useToast } from "@/hooks/useToast";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
+import { getAiActionCopy } from "@/lib/ai/aiActionCopy";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
 import { exportPlanningPackage } from "@/lib/planningPackageExport";
 import { buildPlanningNotes } from "@/lib/planningQuestions";
@@ -61,6 +62,14 @@ export const OutputLibraryPage = (): JSX.Element => {
   );
   const targetPlatform =
     promptLabSession?.targetPlatform ?? availableTargets[0] ?? "codex";
+  const aiActionCopy = useMemo(
+    () =>
+      getAiActionCopy({
+        connectedProvider: defaultProvider?.provider ?? null,
+        selectedTargetPlatform: targetPlatform
+      }),
+    [defaultProvider?.provider, targetPlatform]
+  );
   const planningNotes = useMemo(
     () => buildPlanningNotes(promptLabSession?.planningQuestions ?? []),
     [promptLabSession?.planningQuestions]
@@ -212,9 +221,17 @@ export const OutputLibraryPage = (): JSX.Element => {
             </p>
             {!defaultProvider ? (
               <p className="mt-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-on-surface-variant">
-                Output generation here uses your connected AI. Downloads and planning-package export still work anytime, but generating a new output requires connecting a provider first.
+                Output generation here uses a connected AI provider. Downloads and planning-package export still work anytime, but generating a new output requires connecting a provider first.
               </p>
-            ) : null}
+            ) : (
+              <p className="mt-3 rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                Output generation here uses your connected AI:{" "}
+                <span className="font-semibold text-on-surface">
+                  {aiActionCopy.connectedToolLabel}
+                </span>
+                . The selected output target still shapes how the prompt is framed for handoff.
+              </p>
+            )}
             {planningNotes ? (
               <p className="mt-3 rounded-2xl border border-secondary/15 bg-secondary/5 px-4 py-3 text-sm leading-6 text-on-surface-variant">
                 Your clarifying answers are active for this generation session and will be included in the next output you generate.
@@ -324,8 +341,8 @@ export const OutputLibraryPage = (): JSX.Element => {
                       className="gradient-cta glow-primary rounded-2xl px-4 py-3 text-sm font-semibold text-on-primary"
                     >
                       {defaultProvider
-                        ? "Generate Output"
-                        : "Connect AI to generate"}
+                        ? `Generate with ${aiActionCopy.connectedToolLabel}`
+                        : aiActionCopy.connectAiLabel}
                     </button>
                   </div>
                 </div>

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import type { BuildStage } from "@/types";
 
 interface BuildStageCardProps {
+  actionToolLabel?: string | null;
   connectAiLabel?: string;
   highlightPrimaryAction?: boolean;
   isNextRecommended?: boolean;
@@ -35,6 +36,7 @@ const STATUS_TONES: Record<BuildStage["status"], string> = {
 };
 
 const BuildStageCardComponent = ({
+  actionToolLabel,
   connectAiLabel = "Connect AI to generate",
   highlightPrimaryAction = false,
   isNextRecommended = false,
@@ -53,6 +55,7 @@ const BuildStageCardComponent = ({
   const [planningAnswers, setPlanningAnswers] = useState<Record<string, string>>({});
   const isLocked = stage.status === "locked";
   const platformLabel = getAgentPlatformLabel(stage.platform);
+  const planningToolLabel = actionToolLabel ?? platformLabel;
   const toast = useToast();
   const stageProgress = totalStages === 0 ? 0 : stage.stageNumber / totalStages;
   const parsedPlanningQuestions = useMemo(
@@ -172,7 +175,7 @@ const BuildStageCardComponent = ({
                 <>
                   click <span className="font-semibold">{planningAssistLabel}</span>{" "}
                   below to tighten this stage brief and surface project-specific questions with{" "}
-                  <span className="font-semibold">{platformLabel}</span>, or
+                  <span className="font-semibold">{planningToolLabel}</span>, or
                   copy the prompt when you are ready to hand it off in your build environment.
                 </>
               ) : showsConnectAiAction ? (
@@ -284,12 +287,12 @@ const BuildStageCardComponent = ({
                     setIsSending(true);
                     const response = await onPlanningAssist(stage);
                     setToolResponse(response);
-                    toast.success(`${platformLabel} returned planning notes for ${stage.name}.`);
+                    toast.success(`${planningToolLabel} returned planning notes for ${stage.name}.`);
                   } catch (error) {
                     toast.error(
                       error instanceof Error
                         ? error.message
-                        : `Could not review this stage with ${platformLabel}.`
+                        : `Could not review this stage with ${planningToolLabel}.`
                     );
                   } finally {
                     setIsSending(false);
@@ -304,7 +307,7 @@ const BuildStageCardComponent = ({
               >
                 {isSending
                   ? "Reviewing…"
-                  : planningAssistLabel ?? `Polish with ${platformLabel}`}
+                  : planningAssistLabel ?? `Polish with ${planningToolLabel}`}
               </button>
             ) : showsConnectAiAction ? (
               <button

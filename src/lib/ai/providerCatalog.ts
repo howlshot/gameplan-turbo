@@ -176,6 +176,29 @@ export const PLATFORM_TOGGLE_OPTIONS = [
 export const getProviderLabel = (provider: AIProvider): string =>
   PROVIDER_CATALOG[provider].label;
 
+export const getProviderActionLabel = (provider: AIProvider): string => {
+  switch (provider) {
+    case "codex":
+      return "Codex";
+    case "claude-code":
+      return "Claude Code";
+    case "openrouter":
+      return "OpenRouter";
+    case "google":
+      return "Gemini";
+    case "qwen":
+      return "Qwen Code";
+    case "moonshot":
+      return "Kimi / Moonshot";
+    case "glm":
+      return "GLM / Zhipu";
+    case "custom":
+      return "Custom AI";
+    default:
+      return PROVIDER_CATALOG[provider].label;
+  }
+};
+
 export const getProviderConnectionGroup = (
   provider: AIProvider
 ): "sign-in" | "api-key" => {

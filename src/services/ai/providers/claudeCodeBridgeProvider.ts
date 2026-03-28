@@ -80,7 +80,7 @@ const requestClaudeBridge = async (
     if (error instanceof TypeError) {
       throw new AIServiceError(
         "PROVIDER",
-        "The local Claude Code bridge is unavailable. Start it with `corepack pnpm claude:bridge` and try again.",
+        "The local Claude Code bridge is unavailable. Relaunch the desktop app or start it with `corepack pnpm claude:bridge` and try again.",
         {
           cause: error
         }
