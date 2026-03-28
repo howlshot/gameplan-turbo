@@ -16,11 +16,7 @@ import { clearAllAppData, exportAppData, getUsageLogs } from "@/lib/appData";
 import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { APP_EXPORT_FILE_NAME, APP_NAME } from "@/lib/brand";
-import {
-  fetchCodexBridgeStatus,
-  getCodexBridgeStartCommand,
-  getCodexLoginCommand
-} from "@/lib/codexBridge";
+import { getToolLoginProviderMeta } from "@/lib/toolLoginProviders";
 import { createProviderFromConfig } from "@/services/ai";
 import {
   buildProviderCards,
@@ -56,35 +52,36 @@ export const SettingsPage = (): JSX.Element => {
   ): Promise<void> => {
     const existing = providers.find((item) => item.provider === input.provider);
     const config = PROVIDER_CATALOG[input.provider];
+    const toolLoginProvider = getToolLoginProviderMeta(input.provider);
     const resolvedApiKey =
       input.provider === "custom"
         ? getSanitizedCustomApiKey(input.apiKey, input.baseUrl ?? "")
         : input.apiKey;
 
-    if (config.authMode === "local-bridge") {
+    if (toolLoginProvider) {
       try {
-        const status = await fetchCodexBridgeStatus();
+        const status = await toolLoginProvider.fetchStatus();
 
         if (!status.cliAvailable) {
-          toast.error("Codex CLI was not found on this machine.");
+          toast.error(`${toolLoginProvider.cliName} was not found on this machine.`);
           return;
         }
 
         if (!status.loggedIn) {
           toast.error(
-            `Codex is not logged in. Run \`${getCodexLoginCommand()}\` and retry.`
+            `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` and retry.`
           );
           return;
         }
       } catch {
         toast.error(
-          `Codex bridge is offline. Start it with \`${getCodexBridgeStartCommand()}\`.`
+          `${toolLoginProvider.connectionLabel} is offline. Start it with \`${toolLoginProvider.startCommand}\`.`
         );
         return;
       }
     }
 
-    if (config.authMode !== "local-bridge") {
+    if (!toolLoginProvider) {
       try {
         const providerClient = await createProviderFromConfig({
           id: existing?.id ?? `${input.provider}-settings`,
@@ -111,7 +108,9 @@ export const SettingsPage = (): JSX.Element => {
     const result = await saveProvider({
       id: existing?.id,
       provider: input.provider,
-      apiKey: resolvedApiKey,
+      apiKey: toolLoginProvider
+        ? toolLoginProvider.sentinelApiKey
+        : resolvedApiKey,
       authMethod: input.authMethod,
       isDefault: existing?.isDefault ?? connectedCount === 0,
       model: input.model,

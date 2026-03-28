@@ -8,11 +8,8 @@ import { useAIProviders } from "@/hooks/useAIProviders";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
 import { useSettings } from "@/hooks/useSettings";
 import {
-  fetchCodexBridgeStatus,
-  getCodexBridgeStartCommand,
-  getCodexLoginCommand,
-  openCodexLoginFlow
-} from "@/lib/codexBridge";
+  getToolLoginProviderMeta
+} from "@/lib/toolLoginProviders";
 import { startOpenRouterOAuth } from "@/lib/ai/openRouterOAuth";
 import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { getGenerationErrorState } from "@/lib/generationErrors";
@@ -37,7 +34,7 @@ export const OnboardingFlow = ({
   const [name, setName] = useState(settings?.userName ?? "");
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>("anthropic");
   const [isVerifying, setIsVerifying] = useState(false);
-  const [isStartingCodexLogin, setIsStartingCodexLogin] = useState(false);
+  const [isStartingToolLogin, setIsStartingToolLogin] = useState(false);
   const [isStartingOAuth, setIsStartingOAuth] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -65,35 +62,35 @@ export const OnboardingFlow = ({
     const model =
       modelRef.current?.value.trim() || providerConfig.defaultModel;
     const authMode = providerConfig.authMode ?? "api-key";
-    const isLocalBridgeProvider = authMode === "local-bridge";
+    const toolLoginProvider = getToolLoginProviderMeta(selectedProvider);
     const resolvedApiKey =
       selectedProvider === "custom"
         ? getSanitizedCustomApiKey(apiKey, baseUrl)
         : apiKey;
 
-    if (isLocalBridgeProvider) {
+    if (toolLoginProvider) {
       setErrorMessage("");
       setIsVerifying(true);
 
       try {
-        const status = await fetchCodexBridgeStatus();
+        const status = await toolLoginProvider.fetchStatus();
 
         if (!status.cliAvailable) {
-          setErrorMessage("Codex CLI is not installed on this machine.");
+          setErrorMessage(`${toolLoginProvider.cliName} is not installed on this machine.`);
           return;
         }
 
         if (!status.loggedIn) {
           setErrorMessage(
-            `Codex is not logged in. Run \`${getCodexLoginCommand()}\`, then \`${getCodexBridgeStartCommand()}\`.`
+            `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\`, then \`${toolLoginProvider.startCommand}\`.`
           );
           return;
         }
 
         await saveProvider({
           provider: selectedProvider,
-          apiKey: "codex-cli-bridge",
-          authMethod: "local-bridge",
+          apiKey: toolLoginProvider.sentinelApiKey,
+          authMethod: authMode,
           isDefault: true,
           model: providerConfig.defaultModel
         });
@@ -102,7 +99,7 @@ export const OnboardingFlow = ({
         setStep(3);
       } catch {
         setErrorMessage(
-          `Codex bridge is offline. Start it with \`${getCodexBridgeStartCommand()}\` and try again.`
+          `${toolLoginProvider.connectionLabel} is offline. Start it with \`${toolLoginProvider.startCommand}\` and try again.`
         );
       } finally {
         setIsVerifying(false);
@@ -162,21 +159,26 @@ export const OnboardingFlow = ({
     }
   };
 
-  const handleStartCodexLogin = async (): Promise<void> => {
+  const handleStartToolLogin = async (): Promise<void> => {
+    const toolLoginProvider = getToolLoginProviderMeta(selectedProvider);
+    if (!toolLoginProvider) {
+      return;
+    }
+
     setErrorMessage("");
-    setIsStartingCodexLogin(true);
+    setIsStartingToolLogin(true);
 
     try {
-      await openCodexLoginFlow();
-      toast.success("Opened the Codex login flow in Terminal.");
+      await toolLoginProvider.openLoginFlow();
+      toast.success(`Opened the ${toolLoginProvider.label} login flow in Terminal.`);
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : `Could not open the Codex login flow. Run \`${getCodexLoginCommand()}\` manually.`
+          : `Could not open the ${toolLoginProvider.label} login flow. Run \`${toolLoginProvider.loginCommand}\` manually.`
       );
     } finally {
-      setIsStartingCodexLogin(false);
+      setIsStartingToolLogin(false);
     }
   };
 
@@ -247,11 +249,11 @@ export const OnboardingFlow = ({
             modelRef={modelRef}
             errorMessage={errorMessage}
             isStartingOAuth={isStartingOAuth}
-            isStartingCodexLogin={isStartingCodexLogin}
+            isStartingToolLogin={isStartingToolLogin}
             isVerifying={isVerifying}
             onSkip={handleSkipProvider}
             onStartOAuth={() => void handleStartOpenRouterOAuth()}
-            onStartCodexLogin={() => void handleStartCodexLogin()}
+            onStartToolLogin={() => void handleStartToolLogin()}
             onSelectProvider={setSelectedProvider}
             onToggleApiVisibility={() => setShowApiKey((current) => !current)}
             onVerify={() => void handleVerifyProvider()}

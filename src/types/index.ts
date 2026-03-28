@@ -41,6 +41,7 @@ export type Platform = AgentPlatform;
 
 export type AIProvider =
   | "codex"
+  | "claude-code"
   | "openrouter"
   | "anthropic"
   | "openai"

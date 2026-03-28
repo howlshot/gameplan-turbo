@@ -9,7 +9,11 @@ const mocks = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
   updateSettings: vi.fn(),
   startOpenRouterOAuth: vi.fn(),
-  validateKey: vi.fn()
+  validateKey: vi.fn(),
+  fetchCodexBridgeStatus: vi.fn(),
+  fetchClaudeBridgeStatus: vi.fn(),
+  openCodexLoginFlow: vi.fn(),
+  openClaudeLoginFlow: vi.fn()
 }));
 
 vi.mock("@/hooks/useAIProviders", () => ({
@@ -46,10 +50,17 @@ vi.mock("@/services/ai", () => ({
 }));
 
 vi.mock("@/lib/codexBridge", () => ({
-  fetchCodexBridgeStatus: vi.fn(),
+  fetchCodexBridgeStatus: mocks.fetchCodexBridgeStatus,
   getCodexBridgeStartCommand: () => "corepack pnpm codex:bridge",
   getCodexLoginCommand: () => "codex login",
-  openCodexLoginFlow: vi.fn()
+  openCodexLoginFlow: mocks.openCodexLoginFlow
+}));
+
+vi.mock("@/lib/claudeBridge", () => ({
+  fetchClaudeBridgeStatus: mocks.fetchClaudeBridgeStatus,
+  getClaudeBridgeStartCommand: () => "corepack pnpm claude:bridge",
+  getClaudeLoginCommand: () => "claude auth login",
+  openClaudeLoginFlow: mocks.openClaudeLoginFlow
 }));
 
 vi.mock("@/lib/ai/openRouterOAuth", () => ({
@@ -61,6 +72,20 @@ describe("OnboardingFlow", () => {
     vi.clearAllMocks();
     mocks.updateSettings.mockResolvedValue(null);
     mocks.validateKey.mockResolvedValue(true);
+    mocks.fetchCodexBridgeStatus.mockResolvedValue({
+      ok: true,
+      cliAvailable: true,
+      loggedIn: true,
+      loginMethod: "ChatGPT",
+      message: "ok"
+    });
+    mocks.fetchClaudeBridgeStatus.mockResolvedValue({
+      ok: true,
+      cliAvailable: true,
+      loggedIn: true,
+      loginMethod: "Claude",
+      message: "ok"
+    });
   });
 
   it("lets the user skip provider setup and continue onboarding", async () => {
@@ -100,6 +125,34 @@ describe("OnboardingFlow", () => {
           provider: "openrouter",
           apiKey: "openrouter-test-key",
           authMethod: "oauth-pkce",
+          isDefault: true
+        })
+      );
+    });
+
+    expect(screen.getByText(/Quick Tour/i)).toBeInTheDocument();
+  });
+
+  it("lets the user connect Claude Code through the tool-login workflow", async () => {
+    render(<OnboardingFlow onComplete={mocks.onComplete} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Claude Code/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Claude Code/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Continue with Claude Code/i })
+    );
+
+    await waitFor(() => {
+      expect(mocks.saveProvider).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: "claude-code",
+          apiKey: "claude-code-bridge",
+          authMethod: "tool-login",
           isDefault: true
         })
       );

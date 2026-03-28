@@ -20,6 +20,7 @@ export interface ProviderCatalogEntry {
 
 export const PROVIDER_ORDER: AIProvider[] = [
   "codex",
+  "claude-code",
   "openrouter",
   "anthropic",
   "openai",
@@ -43,6 +44,16 @@ export const PROVIDER_CATALOG: Record<AIProvider, ProviderCatalogEntry> = {
     defaultModel: "codex-default",
     models: ["codex-default", "gpt-5.3-codex", "gpt-5-codex", "gpt-5"],
     authMode: "local-bridge"
+  },
+  "claude-code": {
+    provider: "claude-code",
+    label: "Claude Code (Claude login)",
+    icon: "code",
+    helpUrl: "https://code.claude.com/docs/en/quickstart",
+    keyLabel: "Claude Code bridge",
+    defaultModel: "claude-code-default",
+    models: ["claude-code-default"],
+    authMode: "tool-login"
   },
   openrouter: {
     provider: "openrouter",
@@ -182,8 +193,10 @@ export const getPreferredAgentPlatformForProvider = (
   switch (provider) {
     case "codex":
       return "codex";
-    case "anthropic":
+    case "claude-code":
       return "claude-code";
+    case "anthropic":
+      return null;
     case "google":
       return "gemini";
     case "qwen":

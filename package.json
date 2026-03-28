@@ -24,6 +24,7 @@
   "scripts": {
     "dev": "vite",
     "codex:bridge": "node scripts/codex-bridge.mjs",
+    "claude:bridge": "node scripts/claude-bridge.mjs",
     "typecheck": "tsc -b --pretty false",
     "build": "tsc -b && vite build",
     "preview": "vite preview",

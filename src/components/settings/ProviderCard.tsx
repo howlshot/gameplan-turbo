@@ -1,17 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  fetchCodexBridgeStatus,
-  getCodexBridgeStartCommand,
-  getCodexLoginCommand,
-  openCodexLoginFlow,
-  type CodexBridgeStatus
-} from "@/lib/codexBridge";
-import {
   CUSTOM_BASE_URL_PRESETS
 } from "@/lib/ai/customProviderUtils";
 import { startOpenRouterOAuth } from "@/lib/ai/openRouterOAuth";
 import { APP_FOLDER_PLACEHOLDER, APP_NAME } from "@/lib/brand";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
+import { getToolLoginProviderMeta, type ToolLoginBridgeStatus } from "@/lib/toolLoginProviders";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
 import type { AIProvider } from "@/types";
@@ -58,11 +52,11 @@ export const ProviderCard = ({
   const [isCheckingBridge, setIsCheckingBridge] = useState(false);
   const [isBridgeReady, setIsBridgeReady] = useState<boolean | null>(null);
   const authMode = config.authMode ?? "api-key";
-  const isLocalBridgeProvider = authMode === "local-bridge";
+  const toolLoginProvider = getToolLoginProviderMeta(provider.provider);
   const supportsOAuthPkce = authMode === "oauth-pkce";
   const isCustomProvider = provider.provider === "custom";
-  const isConnected = isLocalBridgeProvider ? isBridgeReady === true : provider.hasKey;
-  const statusLabel = isLocalBridgeProvider
+  const isConnected = toolLoginProvider ? isBridgeReady === true : provider.hasKey;
+  const statusLabel = toolLoginProvider
     ? isCheckingBridge
       ? "Checking"
       : isConnected
@@ -98,24 +92,30 @@ export const ProviderCard = ({
     }
   };
 
-  const checkBridgeStatus = useCallback(async (): Promise<CodexBridgeStatus | null> => {
+  const checkBridgeStatus = useCallback(async (): Promise<ToolLoginBridgeStatus | null> => {
+    if (!toolLoginProvider) {
+      return null;
+    }
+
     setIsCheckingBridge(true);
 
     try {
-      const status = await fetchCodexBridgeStatus();
+      const status = await toolLoginProvider.fetchStatus();
 
       if (!status.cliAvailable) {
         setIsBridgeReady(false);
-        setBridgeStatusMessage("Codex CLI is not installed on this machine.");
+        setBridgeStatusMessage(`${toolLoginProvider.cliName} is not installed on this machine.`);
       } else if (!status.loggedIn) {
         setIsBridgeReady(false);
         setBridgeStatusMessage(
-          `Bridge is online, but Codex is not logged in. Run \`${getCodexLoginCommand()}\` first.`
+          `Bridge is online, but ${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` first.`
         );
       } else {
         setIsBridgeReady(true);
         setBridgeStatusMessage(
-          `Bridge ready. ${status.loginMethod ?? "ChatGPT"} login detected.`
+          status.loginMethod
+            ? `Bridge ready. ${status.loginMethod} login detected.`
+            : `Bridge ready. ${toolLoginProvider.fallbackReadyMessage}`
         );
       }
 
@@ -123,15 +123,19 @@ export const ProviderCard = ({
     } catch {
       setIsBridgeReady(false);
       setBridgeStatusMessage(
-        `Bridge offline. Start it with \`${getCodexBridgeStartCommand()}\`.`
+        `Bridge offline. Start it with \`${toolLoginProvider.startCommand}\`.`
       );
       return null;
     } finally {
       setIsCheckingBridge(false);
     }
-  }, []);
+  }, [toolLoginProvider]);
 
-  const handleLocalBridgeConnect = useCallback(async (): Promise<void> => {
+  const handleToolLoginConnect = useCallback(async (): Promise<void> => {
+    if (!toolLoginProvider) {
+      return;
+    }
+
     const status = await checkBridgeStatus();
 
     if (!status?.ok || !status.loggedIn) {
@@ -142,35 +146,39 @@ export const ProviderCard = ({
     try {
       await onSave({
         provider: provider.provider,
-        apiKey: "codex-cli-bridge",
+        apiKey: toolLoginProvider.sentinelApiKey,
         model: provider.model,
-        authMethod: "local-bridge"
+        authMethod: authMode
       });
     } finally {
       setIsSaving(false);
     }
-  }, [checkBridgeStatus, onSave, provider.provider]);
+  }, [authMode, checkBridgeStatus, onSave, provider.model, provider.provider, toolLoginProvider]);
 
   const handleOpenLogin = useCallback(async (): Promise<void> => {
+    if (!toolLoginProvider) {
+      return;
+    }
+
     setIsStartingLogin(true);
 
     try {
-      await openCodexLoginFlow();
+      await toolLoginProvider.openLoginFlow();
       setBridgeStatusMessage(
-        "Codex login flow opened. Finish sign-in in the Terminal/browser window, then click Check Status."
+        `${toolLoginProvider.label} login flow opened. Finish sign-in in the Terminal/browser window, then click Check Status.`
       );
-      toast.success("Opened the Codex login flow.");
+      toast.success(`Opened the ${toolLoginProvider.label} login flow.`);
     } catch (error) {
       const message =
         error instanceof Error
           ? error.message
-          : "Could not open the Codex login flow.";
+          : `Could not open the ${toolLoginProvider.label} login flow.`;
       setBridgeStatusMessage(message);
       toast.error(message);
     } finally {
       setIsStartingLogin(false);
     }
-  }, [toast]);
+  }, [toast, toolLoginProvider]);
 
   const handleOpenRouterConnect = useCallback(async (): Promise<void> => {
     setIsStartingOAuth(true);
@@ -195,10 +203,10 @@ export const ProviderCard = ({
   }, [config.label, onSave, provider.provider, toast]);
 
   useEffect(() => {
-    if (isLocalBridgeProvider) {
+    if (toolLoginProvider) {
       void checkBridgeStatus();
     }
-  }, [checkBridgeStatus, isLocalBridgeProvider, provider.hasKey]);
+  }, [checkBridgeStatus, provider.hasKey, toolLoginProvider]);
 
   return (
     <article className="flex min-h-[220px] flex-col justify-between rounded-2xl border border-outline-variant/10 bg-surface-container-low p-5">
@@ -245,27 +253,27 @@ export const ProviderCard = ({
           ) : null}
         </div>
 
-        {isLocalBridgeProvider ? (
+        {toolLoginProvider ? (
           <div className="mt-4 space-y-4">
             <p className="text-sm leading-6 text-on-surface-variant">
-              Uses your local Codex CLI session. No API key is stored in the app.
+              {toolLoginProvider.usesSentence}
             </p>
             <p className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 font-mono text-[11px] leading-5 text-on-surface-variant">
-              {bridgeStatusMessage || "Checking local Codex bridge status..."}
+              {bridgeStatusMessage || `Checking ${toolLoginProvider.connectionLabel} status...`}
             </p>
             <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
               <p className="font-semibold text-on-surface">First-time setup</p>
               <p>1. Open Terminal.</p>
               <p>
-                2. Run <code>{getCodexLoginCommand()}</code>
+                2. Run <code>{toolLoginProvider.loginCommand}</code>
               </p>
-              <p>3. Finish the ChatGPT sign-in in your browser.</p>
+              <p>3. Finish the {toolLoginProvider.signInLabel} sign-in in your browser.</p>
               <p>4. Switch Terminal into your {APP_NAME} folder.</p>
               <p>
                 If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
               </p>
               <p>
-                5. Run <code>{getCodexBridgeStartCommand()}</code>
+                5. Run <code>{toolLoginProvider.startCommand}</code>
               </p>
               <p>6. Leave that Terminal window open.</p>
             </div>
@@ -276,19 +284,19 @@ export const ProviderCard = ({
                 onClick={() => void handleOpenLogin()}
                 className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
               >
-                {isStartingLogin ? "Opening..." : "Open Sign-In"}
+                {isStartingLogin ? "Opening..." : toolLoginProvider.openLoginButtonLabel}
               </button>
               <button
                 type="button"
                 disabled={isSaving || isCheckingBridge}
-                onClick={() => void handleLocalBridgeConnect()}
+                onClick={() => void handleToolLoginConnect()}
                 className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
               >
                 {isSaving
                   ? "Connecting..."
                   : provider.hasKey
                     ? "Reconnect"
-                    : "Connect Bridge"}
+                    : toolLoginProvider.connectButtonLabel}
               </button>
               <button
                 type="button"
@@ -300,7 +308,9 @@ export const ProviderCard = ({
               </button>
             </div>
             <p className="text-xs leading-5 text-on-surface-variant">
-              If you use the Desktop launcher, it will usually start the bridge for you.
+              {provider.provider === "codex"
+                ? "If you use the Desktop launcher, it will usually start the bridge for you."
+                : `Start the bridge manually with \`${toolLoginProvider.startCommand}\` before using Claude Code in the app.`}
             </p>
           </div>
         ) : isEditing ? (

@@ -10,6 +10,7 @@ describe("providerCatalog", () => {
   it("includes the new providers in stable order", () => {
     expect(PROVIDER_ORDER).toEqual([
       "codex",
+      "claude-code",
       "openrouter",
       "anthropic",
       "openai",
@@ -30,13 +31,21 @@ describe("providerCatalog", () => {
     expect(getProviderConnectionGroup("openrouter")).toBe("sign-in");
   });
 
+  it("treats Claude Code as a sign-in provider while leaving Anthropic on API keys", () => {
+    expect(PROVIDER_CATALOG["claude-code"].authMode).toBe("tool-login");
+    expect(getProviderConnectionGroup("claude-code")).toBe("sign-in");
+    expect(getProviderConnectionGroup("anthropic")).toBe("api-key");
+  });
+
   it("keeps the new hosted providers on the API-key path", () => {
     expect(getProviderConnectionGroup("glm")).toBe("api-key");
     expect(getProviderConnectionGroup("moonshot")).toBe("api-key");
     expect(getProviderConnectionGroup("minimax")).toBe("api-key");
   });
 
-  it("does not force a build-tool bias for OpenRouter", () => {
+  it("maps Claude Code directly while keeping Anthropic and OpenRouter neutral", () => {
+    expect(getPreferredAgentPlatformForProvider("claude-code")).toBe("claude-code");
+    expect(getPreferredAgentPlatformForProvider("anthropic")).toBeNull();
     expect(getPreferredAgentPlatformForProvider("openrouter")).toBeNull();
   });
 });

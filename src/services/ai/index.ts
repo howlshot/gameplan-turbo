@@ -19,6 +19,11 @@ export const createProviderFromConfig = (
         (module) =>
           module.createCodexBridgeProvider(config.model, config.baseUrl)
       );
+    case "claude-code":
+      return import("@/services/ai/providers/claudeCodeBridgeProvider").then(
+        (module) =>
+          module.createClaudeCodeBridgeProvider(config.model, config.baseUrl)
+      );
     case "openrouter":
       return import("@/services/ai/providers/openrouterProvider").then(
         (module) => module.createOpenRouterProvider(config.apiKey, config.model)

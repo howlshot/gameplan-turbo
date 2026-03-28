@@ -1,10 +1,7 @@
 import type { RefObject } from "react";
 import { BrandMark } from "@/components/branding/BrandMark";
 import { CUSTOM_BASE_URL_PRESETS } from "@/lib/ai/customProviderUtils";
-import {
-  getCodexBridgeStartCommand,
-  getCodexLoginCommand
-} from "@/lib/codexBridge";
+import { getToolLoginProviderMeta } from "@/lib/toolLoginProviders";
 import {
   PROVIDER_CATALOG,
   PROVIDER_ORDER,
@@ -22,11 +19,11 @@ interface OnboardingProviderStepProps {
   modelRef: RefObject<HTMLInputElement>;
   errorMessage: string;
   isStartingOAuth: boolean;
-  isStartingCodexLogin: boolean;
+  isStartingToolLogin: boolean;
   isVerifying: boolean;
   onSkip: () => void;
   onStartOAuth: () => void;
-  onStartCodexLogin: () => void;
+  onStartToolLogin: () => void;
   onSelectProvider: (provider: AIProvider) => void;
   onToggleApiVisibility: () => void;
   onVerify: () => void;
@@ -40,11 +37,11 @@ export const OnboardingProviderStep = ({
   modelRef,
   errorMessage,
   isStartingOAuth,
-  isStartingCodexLogin,
+  isStartingToolLogin,
   isVerifying,
   onSkip,
   onStartOAuth,
-  onStartCodexLogin,
+  onStartToolLogin,
   onSelectProvider,
   onToggleApiVisibility,
   onVerify,
@@ -53,7 +50,7 @@ export const OnboardingProviderStep = ({
 }: OnboardingProviderStepProps): JSX.Element => {
   const providerConfig = PROVIDER_CATALOG[selectedProvider];
   const authMode = providerConfig.authMode ?? "api-key";
-  const isLocalBridgeProvider = authMode === "local-bridge";
+  const toolLoginProvider = getToolLoginProviderMeta(selectedProvider);
   const supportsOAuthPkce = authMode === "oauth-pkce";
   const isCustomProvider = selectedProvider === "custom";
   const signInProviders = PROVIDER_ORDER.filter(
@@ -166,14 +163,16 @@ export const OnboardingProviderStep = ({
         <div className="mt-10">
           <div className="mb-2 flex items-center justify-between gap-3">
             <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
-            {isLocalBridgeProvider
-              ? "Codex Bridge"
+            {toolLoginProvider
+              ? toolLoginProvider.connectionLabel
               : isCustomProvider
                 ? "Custom provider connection"
                 : providerConfig.keyLabel}
             </label>
-            {isLocalBridgeProvider ? (
-              <span className="text-xs text-primary">Uses local Codex login</span>
+            {toolLoginProvider ? (
+              <span className="text-xs text-primary">
+                Uses local {toolLoginProvider.signInLabel} login
+              </span>
             ) : supportsOAuthPkce ? (
               <span className="text-xs text-primary">
                 Sign in or use an API key
@@ -190,53 +189,72 @@ export const OnboardingProviderStep = ({
             )}
           </div>
 
-          {isLocalBridgeProvider ? (
+          {toolLoginProvider ? (
             <div className="space-y-4 rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-sm leading-6 text-on-surface-variant">
               <p>
-                No API key is needed here. {APP_NAME} can use your local Codex CLI
-                session if you want AI generation right away, but you can also skip
-                this step and connect later in Settings.
+                {toolLoginProvider.helpSentence}
               </p>
               <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
                 <p className="font-semibold text-on-surface">Fastest path</p>
                 <p className="mt-2">
-                  If you launched the app using the Desktop icon, try{" "}
-                  <button
-                    type="button"
-                    onClick={onStartCodexLogin}
-                    disabled={isStartingCodexLogin}
-                    className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    Open ChatGPT Sign-In
-                  </button>{" "}
-                  first. The bridge is usually already running.
+                  {selectedProvider === "codex" ? (
+                    <>
+                      If you launched the app using the Desktop icon, try{" "}
+                      <button
+                        type="button"
+                        onClick={onStartToolLogin}
+                        disabled={isStartingToolLogin}
+                        className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {toolLoginProvider.openLoginButtonLabel}
+                      </button>{" "}
+                      first. The bridge is usually already running.
+                    </>
+                  ) : (
+                    <>
+                      Start with{" "}
+                      <button
+                        type="button"
+                        onClick={onStartToolLogin}
+                        disabled={isStartingToolLogin}
+                        className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {toolLoginProvider.openLoginButtonLabel}
+                      </button>{" "}
+                      first, then run the bridge command below.
+                    </>
+                  )}
                 </p>
               </div>
               <div className="space-y-2">
                 <p className="font-semibold text-on-surface">Manual fallback</p>
                 <p>1. Open Terminal.</p>
                 <p>
-                  2. Run <code>{getCodexLoginCommand()}</code>
+                  2. Run <code>{toolLoginProvider.loginCommand}</code>
                 </p>
-                <p>3. Finish the ChatGPT sign-in flow that opens in your browser.</p>
+                <p>
+                  3. Finish the {toolLoginProvider.signInLabel} sign-in flow that opens in your browser.
+                </p>
                 <p>4. In Terminal, switch to your {APP_NAME} folder.</p>
                 <p>
                   If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
                 </p>
                 <p>
-                  5. Run <code>{getCodexBridgeStartCommand()}</code>
+                  5. Run <code>{toolLoginProvider.startCommand}</code>
                 </p>
                 <p>6. Leave that Terminal window open while you use the app.</p>
-                <p>7. Come back here and click <strong>Continue with Codex</strong>.</p>
+                <p>
+                  7. Come back here and click <strong>{toolLoginProvider.continueButtonLabel}</strong>.
+                </p>
               </div>
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
-                  onClick={onStartCodexLogin}
-                  disabled={isStartingCodexLogin}
+                  onClick={onStartToolLogin}
+                  disabled={isStartingToolLogin}
                   className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
                 >
-                  {isStartingCodexLogin ? "Opening..." : "Open ChatGPT Sign-In"}
+                  {isStartingToolLogin ? "Opening..." : toolLoginProvider.openLoginButtonLabel}
                 </button>
               </div>
               <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3">
@@ -421,7 +439,7 @@ export const OnboardingProviderStep = ({
               </>
             ) : (
               <>
-                <span>{isLocalBridgeProvider ? "Continue with Codex" : "Verify & Continue"}</span>
+                <span>{toolLoginProvider ? toolLoginProvider.continueButtonLabel : "Verify & Continue"}</span>
                 <span className="material-symbols-outlined text-base">arrow_forward</span>
               </>
             )}

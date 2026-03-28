@@ -182,7 +182,7 @@ describe("NewProjectModal", () => {
   });
 
   it("defaults to a single connected provider tool target when one maps cleanly", async () => {
-    mocks.defaultProvider = { provider: "anthropic" };
+    mocks.defaultProvider = { provider: "claude-code" };
 
     render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
 
