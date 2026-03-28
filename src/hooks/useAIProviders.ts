@@ -1,6 +1,7 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import db from "@/lib/db";
 import { DEFAULT_PLATFORM_LAUNCHERS } from "@/lib/db";
+import { isProviderAvailableInCurrentRuntime } from "@/lib/providerRuntime";
 import type { AIProviderConfig } from "@/types";
 
 export interface AIProviderSummary {
@@ -58,8 +59,13 @@ export const useAIProviders = () => {
   );
 
   const providers = providersQuery ?? [];
+  const runtimeAvailableProviders = providers.filter((provider) =>
+    isProviderAvailableInCurrentRuntime(provider.provider)
+  );
   const defaultProvider =
-    providers.find((provider) => provider.isDefault) ?? null;
+    runtimeAvailableProviders.find((provider) => provider.isDefault) ??
+    runtimeAvailableProviders.find((provider) => provider.hasKey) ??
+    null;
   const isLoading = providersQuery === undefined;
 
   const saveProvider = async (

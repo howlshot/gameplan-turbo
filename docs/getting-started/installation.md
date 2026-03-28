@@ -22,7 +22,13 @@ corepack pnpm install
 corepack pnpm dev
 ```
 
-Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
+Open the local dev URL printed by Vite, usually [http://127.0.0.1:5173](http://127.0.0.1:5173).
+
+## Browser-hosted mode vs local desktop mode
+
+- **Browser-hosted mode** is ideal if you want to try the app quickly or share it with other people. Planning, roadmap generation, exports, OpenRouter, and API-key providers all work well there.
+- **Local desktop mode** is required for `Codex` and `Claude Code`, because those integrations use local bridges to talk to your installed CLI tools.
+- If you only want to evaluate the planning workflow first, the hosted app or a plain local dev run is enough.
 
 ## What you can do before connecting AI
 
@@ -43,7 +49,7 @@ You only need AI when you want generated outputs or planning-question assists in
 
 ### 1. Sign in with local tools
 
-These integrations use a local bridge and do not store the tool's OAuth session in the browser app.
+These integrations use a local bridge and do not store the tool's OAuth session in the browser app. They are available when Gameplan Turbo is running locally, not in the hosted web app.
 
 #### Codex
 

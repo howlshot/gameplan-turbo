@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProviderCard } from "@/components/settings/ProviderCard";
 
 const mocks = vi.hoisted(() => ({
+  hostedRuntime: false,
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
   fetchStatus: vi.fn(),
@@ -14,6 +15,10 @@ vi.mock("@/hooks/useToast", () => ({
     error: mocks.toastError,
     success: mocks.toastSuccess
   })
+}));
+
+vi.mock("@/lib/runtimeMode", () => ({
+  isHostedRuntime: () => mocks.hostedRuntime
 }));
 
 vi.mock("@/lib/toolLoginProviders", () => ({
@@ -44,6 +49,7 @@ vi.mock("@/lib/toolLoginProviders", () => ({
 describe("ProviderCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.hostedRuntime = false;
     mocks.fetchStatus.mockResolvedValue({
       ok: false,
       cliAvailable: false,
@@ -133,5 +139,32 @@ describe("ProviderCard", () => {
     await waitFor(() => {
       expect(onDisconnect).toHaveBeenCalledWith("claude-provider");
     });
+  });
+
+  it("shows local-only guidance for tool-login providers in hosted mode", async () => {
+    mocks.hostedRuntime = true;
+
+    render(
+      <ProviderCard
+        provider={{
+          provider: "claude-code",
+          model: "claude-code-default",
+          hasKey: false,
+          maskedKey: "",
+          isDefault: false
+        }}
+        onDisconnect={vi.fn()}
+        onSave={vi.fn()}
+        onSetDefault={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText(/available only in local desktop mode/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Open Claude Sign-In/i })
+    ).not.toBeInTheDocument();
+    expect(mocks.fetchStatus).not.toHaveBeenCalled();
   });
 });

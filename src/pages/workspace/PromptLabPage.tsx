@@ -24,6 +24,7 @@ import {
   buildPlanningNotes,
   parsePlanningQuestions
 } from "@/lib/planningQuestions";
+import { isHostedRuntime } from "@/lib/runtimeMode";
 import { generateWithAgent } from "@/services/ai";
 import {
   exportAllPrompts,
@@ -131,6 +132,7 @@ export const PromptLabPage = (): JSX.Element => {
     () => files.filter((file) => file.isActiveContext),
     [files]
   );
+  const hostedRuntime = isHostedRuntime();
   const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
   const [isExportingPlanningPackage, setIsExportingPlanningPackage] =
     useState(false);
@@ -216,7 +218,9 @@ export const PromptLabPage = (): JSX.Element => {
 
     if (!defaultProvider) {
       toast.warning(
-        "Connect an AI provider in Settings to run a clarifying round."
+        hostedRuntime
+          ? "Connect OpenRouter or an API-key provider in Settings to run a clarifying round in the hosted app."
+          : "Connect an AI provider in Settings to run a clarifying round."
       );
       return;
     }
@@ -558,6 +562,9 @@ export const PromptLabPage = (): JSX.Element => {
               </p>
               <p className="rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-3 text-sm leading-6 text-on-surface-variant">
                 Connect your AI if you want project-specific question generation here. Roadmap generation still works without it.
+                {hostedRuntime
+                  ? " In the hosted app, OpenRouter and API-key providers are the fastest path."
+                  : ""}
               </p>
             </div>
           ) : (
@@ -734,6 +741,9 @@ export const PromptLabPage = (): JSX.Element => {
                 {!defaultProvider ? (
                   <p className="mt-3 text-sm leading-6 text-on-surface-variant sm:text-base">
                     No provider is connected yet, so stage-level planning help will ask you to connect AI first. Copying briefs and tracking stage status still work now.
+                    {hostedRuntime
+                      ? " In the hosted app, use OpenRouter or an API-key provider if you want planning help here."
+                      : ""}
                   </p>
                 ) : null}
               </div>

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 
 const mocks = vi.hoisted(() => ({
+  hostedRuntime: false,
   onComplete: vi.fn(),
   saveProvider: vi.fn(),
   toastError: vi.fn(),
@@ -43,6 +44,10 @@ vi.mock("@/hooks/useDialogAccessibility", () => ({
   useDialogAccessibility: () => ({ current: null })
 }));
 
+vi.mock("@/lib/runtimeMode", () => ({
+  isHostedRuntime: () => mocks.hostedRuntime
+}));
+
 vi.mock("@/services/ai", () => ({
   createProviderFromConfig: vi.fn(async () => ({
     validateKey: mocks.validateKey
@@ -70,6 +75,7 @@ vi.mock("@/lib/ai/openRouterOAuth", () => ({
 describe("OnboardingFlow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.hostedRuntime = false;
     mocks.updateSettings.mockResolvedValue(null);
     mocks.validateKey.mockResolvedValue(true);
     mocks.fetchCodexBridgeStatus.mockResolvedValue({
@@ -159,5 +165,26 @@ describe("OnboardingFlow", () => {
     });
 
     expect(screen.getByText(/Quick Tour/i)).toBeInTheDocument();
+  });
+
+  it("marks Claude Code as local-only in the hosted app", async () => {
+    mocks.hostedRuntime = true;
+
+    render(<OnboardingFlow onComplete={mocks.onComplete} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Claude Code/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Claude Code/i }));
+
+    expect(
+      screen.getByText(/Codex and Claude Code need the local desktop version/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Available in Local Desktop Mode/i })
+    ).toBeDisabled();
   });
 });

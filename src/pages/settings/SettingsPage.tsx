@@ -16,6 +16,7 @@ import { clearAllAppData, exportAppData, getUsageLogs } from "@/lib/appData";
 import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { APP_EXPORT_FILE_NAME, APP_NAME } from "@/lib/brand";
+import { isHostedRuntime } from "@/lib/runtimeMode";
 import { getToolLoginProviderMeta } from "@/lib/toolLoginProviders";
 import { createProviderFromConfig } from "@/services/ai";
 import {
@@ -59,6 +60,13 @@ export const SettingsPage = (): JSX.Element => {
         : input.apiKey;
 
     if (toolLoginProvider) {
+      if (isHostedRuntime()) {
+        toast.error(
+          `${toolLoginProvider.label} is available only when Gameplan Turbo is running locally. Use OpenRouter or an API-key provider in the hosted app.`
+        );
+        return;
+      }
+
       try {
         const status = await toolLoginProvider.fetchStatus();
 

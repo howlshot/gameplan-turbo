@@ -1,6 +1,6 @@
 # Gameplan Turbo
 
-Gameplan Turbo is a planning-first game development workspace for small teams and solo builders using AI tools. It helps you move from concept to design intent, build roadmap, and export-ready planning docs without turning the app into a game engine or code runner.
+Gameplan Turbo helps solo developers and small teams turn a rough game idea into a complete, usable production plan. Use it to shape the core loop, pressure-test mechanics, generate polished game-development prompts and briefs, and keep your roadmap, references, and outputs aligned as the project moves toward a playable build.
 
 ## What the app does
 
@@ -26,6 +26,12 @@ Without AI configured, you can:
 
 AI is only required for model-generated outputs and planning-question assists.
 
+## Try in browser or run locally
+
+- **Browser-hosted mode** is the fastest way to share or evaluate the app. It is great for planning, roadmap generation, exports, OpenRouter, and API-key providers.
+- **Local desktop mode** is what you want if you also need bridge-based sign-in with `Codex` or `Claude Code`.
+- Local bridge providers are intentionally not available from the hosted web app.
+
 ## Quick start
 
 ```bash
@@ -35,7 +41,9 @@ corepack pnpm install
 corepack pnpm dev
 ```
 
-Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
+Open the local dev URL printed by Vite, usually [http://127.0.0.1:5173](http://127.0.0.1:5173).
+
+If you deploy the app to Vercel or Netlify, the hosted version can be opened directly in the browser with no local install. Use local run when you want Codex or Claude Code bridge features.
 
 ## Optional AI setup
 

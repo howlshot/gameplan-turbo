@@ -19,6 +19,7 @@ import { getAiActionCopy } from "@/lib/ai/aiActionCopy";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
 import { exportPlanningPackage } from "@/lib/planningPackageExport";
 import { buildPlanningNotes } from "@/lib/planningQuestions";
+import { isHostedRuntime } from "@/lib/runtimeMode";
 import {
   getOutputDefinition,
   PROMPT_LAB_OUTPUTS
@@ -75,6 +76,7 @@ export const OutputLibraryPage = (): JSX.Element => {
     [promptLabSession?.planningQuestions]
   );
   const activeOutput = getActiveOutputFromSearch(location.search);
+  const hostedRuntime = isHostedRuntime();
   const [streamingByType, setStreamingByType] = useState<
     Partial<Record<ArtifactType, string>>
   >({});
@@ -222,6 +224,9 @@ export const OutputLibraryPage = (): JSX.Element => {
             {!defaultProvider ? (
               <p className="mt-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-on-surface-variant">
                 Output generation here uses a connected AI provider. Downloads and planning-package export still work anytime, but generating a new output requires connecting a provider first.
+                {hostedRuntime
+                  ? " In the hosted app, OpenRouter and API-key providers are the fastest way to turn generation on."
+                  : ""}
               </p>
             ) : (
               <p className="mt-3 rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-3 text-sm leading-6 text-on-surface-variant">

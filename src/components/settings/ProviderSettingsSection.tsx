@@ -1,6 +1,7 @@
 import { ProviderCard } from "@/components/settings/ProviderCard";
 import type { AIProviderSummary } from "@/hooks/useAIProviders";
 import { getProviderConnectionGroup } from "@/lib/ai/providerCatalog";
+import { isHostedRuntime } from "@/lib/runtimeMode";
 import type { AIProvider } from "@/types";
 
 interface ProviderSettingsSectionProps {
@@ -26,6 +27,7 @@ export const ProviderSettingsSection = ({
   onSaveProvider,
   onSetDefault
 }: ProviderSettingsSectionProps): JSX.Element => {
+  const hostedRuntime = isHostedRuntime();
   const signInProviders = providerCards.filter(
     (provider) => getProviderConnectionGroup(provider.provider) === "sign-in"
   );
@@ -69,6 +71,16 @@ export const ProviderSettingsSection = ({
       </div>
 
       <div className="mt-6 space-y-8">
+        {hostedRuntime ? (
+          <div className="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 text-sm leading-6 text-on-surface-variant">
+            <p className="font-semibold text-on-surface">Hosted web mode</p>
+            <p className="mt-2">
+              OpenRouter and API-key providers work in the browser-hosted app. Codex
+              and Claude Code use local bridges and are available when Gameplan Turbo
+              is running locally.
+            </p>
+          </div>
+        ) : null}
         <div>
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary">login</span>

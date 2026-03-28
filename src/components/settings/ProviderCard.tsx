@@ -5,6 +5,7 @@ import {
 import { startOpenRouterOAuth } from "@/lib/ai/openRouterOAuth";
 import { APP_FOLDER_PLACEHOLDER, APP_NAME } from "@/lib/brand";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
+import { isHostedRuntime } from "@/lib/runtimeMode";
 import { getToolLoginProviderMeta, type ToolLoginBridgeStatus } from "@/lib/toolLoginProviders";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
@@ -55,15 +56,23 @@ export const ProviderCard = ({
   const [isBridgeReady, setIsBridgeReady] = useState<boolean | null>(null);
   const authMode = config.authMode ?? "api-key";
   const toolLoginProvider = getToolLoginProviderMeta(provider.provider);
+  const isHostedBridgeUnavailable =
+    Boolean(toolLoginProvider) && isHostedRuntime();
   const supportsOAuthPkce = authMode === "oauth-pkce";
   const isCustomProvider = provider.provider === "custom";
-  const isConnected = toolLoginProvider ? isBridgeReady === true : provider.hasKey;
+  const isConnected = toolLoginProvider
+    ? isHostedBridgeUnavailable
+      ? false
+      : isBridgeReady === true
+    : provider.hasKey;
   const statusLabel = toolLoginProvider
-    ? isCheckingBridge
-      ? "Checking"
-      : isConnected
-        ? "Bridge Ready"
-        : "Bridge Offline"
+    ? isHostedBridgeUnavailable
+      ? "Local Only"
+      : isCheckingBridge
+        ? "Checking"
+        : isConnected
+          ? "Bridge Ready"
+          : "Bridge Offline"
     : provider.hasKey
       ? "Connected"
       : "Disconnected";
@@ -103,6 +112,14 @@ export const ProviderCard = ({
       return null;
     }
 
+    if (isHostedBridgeUnavailable) {
+      setIsBridgeReady(false);
+      setBridgeStatusMessage(
+        `${toolLoginProvider.label} is available only when Gameplan Turbo is running locally.`
+      );
+      return null;
+    }
+
     setIsCheckingBridge(true);
 
     try {
@@ -133,10 +150,17 @@ export const ProviderCard = ({
     } finally {
       setIsCheckingBridge(false);
     }
-  }, [bridgeOfflineMessage, toolLoginProvider]);
+  }, [bridgeOfflineMessage, isHostedBridgeUnavailable, toolLoginProvider]);
 
   const handleToolLoginConnect = useCallback(async (): Promise<void> => {
     if (!toolLoginProvider) {
+      return;
+    }
+
+    if (isHostedBridgeUnavailable) {
+      toast.error(
+        `${toolLoginProvider.label} uses a local bridge and is only available when running Gameplan Turbo locally.`
+      );
       return;
     }
 
@@ -157,10 +181,26 @@ export const ProviderCard = ({
     } finally {
       setIsSaving(false);
     }
-  }, [authMode, checkBridgeStatus, onSave, provider.model, provider.provider, toolLoginProvider]);
+  }, [
+    authMode,
+    checkBridgeStatus,
+    isHostedBridgeUnavailable,
+    onSave,
+    provider.model,
+    provider.provider,
+    toast,
+    toolLoginProvider
+  ]);
 
   const handleOpenLogin = useCallback(async (): Promise<void> => {
     if (!toolLoginProvider) {
+      return;
+    }
+
+    if (isHostedBridgeUnavailable) {
+      toast.error(
+        `${toolLoginProvider.label} sign-in is available only in local desktop mode.`
+      );
       return;
     }
 
@@ -182,7 +222,7 @@ export const ProviderCard = ({
     } finally {
       setIsStartingLogin(false);
     }
-  }, [toast, toolLoginProvider]);
+  }, [isHostedBridgeUnavailable, toast, toolLoginProvider]);
 
   const handleOpenRouterConnect = useCallback(async (): Promise<void> => {
     setIsStartingOAuth(true);
@@ -207,10 +247,10 @@ export const ProviderCard = ({
   }, [config.label, onSave, provider.provider, toast]);
 
   useEffect(() => {
-    if (toolLoginProvider) {
+    if (toolLoginProvider && !isHostedBridgeUnavailable) {
       void checkBridgeStatus();
     }
-  }, [checkBridgeStatus, provider.hasKey, toolLoginProvider]);
+  }, [checkBridgeStatus, isHostedBridgeUnavailable, provider.hasKey, toolLoginProvider]);
 
   return (
     <article className="flex min-h-[220px] flex-col justify-between rounded-2xl border border-outline-variant/10 bg-surface-container-low p-5">
@@ -277,81 +317,103 @@ export const ProviderCard = ({
             <p className="text-sm leading-6 text-on-surface-variant">
               {toolLoginProvider.usesSentence}
             </p>
-            <p className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 font-mono text-[11px] leading-5 text-on-surface-variant">
-              {bridgeStatusMessage || `Checking ${toolLoginProvider.connectionLabel} status...`}
-            </p>
-            <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
-              <p className="font-semibold text-on-surface">First-time setup</p>
-              {toolLoginProvider.launcherUsuallyStartsBridge ? (
-                <p>
-                  If you launched {APP_NAME} from the desktop app, it will usually
-                  start this bridge for you. Use the steps below only if relaunching
-                  the app does not bring the bridge online.
+            {isHostedBridgeUnavailable ? (
+              <>
+                <p className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 font-mono text-[11px] leading-5 text-on-surface-variant">
+                  {toolLoginProvider.label} is available only in local desktop mode.
                 </p>
-              ) : null}
-              <p>1. Open Terminal.</p>
-              <p>
-                2. Run <code>{toolLoginProvider.loginCommand}</code>
-              </p>
-              <p>3. Finish the {toolLoginProvider.signInLabel} sign-in in your browser.</p>
-              <p>4. Switch Terminal into your {APP_NAME} folder.</p>
-              <p>
-                If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
-              </p>
-              <p>
-                5. Run <code>{toolLoginProvider.startCommand}</code>
-              </p>
-              <p>6. Leave that Terminal window open.</p>
-            </div>
-            <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
-              <p className="font-semibold text-on-surface">What each button does</p>
-              <p>
-                <strong>{toolLoginProvider.openLoginButtonLabel}</strong> opens the
-                {toolLoginProvider.signInLabel} sign-in flow.
-              </p>
-              <p>
-                <strong>Check Status</strong> confirms that the bridge is running and
-                the CLI is logged in.
-              </p>
-              <p>
-                <strong>{toolLoginProvider.connectButtonLabel}</strong> saves that
-                running session into {APP_NAME}.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={isStartingLogin}
-                onClick={() => void handleOpenLogin()}
-                className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
-              >
-                {isStartingLogin ? "Opening..." : toolLoginProvider.openLoginButtonLabel}
-              </button>
-              <button
-                type="button"
-                disabled={isSaving || isCheckingBridge}
-                onClick={() => void handleToolLoginConnect()}
-                className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
-              >
-                {isSaving
-                  ? "Connecting..."
-                  : provider.hasKey
-                    ? "Reconnect"
-                    : toolLoginProvider.connectButtonLabel}
-              </button>
-              <button
-                type="button"
-                disabled={isCheckingBridge}
-                onClick={() => void checkBridgeStatus()}
-                className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
-              >
-                {isCheckingBridge ? "Checking..." : "Check Status"}
-              </button>
-            </div>
-            <p className="text-xs leading-5 text-on-surface-variant">
-              Relaunch the desktop app first if the bridge is offline. If that does not
-              work, start it manually with <code>{toolLoginProvider.startCommand}</code>.
-            </p>
+                <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
+                  <p className="font-semibold text-on-surface">Use this when running locally</p>
+                  <p>
+                    {toolLoginProvider.label} relies on a bridge that talks to your local
+                    CLI session, so it is intentionally disabled on the hosted web app.
+                  </p>
+                  <p>
+                    Use <strong>OpenRouter</strong> or an <strong>API key</strong>
+                    provider here, or run {APP_NAME} locally if you want to connect{" "}
+                    {toolLoginProvider.label}.
+                  </p>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 font-mono text-[11px] leading-5 text-on-surface-variant">
+                  {bridgeStatusMessage || `Checking ${toolLoginProvider.connectionLabel} status...`}
+                </p>
+                <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
+                  <p className="font-semibold text-on-surface">First-time setup</p>
+                  {toolLoginProvider.launcherUsuallyStartsBridge ? (
+                    <p>
+                      If you launched {APP_NAME} from the desktop app, it will usually
+                      start this bridge for you. Use the steps below only if relaunching
+                      the app does not bring the bridge online.
+                    </p>
+                  ) : null}
+                  <p>1. Open Terminal.</p>
+                  <p>
+                    2. Run <code>{toolLoginProvider.loginCommand}</code>
+                  </p>
+                  <p>3. Finish the {toolLoginProvider.signInLabel} sign-in in your browser.</p>
+                  <p>4. Switch Terminal into your {APP_NAME} folder.</p>
+                  <p>
+                    If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
+                  </p>
+                  <p>
+                    5. Run <code>{toolLoginProvider.startCommand}</code>
+                  </p>
+                  <p>6. Leave that Terminal window open.</p>
+                </div>
+                <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
+                  <p className="font-semibold text-on-surface">What each button does</p>
+                  <p>
+                    <strong>{toolLoginProvider.openLoginButtonLabel}</strong> opens the
+                    {toolLoginProvider.signInLabel} sign-in flow.
+                  </p>
+                  <p>
+                    <strong>Check Status</strong> confirms that the bridge is running and
+                    the CLI is logged in.
+                  </p>
+                  <p>
+                    <strong>{toolLoginProvider.connectButtonLabel}</strong> saves that
+                    running session into {APP_NAME}.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={isStartingLogin}
+                    onClick={() => void handleOpenLogin()}
+                    className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
+                  >
+                    {isStartingLogin ? "Opening..." : toolLoginProvider.openLoginButtonLabel}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSaving || isCheckingBridge}
+                    onClick={() => void handleToolLoginConnect()}
+                    className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+                  >
+                    {isSaving
+                      ? "Connecting..."
+                      : provider.hasKey
+                        ? "Reconnect"
+                        : toolLoginProvider.connectButtonLabel}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isCheckingBridge}
+                    onClick={() => void checkBridgeStatus()}
+                    className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
+                  >
+                    {isCheckingBridge ? "Checking..." : "Check Status"}
+                  </button>
+                </div>
+                <p className="text-xs leading-5 text-on-surface-variant">
+                  Relaunch the desktop app first if the bridge is offline. If that does not
+                  work, start it manually with <code>{toolLoginProvider.startCommand}</code>.
+                </p>
+              </>
+            )}
           </div>
         ) : isEditing ? (
           <div className="mt-4 space-y-3">

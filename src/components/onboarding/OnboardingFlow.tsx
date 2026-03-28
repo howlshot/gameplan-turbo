@@ -14,6 +14,7 @@ import { startOpenRouterOAuth } from "@/lib/ai/openRouterOAuth";
 import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { getGenerationErrorState } from "@/lib/generationErrors";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
+import { isHostedRuntime } from "@/lib/runtimeMode";
 import { createProviderFromConfig } from "@/services/ai";
 import { useToast } from "@/hooks/useToast";
 import type { AIProvider } from "@/types";
@@ -69,6 +70,13 @@ export const OnboardingFlow = ({
         : apiKey;
 
     if (toolLoginProvider) {
+      if (isHostedRuntime()) {
+        setErrorMessage(
+          `${toolLoginProvider.label} is only available when Gameplan Turbo is running locally. Choose OpenRouter, an API-key provider, or skip for now in the hosted app.`
+        );
+        return;
+      }
+
       setErrorMessage("");
       setIsVerifying(true);
 
@@ -162,6 +170,13 @@ export const OnboardingFlow = ({
   const handleStartToolLogin = async (): Promise<void> => {
     const toolLoginProvider = getToolLoginProviderMeta(selectedProvider);
     if (!toolLoginProvider) {
+      return;
+    }
+
+    if (isHostedRuntime()) {
+      setErrorMessage(
+        `${toolLoginProvider.label} needs local desktop mode because it uses a local bridge. Choose a hosted provider here, or run Gameplan Turbo locally to use ${toolLoginProvider.label}.`
+      );
       return;
     }
 
