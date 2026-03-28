@@ -20,9 +20,8 @@ Gameplan Turbo is not a game engine and not a generic PM suite. It is a game dev
 - `Content Bible`: verbs, enemies, encounters, levels, bosses, HUD
 - `Art & Tone`: visual direction, references, negative references, animation, VFX, audio
 - `Technical Design`: engine preference, performance targets, save system, pipeline, naming
-- `Build Plan`: staged implementation prompts aligned to a first-playable workflow
 - `Vault`: design notes, screenshots, playtest notes, mockups, technical constraints
-- `Prompt Lab`: copy-ready documents and prompts for AI tools
+- `Prompt Lab`: guided planning, build roadmap generation, and copy-ready documents/prompts for AI tools
 
 ## v1 output set
 

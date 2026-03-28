@@ -1,17 +1,19 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useMemo, useState } from "react";
 import { CopyButton } from "@/components/shared/CopyButton";
 import { useToast } from "@/hooks/useToast";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
+import { parsePlanningQuestions } from "@/lib/planningQuestions";
 import { cn } from "@/lib/utils";
 import type { BuildStage } from "@/types";
 
 interface BuildStageCardProps {
-  directSendLabel?: string;
   highlightPrimaryAction?: boolean;
   isNextRecommended?: boolean;
   isActionSpotlighted?: boolean;
-  onDirectSend?: (stage: BuildStage) => Promise<string>;
+  onPlanningAssist?: (stage: BuildStage) => Promise<string>;
   onStatusChange: (stage: BuildStage) => void;
+  planningAssistLabel?: string;
+  planningAssistResponseLabel?: string;
   stage: BuildStage;
   totalStages: number;
 }
@@ -31,28 +33,65 @@ const STATUS_TONES: Record<BuildStage["status"], string> = {
 };
 
 const BuildStageCardComponent = ({
-  directSendLabel,
   highlightPrimaryAction = false,
   isNextRecommended = false,
   isActionSpotlighted = false,
-  onDirectSend,
+  onPlanningAssist,
   onStatusChange,
+  planningAssistLabel,
+  planningAssistResponseLabel = "Planning notes from connected tool",
   stage,
   totalStages
 }: BuildStageCardProps): JSX.Element => {
   const [isExpanded, setIsExpanded] = useState(stage.status === "in-progress");
   const [isSending, setIsSending] = useState(false);
   const [toolResponse, setToolResponse] = useState("");
+  const [planningAnswers, setPlanningAnswers] = useState<Record<string, string>>({});
   const isLocked = stage.status === "locked";
   const platformLabel = getAgentPlatformLabel(stage.platform);
   const toast = useToast();
   const stageProgress = totalStages === 0 ? 0 : stage.stageNumber / totalStages;
+  const parsedPlanningQuestions = useMemo(
+    () =>
+      toolResponse.trim().startsWith("[") || toolResponse.trim().startsWith("{")
+        ? parsePlanningQuestions(toolResponse)
+        : [],
+    [toolResponse]
+  );
+  const answeredPlanningQuestions = parsedPlanningQuestions.filter((question) =>
+    (planningAnswers[question.id] ?? "").trim().length > 0
+  );
+  const stageBriefWithAnswers = useMemo(() => {
+    if (answeredPlanningQuestions.length === 0) {
+      return stage.promptContent;
+    }
+
+    const answeredQuestionSection = answeredPlanningQuestions
+      .map((question, index) => {
+        const answer = planningAnswers[question.id]?.trim() ?? "";
+        return `Question ${index + 1}: ${question.question}\nRationale: ${question.rationale}\nAnswer: ${answer}`;
+      })
+      .join("\n\n");
+
+    return `${stage.promptContent}\n\n## Stage Planning Answers\n${answeredQuestionSection}`;
+  }, [answeredPlanningQuestions, planningAnswers, stage.promptContent]);
   const stageTone =
     stageProgress <= 0.33
       ? "bg-primary/20 text-primary"
       : stageProgress <= 0.66
         ? "bg-secondary/20 text-secondary"
         : "bg-outline-variant/20 text-on-surface";
+
+  useEffect(() => {
+    if (parsedPlanningQuestions.length === 0) {
+      setPlanningAnswers({});
+      return;
+    }
+
+    setPlanningAnswers(
+      Object.fromEntries(parsedPlanningQuestions.map((question) => [question.id, ""]))
+    );
+  }, [toolResponse, parsedPlanningQuestions]);
 
   return (
     <article
@@ -101,6 +140,9 @@ const BuildStageCardComponent = ({
           </div>
 
           <div className="mt-4 flex items-center gap-2 text-xs text-on-surface-variant">
+            <span className="rounded-full bg-surface px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">
+              Recommended tool: {platformLabel}
+            </span>
             {Array.from({ length: totalStages }).map((_, index) => (
               <span
                 key={index}
@@ -121,12 +163,12 @@ const BuildStageCardComponent = ({
           {isNextRecommended && !isLocked ? (
             <div className="mt-4 rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-sm leading-6 text-on-surface">
               Next:{" "}
-              {onDirectSend ? (
+              {onPlanningAssist ? (
                 <>
-                  click <span className="font-semibold">{directSendLabel}</span>{" "}
-                  below to run this stage with{" "}
+                  click <span className="font-semibold">{planningAssistLabel}</span>{" "}
+                  below to tighten this stage brief and surface project-specific questions with{" "}
                   <span className="font-semibold">{platformLabel}</span>, or
-                  copy the prompt if you want to inspect or paste it manually.
+                  copy the prompt when you are ready to hand it off in your build environment.
                 </>
               ) : (
                 <>
@@ -146,9 +188,9 @@ const BuildStageCardComponent = ({
               <div className="flex items-center gap-2">
                 {!isLocked ? (
                   <CopyButton
-                    text={stage.promptContent}
+                    text={stageBriefWithAnswers}
                     size="sm"
-                    label={`Copy prompt for ${platformLabel}`}
+                    label="Copy Stage Brief"
                   />
                 ) : null}
                 <button
@@ -173,16 +215,56 @@ const BuildStageCardComponent = ({
           {toolResponse ? (
             <div className="mt-4 rounded-xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-4">
               <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
-                Connected tool response
+                {planningAssistResponseLabel}
               </p>
-              <pre className="mt-3 overflow-x-auto whitespace-pre-wrap font-mono text-sm text-on-surface">
-                {toolResponse}
-              </pre>
+              {parsedPlanningQuestions.length > 0 ? (
+                <div className="mt-3 space-y-3">
+                  {parsedPlanningQuestions.map((question, index) => (
+                    <div
+                      key={question.id}
+                      className="rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4"
+                    >
+                      <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                        Question {index + 1}
+                      </p>
+                      <p className="mt-2 text-base font-medium text-on-surface">
+                        {question.question}
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                        {question.rationale}
+                      </p>
+                      <textarea
+                        value={planningAnswers[question.id] ?? ""}
+                        onChange={(event) =>
+                          setPlanningAnswers((current) => ({
+                            ...current,
+                            [question.id]: event.target.value
+                          }))
+                        }
+                        placeholder="Type your answer here. It will be included when you copy the stage brief."
+                        className="mt-3 min-h-28 w-full resize-y rounded-2xl border border-outline-variant/10 bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary/40"
+                      />
+                    </div>
+                  ))}
+                  <div className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
+                    <p className="font-medium text-on-surface">
+                      Answers stay on this stage card and do not need a separate submit.
+                    </p>
+                    <p className="mt-1">
+                      They are included when you copy the stage brief, so you can hand off a more complete prompt when you are ready.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <pre className="mt-3 overflow-x-auto whitespace-pre-wrap font-mono text-sm text-on-surface">
+                  {toolResponse}
+                </pre>
+              )}
             </div>
           ) : null}
 
           <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
-            {onDirectSend ? (
+            {onPlanningAssist ? (
               <button
                 type="button"
                 data-build-stage-primary-action="true"
@@ -190,14 +272,14 @@ const BuildStageCardComponent = ({
                 onClick={async () => {
                   try {
                     setIsSending(true);
-                    const response = await onDirectSend(stage);
+                    const response = await onPlanningAssist(stage);
                     setToolResponse(response);
-                    toast.success(`${platformLabel} responded for ${stage.name}.`);
+                    toast.success(`${platformLabel} returned planning notes for ${stage.name}.`);
                   } catch (error) {
                     toast.error(
                       error instanceof Error
                         ? error.message
-                        : `Could not send this stage to ${platformLabel}.`
+                        : `Could not review this stage with ${platformLabel}.`
                     );
                   } finally {
                     setIsSending(false);
@@ -210,17 +292,19 @@ const BuildStageCardComponent = ({
                     : "border border-primary/25 bg-primary/10 text-primary hover:border-primary/35 hover:bg-primary/15"
                 )}
               >
-                {isSending ? "Sending…" : directSendLabel ?? `Send to ${platformLabel}`}
+                {isSending
+                  ? "Reviewing…"
+                  : planningAssistLabel ?? `Polish with ${platformLabel}`}
               </button>
             ) : null}
             <button
               type="button"
-              data-build-stage-primary-action={!onDirectSend ? "true" : undefined}
+              data-build-stage-primary-action={!onPlanningAssist ? "true" : undefined}
               disabled={isLocked}
               onClick={() => onStatusChange(stage)}
               className={cn(
                 "rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-50",
-                onDirectSend
+                onPlanningAssist
                   ? "border border-outline-variant/15 bg-surface-container text-on-surface hover:bg-surface-container-high"
                   : highlightPrimaryAction
                     ? "gradient-cta glow-primary text-on-primary ring-2 ring-primary/30"

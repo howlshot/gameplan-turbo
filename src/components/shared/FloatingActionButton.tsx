@@ -8,7 +8,6 @@ const WORKSPACE_FLOW = [
   "content-bible",
   "art-tone",
   "technical-design",
-  "build-plan",
   "vault",
   "prompt-lab"
 ] as const;

@@ -1,4 +1,4 @@
-import { Suspense, lazy, useMemo, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   getProjectTabFromSearch,
@@ -44,11 +44,6 @@ const TechnicalDesignPage = lazy(() =>
     default: module.TechnicalDesignPage
   }))
 );
-const BuildPlanPage = lazy(() =>
-  import("@/pages/workspace/BuildPlanPage").then((module) => ({
-    default: module.BuildPlanPage
-  }))
-);
 const VaultPage = lazy(() =>
   import("@/pages/workspace/VaultPage").then((module) => ({
     default: module.VaultPage
@@ -81,7 +76,6 @@ const WORKSPACE_STAGES = [
   { id: "content-bible", label: "Content" },
   { id: "art-tone", label: "Art" },
   { id: "technical-design", label: "Tech" },
-  { id: "build-plan", label: "Build" },
   { id: "vault", label: "Vault" },
   { id: "prompt-lab", label: "Prompt Lab" }
 ] as const;
@@ -110,6 +104,21 @@ export const ProjectWorkspace = (): JSX.Element => {
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const urlTab = getProjectTabFromSearch(location.search);
   const resolvedTab = urlTab ?? activeTab;
+
+  useEffect(() => {
+    if (!projectId) {
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("tab") !== "build-plan") {
+      return;
+    }
+
+    navigate(getProjectTabPath(projectId, "prompt-lab", { view: "guided" }), {
+      replace: true
+    });
+  }, [location.search, navigate, projectId]);
 
   const currentStageIndex = useMemo(() => {
     const activeIndex = WORKSPACE_STAGES.findIndex((stage) => stage.id === resolvedTab);
@@ -158,8 +167,6 @@ export const ProjectWorkspace = (): JSX.Element => {
         <ArtTonePage />
       ) : resolvedTab === "technical-design" ? (
         <TechnicalDesignPage />
-      ) : resolvedTab === "build-plan" ? (
-        <BuildPlanPage />
       ) : resolvedTab === "vault" ? (
         <VaultPage />
       ) : resolvedTab === "prompt-lab" ? (

@@ -8,6 +8,7 @@ import type { BuildStage, GameDesignDoc, Project } from "@/types";
 
 interface GenerateBuildStagesInput {
   gameDesignDoc: GameDesignDoc;
+  planningNotes?: string;
   project: Project;
   targetPlatform: string;
 }
@@ -27,7 +28,8 @@ interface BuildStageDraft {
 
 const buildSharedStageContext = (
   project: Project,
-  gameDesignDoc: GameDesignDoc
+  gameDesignDoc: GameDesignDoc,
+  planningNotes?: string
 ): string => {
   return [
     `Project: ${project.title}`,
@@ -39,8 +41,11 @@ const buildSharedStageContext = (
     `Design Pillars: ${gameDesignDoc.designPillars.pillars.join(" | ") || "TBD"}`,
     `Core Loop: ${gameDesignDoc.coreLoop.secondToSecond || "TBD"}`,
     `Controls: ${gameDesignDoc.controlsFeel.controlScheme || "TBD"}`,
-    `Technical Constraints: ${gameDesignDoc.technicalDesign.platformConstraints || "TBD"}`
-  ].join("\n");
+    `Technical Constraints: ${gameDesignDoc.technicalDesign.platformConstraints || "TBD"}`,
+    planningNotes ? `Clarifying Notes:\n${planningNotes}` : ""
+  ]
+    .filter(Boolean)
+    .join("\n");
 };
 
 const LARGE_STAGE_DEFAULTS: Partial<Record<BuildStage["stageKey"], string>> = {
@@ -124,7 +129,8 @@ const buildStagePrompt = (
   stage: ReturnType<typeof getBuildStageSequence>[number],
   project: Project,
   gameDesignDoc: GameDesignDoc,
-  targetPlatform: string
+  targetPlatform: string,
+  planningNotes?: string
 ): string => {
   const template = getTemplateDefinition(project.templateId);
   const templateFocus =
@@ -142,7 +148,7 @@ const buildStagePrompt = (
     `Stage Goal: ${stage.description}`,
     "",
     "## Project Context",
-    buildSharedStageContext(project, gameDesignDoc),
+    buildSharedStageContext(project, gameDesignDoc, planningNotes),
     "",
     "## Stage-Specific Focus",
     templateFocus || "Advance the project without compromising the design pillars or scope guardrails.",
@@ -176,6 +182,7 @@ const buildStagePrompt = (
 
 export const generateBuildStages = async ({
   gameDesignDoc,
+  planningNotes,
   project,
   targetPlatform
 }: GenerateBuildStagesInput): Promise<BuildStageDraft[]> => {
@@ -188,7 +195,13 @@ export const generateBuildStages = async ({
     id: crypto.randomUUID(),
     name: stage.label,
     platform: targetPlatform,
-    promptContent: buildStagePrompt(stage, project, gameDesignDoc, targetPlatform),
+    promptContent: buildStagePrompt(
+      stage,
+      project,
+      gameDesignDoc,
+      targetPlatform,
+      planningNotes
+    ),
     stageNumber: index + 1,
     stageKey: stage.key,
     status: index === 0 ? "not-started" : "locked",

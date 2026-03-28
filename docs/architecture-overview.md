@@ -49,9 +49,9 @@ This means the product can stay local-first while still supporting external gene
 
 ## Generation architecture
 
-### Build Plan
+### Build roadmap
 
-`src/services/generation/buildGeneration.ts` now generates game-specific stage prompts locally from the design doc and template bias.
+`src/services/generation/buildGeneration.ts` now generates game-specific roadmap stages and stage briefs locally from the design doc and template bias.
 
 ### Prompt Lab
 
@@ -59,7 +59,7 @@ This means the product can stay local-first while still supporting external gene
 
 - project metadata
 - game design doc
-- build stages
+- build roadmap stages
 - active vault files
 
 If an AI provider exists, Prompt Lab routes through the provider layer. If not, it falls back to deterministic local output generation so the product remains useful before AI setup.

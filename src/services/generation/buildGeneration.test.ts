@@ -145,4 +145,19 @@ describe("generateBuildStages", () => {
     expect(cameraStage?.promptContent).toContain("jump feel");
     expect(cameraStage?.promptContent).toContain("landing zones");
   });
+
+  it("threads clarifying notes into generated roadmap briefs", async () => {
+    const project = createProject("small");
+    const gameDesignDoc = createGameDesignDoc("small");
+
+    const stages = await generateBuildStages({
+      gameDesignDoc,
+      planningNotes: "Question: What is the target run length?\nAnswer: Keep it under 25 minutes.",
+      project,
+      targetPlatform: "codex"
+    });
+
+    expect(stages[0]?.promptContent).toContain("Clarifying Notes");
+    expect(stages[0]?.promptContent).toContain("Keep it under 25 minutes");
+  });
 });

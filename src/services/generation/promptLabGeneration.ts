@@ -19,6 +19,7 @@ export interface PromptLabGenerationInput {
   gameDesignDoc: GameDesignDoc;
   onChunk?: (chunk: string) => void;
   outputType: ArtifactType;
+  planningNotes?: string;
   project: Project;
   targetAgentPlatform?: string;
   vaultFiles?: VaultFile[];
@@ -148,6 +149,7 @@ const buildRoadmapExitCriteria = (
 const buildWorkspaceContext = ({
   buildStages = [],
   gameDesignDoc,
+  planningNotes,
   project,
   vaultFiles = []
 }: Omit<PromptLabGenerationInput, "onChunk" | "outputType" | "targetAgentPlatform">): string => {
@@ -164,6 +166,9 @@ const buildWorkspaceContext = ({
     "",
     ...(isLargeProjectMode(project)
       ? [formatMarkdownSection("Large Project Mode", buildLargeModeContext(project, gameDesignDoc))]
+      : []),
+    ...(planningNotes
+      ? [formatMarkdownSection("Clarifying Round", planningNotes)]
       : []),
     formatMarkdownSection(
       "Concept",
@@ -255,7 +260,7 @@ const buildWorkspaceContext = ({
         : "No active vault files."
     ),
     formatMarkdownSection(
-      "Current Build Plan",
+      "Current Build Roadmap",
       buildStages.length > 0
         ? buildStages
             .map(
@@ -263,7 +268,7 @@ const buildWorkspaceContext = ({
                 `${stage.stageNumber}. ${stage.name} [${stage.status}] - ${stage.description}`
             )
             .join("\n")
-        : "No build stages generated yet."
+        : "No build roadmap generated yet."
     )
   ].join("\n\n");
 };
@@ -293,6 +298,7 @@ export const buildOfflineOutput = ({
   buildStages = [],
   gameDesignDoc,
   outputType,
+  planningNotes,
   project,
   targetAgentPlatform = "codex",
   vaultFiles = []
@@ -335,7 +341,13 @@ export const buildOfflineOutput = ({
     case "full_gdd":
       return [
         sharedHeader,
-        buildWorkspaceContext({ buildStages, gameDesignDoc, project, vaultFiles }),
+        buildWorkspaceContext({
+          buildStages,
+          gameDesignDoc,
+          planningNotes,
+          project,
+          vaultFiles
+        }),
         ...(isLarge
           ? [
               formatMarkdownSection(
@@ -554,6 +566,7 @@ export const generatePromptLabOutput = async (
   const context = buildWorkspaceContext({
     buildStages: input.buildStages,
     gameDesignDoc: input.gameDesignDoc,
+    planningNotes: input.planningNotes,
     project: input.project,
     vaultFiles: input.vaultFiles
   });

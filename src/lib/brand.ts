@@ -17,7 +17,7 @@ export const LEGACY_CHECKPOINT_STORAGE_KEY =
   "preflight_generation_checkpoint";
 
 export const APP_EXPORT_FILE_NAME = `${APP_SLUG}-export.json`;
-export const APP_BUILD_PLAN_FILE_NAME = `${APP_SLUG}-build-plan.md`;
+export const APP_BUILD_PLAN_FILE_NAME = `${APP_SLUG}-build-roadmap.md`;
 
 export const APP_CODEX_BRIDGE_HOST_ENV = "GAMEPLAN_TURBO_CODEX_BRIDGE_HOST";
 export const APP_CODEX_BRIDGE_PORT_ENV = "GAMEPLAN_TURBO_CODEX_BRIDGE_PORT";

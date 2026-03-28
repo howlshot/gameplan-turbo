@@ -50,6 +50,7 @@ export type AIProvider =
   | "custom";
 
 export type AgentType =
+  | "planning-questions"
   | "game-pitch"
   | "mini-gdd"
   | "full-gdd"

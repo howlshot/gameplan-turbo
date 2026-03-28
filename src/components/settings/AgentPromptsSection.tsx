@@ -11,6 +11,7 @@ interface AgentPromptsSectionProps {
 }
 
 const OUTPUT_AGENTS = [
+  "planning-questions",
   "game-pitch",
   "mini-gdd",
   "full-gdd",

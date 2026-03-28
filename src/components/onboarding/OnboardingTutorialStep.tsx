@@ -24,12 +24,12 @@ const FEATURES = [
   {
     icon: "article",
     title: "Prompt Lab",
-    description: "Generate pitches, GDDs, system prompts, cut lists, and playtest docs."
+    description: "Guide planning, generate the build roadmap, and create pitches, GDDs, and handoff prompts."
   },
   {
     icon: "terminal",
-    title: "Build Plan",
-    description: "Stage first playable, combat feel, encounters, HUD, and polish."
+    title: "Build Roadmap",
+    description: "Track staged briefs, questions, dependencies, and progress inside Prompt Lab."
   },
   {
     icon: "folder",

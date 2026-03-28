@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useArtifacts } from "@/hooks/useArtifacts";
+import { useBuildStages } from "@/hooks/useBuildStages";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ export const ContextNodeSelector = ({
 }: ContextNodeSelectorProps): JSX.Element => {
   const { gameDesignDoc } = useGameDesignDoc(projectId);
   const { artifacts } = useArtifacts(projectId);
+  const { stages } = useBuildStages(projectId);
   const { files, setAllFilesAsContext } = useVaultFiles(projectId);
 
   const hasConceptContent = Boolean(
@@ -66,10 +68,10 @@ export const ContextNodeSelector = ({
       available: Boolean(gameDesignDoc?.coreLoop.secondToSecond)
     },
     {
-      id: "build-plan",
+      id: "build-roadmap",
       icon: "terminal",
-      label: "Build Plan",
-      available: artifactTypes.has("staged_implementation_prompts")
+      label: "Build Roadmap",
+      available: stages.length > 0
     },
     {
       id: "full-gdd",

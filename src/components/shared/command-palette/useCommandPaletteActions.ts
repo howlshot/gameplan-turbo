@@ -63,25 +63,14 @@ export const useCommandPaletteActions = ({
         hidden: !selectedProjectId,
         onSelect: () =>
           handleNavigate(
-            getProjectTabPath(selectedProjectId!, "prompt-lab"),
+            getProjectTabPath(selectedProjectId!, "prompt-lab", { view: "guided" }),
             "prompt-lab"
-          )
-      },
-      {
-        id: "open-build-plan",
-        icon: "terminal",
-        label: "Open Build Plan",
-        hidden: !selectedProjectId,
-        onSelect: () =>
-          handleNavigate(
-            getProjectTabPath(selectedProjectId!, "build-plan"),
-            "build-plan"
           )
       },
       {
         id: "export-build",
         icon: "download",
-        label: "Export Build Prompts",
+        label: "Export Roadmap Briefs",
         shortcut: "⌘E",
         hidden: stages.length === 0,
         onSelect: () => {

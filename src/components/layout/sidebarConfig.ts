@@ -8,13 +8,16 @@ export const PROJECT_LINKS = [
   { id: "content-bible", icon: "library_books", label: "Content Bible" },
   { id: "art-tone", icon: "palette", label: "Art & Tone" },
   { id: "technical-design", icon: "memory", label: "Technical Design" },
-  { id: "build-plan", icon: "terminal", label: "Build Plan" },
   { id: "vault", icon: "inventory_2", label: "Vault" },
   { id: "prompt-lab", icon: "auto_awesome", label: "Prompt Lab" }
 ] as const;
 
 export type ProjectLinkId = (typeof PROJECT_LINKS)[number]["id"];
 export const PROJECT_LINK_IDS = PROJECT_LINKS.map((link) => link.id) as ProjectLinkId[];
+
+const LEGACY_PROJECT_TAB_REDIRECTS: Record<string, ProjectLinkId> = {
+  "build-plan": "prompt-lab"
+};
 
 export const isProjectLinkId = (value: string | null | undefined): value is ProjectLinkId =>
   typeof value === "string" &&
@@ -24,13 +27,32 @@ export const getProjectTabFromSearch = (
   search: string
 ): ProjectLinkId | null => {
   const tab = new URLSearchParams(search).get("tab");
-  return isProjectLinkId(tab) ? tab : null;
+  if (isProjectLinkId(tab)) {
+    return tab;
+  }
+
+  if (tab && tab in LEGACY_PROJECT_TAB_REDIRECTS) {
+    return LEGACY_PROJECT_TAB_REDIRECTS[tab];
+  }
+
+  return null;
 };
 
 export const getProjectTabPath = (
   projectId: string,
-  tabId: ProjectLinkId
-): string => `/project/${projectId}?tab=${tabId}`;
+  tabId: ProjectLinkId,
+  extraSearch?: Record<string, string | undefined>
+): string => {
+  const params = new URLSearchParams({ tab: tabId });
+
+  Object.entries(extraSearch ?? {}).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value);
+    }
+  });
+
+  return `/project/${projectId}?${params.toString()}`;
+};
 
 export const getProjectStatusTone = (status: string): string =>
   getStatusTone(status as never);

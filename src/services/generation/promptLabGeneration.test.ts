@@ -158,4 +158,33 @@ describe("buildOfflineOutput", () => {
     expect(content).toContain("safe-room");
     expect(content).toContain("tension");
   });
+
+  it("includes the clarifying round and current build roadmap in full GDD context", () => {
+    const content = buildOfflineOutput({
+      buildStages: [
+        {
+          id: "stage-1",
+          projectId: "project-1",
+          stageKey: "foundation",
+          stageNumber: 1,
+          name: "Foundation",
+          description: "Bootstrap the project.",
+          status: "not-started",
+          promptContent: "Prompt",
+          platform: "codex",
+          createdAt: 1,
+          updatedAt: 1
+        }
+      ],
+      gameDesignDoc: createGameDesignDoc("small"),
+      outputType: "full_gdd",
+      planningNotes: "Question: What does the first milestone prove?\nAnswer: One complete playable loop.",
+      project: createProject("small")
+    });
+
+    expect(content).toContain("## Clarifying Round");
+    expect(content).toContain("One complete playable loop");
+    expect(content).toContain("## Current Build Roadmap");
+    expect(content).toContain("Foundation [not-started]");
+  });
 });
