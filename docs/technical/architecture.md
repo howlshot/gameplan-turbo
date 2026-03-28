@@ -1,5 +1,7 @@
 # Preflight Architecture
 
+> Legacy note: this architecture document is inherited from the upstream Preflight project. For the current Gameplan Turbo architecture, use [docs/architecture-overview.md](../architecture-overview.md) as the primary source of truth.
+
 This document provides a high-level overview of Preflight's architecture and design decisions.
 
 ## System Overview

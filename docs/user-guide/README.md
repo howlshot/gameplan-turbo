@@ -1,5 +1,7 @@
 # Preflight User Guide
 
+> Legacy note: this guide is inherited from the upstream Preflight project. It does not describe the current Gameplan Turbo workflow. Start with [docs/README.md](../README.md) and [getting-started/installation.md](../getting-started/installation.md) for the current product.
+
 **Welcome to Preflight!** This guide will help you get the most out of your project operating system.
 
 ---

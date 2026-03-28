@@ -1,64 +1,80 @@
 # Gameplan Turbo
 
-Gameplan Turbo is a local-first game design operating system for AI-assisted builders. It takes the original Preflight shell and refocuses it on game concept development, design pillars, playable-loop planning, staged implementation prompts, and vault-backed context for tools like Codex, Cursor, Claude Code, and Qwen Code.
+Gameplan Turbo is a planning-first game development workspace for small teams and solo builders using AI tools. It helps you move from concept to design intent, build roadmap, and export-ready planning docs without turning the app into a game engine or code runner.
 
-## What changed
+## What the app does
 
-- The workspace is now game-native: `Concept`, `Design Pillars`, `Core Loop`, `Controls & Feel`, `Content Bible`, `Art & Tone`, `Technical Design`, `Build Plan`, `Vault`, and `Prompt Lab`.
-- Projects are modeled as game projects, not generic apps.
-- Build planning is staged around first playable, combat feel, encounter scripting, HUD, progression, content slice, and release prep.
-- Prompt Lab generates game-focused outputs: one-page pitch, mini/full GDD, vertical slice plan, milestone roadmap, agent system prompt, staged implementation prompts, art packet, asset grocery list, playtest checklist, risk register, and cut list.
-- The first built-in template is `Arcade Action / Rail Shooter`.
+- capture the game in structured modules: `Concept`, `Design Pillars`, `Core Loop`, `Controls & Feel`, `Content Bible`, `Art & Tone`, and `Technical Design`
+- gather references, mocks, and notes in `Vault`
+- generate a staged `Build Roadmap` in `Prompt Lab`
+- generate copy-ready planning outputs in `Output Library`
+- track project phase from `Concept` through `Release Prep`
+- export a full planning package as a `.zip`
 
-## What stayed the same
+## What works without AI
 
-- Browser-only, local-first architecture
-- Dexie + IndexedDB persistence
-- Zustand stores
-- BYOK AI provider support
-- Streaming provider execution
-- Vault storage and context injection
-- Copy/download-first export flows
+Gameplan Turbo is usable before you connect any provider.
+
+Without AI configured, you can:
+
+- create and edit projects
+- fill out all planning modules
+- manage `Vault` references
+- generate the local `Build Roadmap`
+- track roadmap stages and project phase
+- export the roadmap and planning package
+
+AI is only required for model-generated outputs and planning-question assists.
 
 ## Quick start
 
 ```bash
-git clone https://github.com/Meykiio/preflight.git gameplan-turbo
+git clone https://github.com/howlshot/gameplan-turbo.git
 cd gameplan-turbo
 corepack pnpm install
 corepack pnpm dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173). The app works without AI keys; add providers later in `Settings` if you want generated outputs from external models.
+Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
-### Optional: use your ChatGPT-backed Codex login
+## Optional AI setup
 
-If you want Prompt Lab to run through the local Codex CLI instead of an API key:
+Gameplan Turbo supports a mix of login-based local-tool integrations and hosted/API-key providers.
+
+### Sign in providers
+
+- `Codex` via local bridge
+- `Claude Code` via local bridge
+- `OpenRouter` via browser sign-in or API key
+
+If you use the desktop launcher, it will try to start the local bridges for Codex and Claude Code automatically. If you run the web app manually, you can start them yourself:
 
 ```bash
-codex login
 corepack pnpm codex:bridge
+corepack pnpm claude:bridge
 ```
 
-Then open `Settings`, connect `Codex (ChatGPT login)`, and set it as the default provider.
+### API-key providers
 
-## Core workflow
+- `Anthropic`
+- `OpenAI`
+- `Google`
+- `DeepSeek`
+- `Groq`
+- `Qwen`
+- `GLM / Zhipu`
+- `Kimi / Moonshot`
+- `MiniMax`
+- `Custom` for OpenAI-compatible endpoints, including local endpoints like LM Studio, Ollama, or vLLM
 
-1. Create a game project from `Blank Game Project` or `Arcade Action / Rail Shooter`.
-2. Fill the concept, pillars, loop, feel, content, art, and technical sections.
-3. Generate a staged `Build Plan`.
-4. Use `Prompt Lab` to generate GDDs, system prompts, roadmap docs, and implementation prompts.
-5. Keep references, mockups, screenshots, and playtest notes in the `Vault`.
+## Typical workflow
 
-## v1 focus
-
-Gameplan Turbo v1 is optimized for small-scope action and arcade-style games, especially:
-
-- arcade action
-- rail shooters
-- character action lite
-- survival-horror-lite
-- mobile action games
+1. Create a game project and define the core identity.
+2. Fill the design modules until the game intent is stable.
+3. Add references, mocks, and notes to `Vault`.
+4. Use `Prompt Lab` to run clarifying questions and generate the `Build Roadmap`.
+5. Use `Output Library` to generate planning outputs such as the full game design document, milestone roadmap, risk register, and staged implementation prompts.
+6. Export a planning package for handoff to your build environment.
 
 ## Development
 
@@ -71,9 +87,12 @@ corepack pnpm build
 ## Documentation
 
 - [Docs index](docs/README.md)
-- [Migration from original Preflight](docs/migration-from-preflight.md)
+- [Getting started](docs/getting-started/installation.md)
 - [Product overview](docs/product-overview.md)
 - [Architecture overview](docs/architecture-overview.md)
 - [Using with Codex for game projects](docs/using-with-codex-for-games.md)
-- [Virtua Cop-style mobile rail shooter example](docs/examples/virtua-cop-mobile-rail-shooter.md)
-- [Assumptions](ASSUMPTIONS.md)
+- [Migration from the upstream Preflight project](docs/migration-from-preflight.md)
+
+## Legacy note
+
+The repository still contains some inherited Preflight-era docs for historical context. The files linked from `README.md` and `docs/README.md` are the current public starting point; older Preflight guides are marked as legacy where they remain in the tree.
