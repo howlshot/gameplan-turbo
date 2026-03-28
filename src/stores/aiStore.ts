@@ -17,6 +17,8 @@ interface SaveProviderInput {
   provider: AIProviderConfig["provider"];
   apiKey: string;
   model: string;
+  baseUrl?: string;
+  authMethod?: AIProviderConfig["authMethod"];
   isDefault?: boolean;
 }
 
@@ -61,7 +63,8 @@ export const useAIStore = create<AIStoreState>((set, get) => ({
       apiKey: input.apiKey.trim() || storedProvider?.apiKey || "",
       model: input.model,
       isDefault: input.isDefault ?? false,
-      baseUrl: storedProvider?.baseUrl,
+      baseUrl: input.baseUrl ?? storedProvider?.baseUrl,
+      authMethod: input.authMethod ?? storedProvider?.authMethod,
       createdAt:
         existing.find((provider) => provider.id === input.id)?.createdAt ??
         Date.now()

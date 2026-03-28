@@ -7,6 +7,8 @@ export interface AIProviderSummary {
   id?: string;
   provider: AIProviderConfig["provider"];
   model: string;
+  baseUrl?: string;
+  authMethod?: AIProviderConfig["authMethod"];
   isDefault: boolean;
   hasKey: boolean;
   maskedKey: string;
@@ -18,6 +20,8 @@ interface SaveProviderInput {
   provider: AIProviderConfig["provider"];
   apiKey: string;
   model: string;
+  baseUrl?: string;
+  authMethod?: AIProviderConfig["authMethod"];
   isDefault?: boolean;
 }
 
@@ -42,6 +46,8 @@ export const useAIProviders = () => {
         id: config.id,
         provider: config.provider,
         model: config.model,
+        baseUrl: config.baseUrl,
+        authMethod: config.authMethod,
         isDefault: config.isDefault,
         hasKey: Boolean(config.apiKey.trim()),
         maskedKey: maskApiKey(config.apiKey),
@@ -67,7 +73,8 @@ export const useAIProviders = () => {
         apiKey: input.apiKey.trim() || existing?.apiKey || "",
         model: input.model,
         isDefault: input.isDefault ?? false,
-        baseUrl: existing?.baseUrl,
+        baseUrl: input.baseUrl ?? existing?.baseUrl,
+        authMethod: input.authMethod ?? existing?.authMethod,
         createdAt: existing?.createdAt ?? Date.now()
       };
 

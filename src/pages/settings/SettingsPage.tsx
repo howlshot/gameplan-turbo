@@ -13,6 +13,7 @@ import { useSettings } from "@/hooks/useSettings";
 import { useToast } from "@/hooks/useToast";
 import type { UsageLogEntry } from "@/lib/appData";
 import { clearAllAppData, exportAppData, getUsageLogs } from "@/lib/appData";
+import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { APP_EXPORT_FILE_NAME, APP_NAME } from "@/lib/brand";
 import {
@@ -20,6 +21,7 @@ import {
   getCodexBridgeStartCommand,
   getCodexLoginCommand
 } from "@/lib/codexBridge";
+import { createProviderFromConfig } from "@/services/ai";
 import {
   buildProviderCards,
   downloadJsonFile
@@ -44,13 +46,22 @@ export const SettingsPage = (): JSX.Element => {
     : PROVIDER_CATALOG.anthropic.models;
 
   const handleSaveProvider = async (
-    provider: AIProvider,
-    apiKey: string
+    input: {
+      provider: AIProvider;
+      apiKey: string;
+      model: string;
+      baseUrl?: string;
+      authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
+    }
   ): Promise<void> => {
-    const existing = providers.find((item) => item.provider === provider);
-    const config = PROVIDER_CATALOG[provider];
+    const existing = providers.find((item) => item.provider === input.provider);
+    const config = PROVIDER_CATALOG[input.provider];
+    const resolvedApiKey =
+      input.provider === "custom"
+        ? getSanitizedCustomApiKey(input.apiKey, input.baseUrl ?? "")
+        : input.apiKey;
 
-    if (provider === "codex") {
+    if (config.authMode === "local-bridge") {
       try {
         const status = await fetchCodexBridgeStatus();
 
@@ -73,12 +84,38 @@ export const SettingsPage = (): JSX.Element => {
       }
     }
 
+    if (config.authMode !== "local-bridge") {
+      try {
+        const providerClient = await createProviderFromConfig({
+          id: existing?.id ?? `${input.provider}-settings`,
+          provider: input.provider,
+          apiKey: resolvedApiKey,
+          model: input.model,
+          baseUrl: input.baseUrl,
+          authMethod: input.authMethod,
+          isDefault: existing?.isDefault ?? connectedCount === 0,
+          createdAt: existing?.createdAt ?? Date.now()
+        });
+
+        await providerClient.validateKey(resolvedApiKey);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : `Could not verify ${config.label}.`
+        );
+        return;
+      }
+    }
+
     const result = await saveProvider({
       id: existing?.id,
-      provider,
-      apiKey,
+      provider: input.provider,
+      apiKey: resolvedApiKey,
+      authMethod: input.authMethod,
       isDefault: existing?.isDefault ?? connectedCount === 0,
-      model: existing?.model ?? config.defaultModel
+      model: input.model,
+      baseUrl: input.baseUrl
     });
 
     if (result) {

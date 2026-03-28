@@ -41,12 +41,16 @@ export type Platform = AgentPlatform;
 
 export type AIProvider =
   | "codex"
+  | "openrouter"
   | "anthropic"
   | "openai"
   | "google"
   | "deepseek"
   | "groq"
   | "qwen"
+  | "glm"
+  | "moonshot"
+  | "minimax"
   | "custom";
 
 export type AgentType =
@@ -343,6 +347,7 @@ export interface AIProviderConfig {
   apiKey: string;
   model: string;
   baseUrl?: string;
+  authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
   isDefault: boolean;
   createdAt: number;
 }

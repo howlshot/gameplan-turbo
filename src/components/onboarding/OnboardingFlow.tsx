@@ -13,6 +13,8 @@ import {
   getCodexLoginCommand,
   openCodexLoginFlow
 } from "@/lib/codexBridge";
+import { startOpenRouterOAuth } from "@/lib/ai/openRouterOAuth";
+import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { getGenerationErrorState } from "@/lib/generationErrors";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { createProviderFromConfig } from "@/services/ai";
@@ -36,10 +38,13 @@ export const OnboardingFlow = ({
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>("anthropic");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isStartingCodexLogin, setIsStartingCodexLogin] = useState(false);
+  const [isStartingOAuth, setIsStartingOAuth] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [validationAttempts, setValidationAttempts] = useState(0);
   const apiKeyRef = useRef<HTMLInputElement>(null);
+  const baseUrlRef = useRef<HTMLInputElement>(null);
+  const modelRef = useRef<HTMLInputElement>(null);
   const dialogRef = useDialogAccessibility<HTMLDivElement>(true, () => undefined);
 
   const handleContinueName = async (): Promise<void> => {
@@ -55,8 +60,16 @@ export const OnboardingFlow = ({
 
   const handleVerifyProvider = async (): Promise<void> => {
     const apiKey = apiKeyRef.current?.value.trim() ?? "";
+    const baseUrl = baseUrlRef.current?.value.trim() ?? "";
     const providerConfig = PROVIDER_CATALOG[selectedProvider];
-    const isLocalBridgeProvider = providerConfig.authMode === "local-bridge";
+    const model =
+      modelRef.current?.value.trim() || providerConfig.defaultModel;
+    const authMode = providerConfig.authMode ?? "api-key";
+    const isLocalBridgeProvider = authMode === "local-bridge";
+    const resolvedApiKey =
+      selectedProvider === "custom"
+        ? getSanitizedCustomApiKey(apiKey, baseUrl)
+        : apiKey;
 
     if (isLocalBridgeProvider) {
       setErrorMessage("");
@@ -80,6 +93,7 @@ export const OnboardingFlow = ({
         await saveProvider({
           provider: selectedProvider,
           apiKey: "codex-cli-bridge",
+          authMethod: "local-bridge",
           isDefault: true,
           model: providerConfig.defaultModel
         });
@@ -97,8 +111,13 @@ export const OnboardingFlow = ({
       return;
     }
 
-    if (!apiKey) {
+    if (!resolvedApiKey) {
       setErrorMessage("Enter an API key to continue.");
+      return;
+    }
+
+    if (selectedProvider === "custom" && !baseUrl) {
+      setErrorMessage("Enter a base URL for the custom provider.");
       return;
     }
 
@@ -109,18 +128,22 @@ export const OnboardingFlow = ({
       const provider = await createProviderFromConfig({
         id: "onboarding-provider",
         provider: selectedProvider,
-        apiKey,
-        model: providerConfig.defaultModel,
+        apiKey: resolvedApiKey,
+        model,
+        baseUrl: selectedProvider === "custom" ? baseUrl : undefined,
+        authMethod: "api-key",
         isDefault: true,
         createdAt: Date.now()
       });
 
-      await provider.validateKey(apiKey);
+      await provider.validateKey(resolvedApiKey);
       await saveProvider({
         provider: selectedProvider,
-        apiKey,
+        apiKey: resolvedApiKey,
+        baseUrl: selectedProvider === "custom" ? baseUrl : undefined,
+        authMethod: "api-key",
         isDefault: true,
-        model: providerConfig.defaultModel
+        model
       });
       setValidationAttempts(0);
       toast.success(`${providerConfig.label} verified.`);
@@ -157,6 +180,47 @@ export const OnboardingFlow = ({
     }
   };
 
+  const handleStartOpenRouterOAuth = async (): Promise<void> => {
+    setErrorMessage("");
+    setIsStartingOAuth(true);
+
+    try {
+      const apiKey = await startOpenRouterOAuth();
+      const providerConfig = PROVIDER_CATALOG.openrouter;
+
+      const provider = await createProviderFromConfig({
+        id: "onboarding-provider",
+        provider: "openrouter",
+        apiKey,
+        model: providerConfig.defaultModel,
+        authMethod: "oauth-pkce",
+        isDefault: true,
+        createdAt: Date.now()
+      });
+
+      await provider.validateKey(apiKey);
+      await saveProvider({
+        provider: "openrouter",
+        apiKey,
+        authMethod: "oauth-pkce",
+        isDefault: true,
+        model: providerConfig.defaultModel
+      });
+      setValidationAttempts(0);
+      toast.success("OpenRouter connected.");
+      setSelectedProvider("openrouter");
+      setStep(3);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not complete OpenRouter sign-in.";
+      setErrorMessage(message);
+    } finally {
+      setIsStartingOAuth(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface-dim/80 px-4 backdrop-blur-sm">
       <div
@@ -179,10 +243,14 @@ export const OnboardingFlow = ({
         {step === 2 ? (
           <OnboardingProviderStep
             apiKeyRef={apiKeyRef}
+            baseUrlRef={baseUrlRef}
+            modelRef={modelRef}
             errorMessage={errorMessage}
+            isStartingOAuth={isStartingOAuth}
             isStartingCodexLogin={isStartingCodexLogin}
             isVerifying={isVerifying}
             onSkip={handleSkipProvider}
+            onStartOAuth={() => void handleStartOpenRouterOAuth()}
             onStartCodexLogin={() => void handleStartCodexLogin()}
             onSelectProvider={setSelectedProvider}
             onToggleApiVisibility={() => setShowApiKey((current) => !current)}

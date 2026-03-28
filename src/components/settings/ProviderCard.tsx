@@ -6,6 +6,10 @@ import {
   openCodexLoginFlow,
   type CodexBridgeStatus
 } from "@/lib/codexBridge";
+import {
+  CUSTOM_BASE_URL_PRESETS
+} from "@/lib/ai/customProviderUtils";
+import { startOpenRouterOAuth } from "@/lib/ai/openRouterOAuth";
 import { APP_FOLDER_PLACEHOLDER, APP_NAME } from "@/lib/brand";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { cn } from "@/lib/utils";
@@ -16,6 +20,8 @@ export interface ProviderCardValue {
   id?: string;
   provider: AIProvider;
   model: string;
+  baseUrl?: string;
+  authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
   isDefault: boolean;
   hasKey: boolean;
   maskedKey: string;
@@ -23,7 +29,13 @@ export interface ProviderCardValue {
 
 interface ProviderCardProps {
   provider: ProviderCardValue;
-  onSave: (provider: AIProvider, apiKey: string) => Promise<void>;
+  onSave: (input: {
+    provider: AIProvider;
+    apiKey: string;
+    model: string;
+    baseUrl?: string;
+    authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
+  }) => Promise<void>;
   onSetDefault: (providerId: string) => Promise<void>;
 }
 
@@ -36,13 +48,19 @@ export const ProviderCard = ({
   const config = PROVIDER_CATALOG[provider.provider];
   const providerId = provider.id;
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const baseUrlRef = useRef<HTMLInputElement | null>(null);
+  const modelRef = useRef<HTMLInputElement | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isStartingLogin, setIsStartingLogin] = useState(false);
+  const [isStartingOAuth, setIsStartingOAuth] = useState(false);
   const [bridgeStatusMessage, setBridgeStatusMessage] = useState("");
   const [isCheckingBridge, setIsCheckingBridge] = useState(false);
   const [isBridgeReady, setIsBridgeReady] = useState<boolean | null>(null);
-  const isLocalBridgeProvider = config.authMode === "local-bridge";
+  const authMode = config.authMode ?? "api-key";
+  const isLocalBridgeProvider = authMode === "local-bridge";
+  const supportsOAuthPkce = authMode === "oauth-pkce";
+  const isCustomProvider = provider.provider === "custom";
   const isConnected = isLocalBridgeProvider ? isBridgeReady === true : provider.hasKey;
   const statusLabel = isLocalBridgeProvider
     ? isCheckingBridge
@@ -56,13 +74,21 @@ export const ProviderCard = ({
 
   const handleSave = async (): Promise<void> => {
     const value = inputRef.current?.value.trim() ?? "";
-    if (!value) {
+    const nextBaseUrl = baseUrlRef.current?.value.trim() ?? provider.baseUrl ?? "";
+    const nextModel = modelRef.current?.value.trim() ?? provider.model;
+    if ((!value && !provider.hasKey) || !nextModel || (isCustomProvider && !nextBaseUrl)) {
       return;
     }
 
     setIsSaving(true);
     try {
-      await onSave(provider.provider, value);
+      await onSave({
+        provider: provider.provider,
+        apiKey: value,
+        model: nextModel,
+        baseUrl: isCustomProvider ? nextBaseUrl : undefined,
+        authMethod: "api-key"
+      });
       setIsEditing(false);
       if (inputRef.current) {
         inputRef.current.value = "";
@@ -114,7 +140,12 @@ export const ProviderCard = ({
 
     setIsSaving(true);
     try {
-      await onSave(provider.provider, "codex-cli-bridge");
+      await onSave({
+        provider: provider.provider,
+        apiKey: "codex-cli-bridge",
+        model: provider.model,
+        authMethod: "local-bridge"
+      });
     } finally {
       setIsSaving(false);
     }
@@ -140,6 +171,28 @@ export const ProviderCard = ({
       setIsStartingLogin(false);
     }
   }, [toast]);
+
+  const handleOpenRouterConnect = useCallback(async (): Promise<void> => {
+    setIsStartingOAuth(true);
+
+    try {
+      const apiKey = await startOpenRouterOAuth();
+      await onSave({
+        provider: provider.provider,
+        apiKey,
+        model: provider.model,
+        authMethod: "oauth-pkce"
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : `Could not connect ${config.label} right now.`
+      );
+    } finally {
+      setIsStartingOAuth(false);
+    }
+  }, [config.label, onSave, provider.provider, toast]);
 
   useEffect(() => {
     if (isLocalBridgeProvider) {
@@ -252,10 +305,59 @@ export const ProviderCard = ({
           </div>
         ) : isEditing ? (
           <div className="mt-4 space-y-3">
+            {isCustomProvider ? (
+              <div className="space-y-3 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">
+                <label className="block">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">
+                    Base URL
+                  </span>
+                  <input
+                    ref={baseUrlRef}
+                    type="url"
+                    autoFocus
+                    defaultValue={provider.baseUrl ?? CUSTOM_BASE_URL_PRESETS[0].value}
+                    placeholder="https://your-endpoint.example.com/v1"
+                    className="mt-2 w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
+                  />
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {CUSTOM_BASE_URL_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        if (baseUrlRef.current) {
+                          baseUrlRef.current.value = preset.value;
+                        }
+                      }}
+                      className="rounded-full bg-surface-container-lowest px-3 py-1.5 font-mono text-[10px] uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+                <label className="block">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">
+                    Model ID
+                  </span>
+                  <input
+                    ref={modelRef}
+                    type="text"
+                    defaultValue={provider.model}
+                    placeholder="gpt-4o-mini or your local model id"
+                    className="mt-2 w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-3 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
+                  />
+                </label>
+                <p className="text-xs leading-5 text-on-surface-variant">
+                  Use this for OpenAI-compatible gateways like LM Studio, Ollama,
+                  vLLM, Together, or Fireworks. Local endpoints can use a placeholder key.
+                </p>
+              </div>
+            ) : null}
             <input
               ref={inputRef}
               type="password"
-              autoFocus
+              autoFocus={!isCustomProvider}
               placeholder={`Paste your ${config.keyLabel.toLowerCase()}`}
               className="w-full rounded-xl border border-outline-variant/15 bg-surface px-4 py-3 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
             />
@@ -277,18 +379,72 @@ export const ProviderCard = ({
               </button>
             </div>
           </div>
+        ) : supportsOAuthPkce ? (
+          <div className="mt-4 space-y-4">
+            <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
+              <p className="font-semibold text-on-surface">Sign in first</p>
+              <p className="mt-2">
+                Connect {config.label} with a browser sign-in, or paste an API key
+                if you prefer to manage credentials manually.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={isStartingOAuth}
+                  onClick={() => void handleOpenRouterConnect()}
+                  className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+                >
+                  {isStartingOAuth ? "Opening..." : "Sign in with OpenRouter"}
+                </button>
+                <a
+                  href={config.helpUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+                >
+                  Learn More
+                </a>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                {provider.hasKey ? provider.maskedKey : "No key connected"}
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="rounded-full p-2 text-on-surface-variant transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface hover:text-primary"
+              >
+                <span className="material-symbols-outlined text-base">vpn_key</span>
+              </button>
+            </div>
+          </div>
         ) : (
-          <div className="mt-4 flex items-center justify-between gap-3">
-            <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
-              {provider.hasKey ? provider.maskedKey : "No key connected"}
-            </p>
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="rounded-full p-2 text-on-surface-variant transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface hover:text-primary"
-            >
-              <span className="material-symbols-outlined text-base">edit</span>
-            </button>
+          <div className="mt-4 space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
+                {provider.hasKey ? provider.maskedKey : "No key connected"}
+              </p>
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="rounded-full p-2 text-on-surface-variant transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface hover:text-primary"
+              >
+                <span className="material-symbols-outlined text-base">edit</span>
+              </button>
+            </div>
+            {isCustomProvider ? (
+              <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                <p className="font-semibold text-on-surface">OpenAI-compatible endpoint</p>
+                <p className="mt-2 font-mono text-[11px] break-all">
+                  {provider.baseUrl ?? "No base URL configured"}
+                </p>
+                <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.12em]">
+                  Model: {provider.model}
+                </p>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

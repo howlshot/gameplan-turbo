@@ -19,6 +19,10 @@ export const createProviderFromConfig = (
         (module) =>
           module.createCodexBridgeProvider(config.model, config.baseUrl)
       );
+    case "openrouter":
+      return import("@/services/ai/providers/openrouterProvider").then(
+        (module) => module.createOpenRouterProvider(config.apiKey, config.model)
+      );
     case "anthropic":
       return import("@/services/ai/providers/anthropicProvider").then((module) =>
         module.createAnthropicProvider(config.apiKey, config.model)
@@ -42,6 +46,18 @@ export const createProviderFromConfig = (
     case "qwen":
       return import("@/services/ai/providers/qwenProvider").then((module) =>
         module.createQwenProvider(config.apiKey, config.model)
+      );
+    case "glm":
+      return import("@/services/ai/providers/glmProvider").then((module) =>
+        module.createGlmProvider(config.apiKey, config.model)
+      );
+    case "moonshot":
+      return import("@/services/ai/providers/moonshotProvider").then((module) =>
+        module.createMoonshotProvider(config.apiKey, config.model)
+      );
+    case "minimax":
+      return import("@/services/ai/providers/minimaxProvider").then((module) =>
+        module.createMiniMaxProvider(config.apiKey, config.model)
       );
     case "custom":
       return import("@/services/ai/providers/customProvider").then((module) =>

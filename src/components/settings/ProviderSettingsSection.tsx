@@ -1,12 +1,19 @@
 import { ProviderCard } from "@/components/settings/ProviderCard";
 import type { AIProviderSummary } from "@/hooks/useAIProviders";
+import { getProviderConnectionGroup } from "@/lib/ai/providerCatalog";
 import type { AIProvider } from "@/types";
 
 interface ProviderSettingsSectionProps {
   connectedCount: number;
   isLoading: boolean;
   providerCards: AIProviderSummary[];
-  onSaveProvider: (provider: AIProvider, apiKey: string) => Promise<void>;
+  onSaveProvider: (input: {
+    provider: AIProvider;
+    apiKey: string;
+    model: string;
+    baseUrl?: string;
+    authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
+  }) => Promise<void>;
   onSetDefault: (providerId: string) => Promise<void>;
 }
 
@@ -17,6 +24,33 @@ export const ProviderSettingsSection = ({
   onSaveProvider,
   onSetDefault
 }: ProviderSettingsSectionProps): JSX.Element => {
+  const signInProviders = providerCards.filter(
+    (provider) => getProviderConnectionGroup(provider.provider) === "sign-in"
+  );
+  const apiKeyProviders = providerCards.filter(
+    (provider) => getProviderConnectionGroup(provider.provider) === "api-key"
+  );
+
+  const renderGrid = (providersToRender: AIProviderSummary[]) => (
+    <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {isLoading
+        ? Array.from({ length: 6 }).map((_, index) => (
+            <div
+              key={index}
+              className="h-[220px] animate-pulse rounded-2xl bg-surface-container-high"
+            />
+          ))
+        : providersToRender.map((provider) => (
+            <ProviderCard
+              key={provider.provider}
+              provider={provider}
+              onSave={onSaveProvider}
+              onSetDefault={onSetDefault}
+            />
+          ))}
+    </div>
+  );
+
   return (
     <section className="rounded-2xl border border-outline-variant/10 bg-surface-container p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -31,22 +65,36 @@ export const ProviderSettingsSection = ({
         </span>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {isLoading
-          ? Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-[220px] animate-pulse rounded-2xl bg-surface-container-high"
-              />
-            ))
-          : providerCards.map((provider) => (
-              <ProviderCard
-                key={provider.provider}
-                provider={provider}
-                onSave={onSaveProvider}
-                onSetDefault={onSetDefault}
-              />
-            ))}
+      <div className="mt-6 space-y-8">
+        <div>
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-primary">login</span>
+            <div>
+              <h3 className="font-headline text-lg font-semibold text-on-surface">
+                Sign in
+              </h3>
+              <p className="text-sm leading-6 text-on-surface-variant">
+                Connect through a browser login or local tool bridge.
+              </p>
+            </div>
+          </div>
+          {renderGrid(signInProviders)}
+        </div>
+
+        <div>
+          <div className="flex items-center gap-3">
+            <span className="material-symbols-outlined text-primary">key</span>
+            <div>
+              <h3 className="font-headline text-lg font-semibold text-on-surface">
+                API key
+              </h3>
+              <p className="text-sm leading-6 text-on-surface-variant">
+                Add an API key for hosted providers that use direct key auth.
+              </p>
+            </div>
+          </div>
+          {renderGrid(apiKeyProviders)}
+        </div>
       </div>
     </section>
   );

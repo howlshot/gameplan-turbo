@@ -1,10 +1,15 @@
 import type { RefObject } from "react";
 import { BrandMark } from "@/components/branding/BrandMark";
+import { CUSTOM_BASE_URL_PRESETS } from "@/lib/ai/customProviderUtils";
 import {
   getCodexBridgeStartCommand,
   getCodexLoginCommand
 } from "@/lib/codexBridge";
-import { PROVIDER_CATALOG, PROVIDER_ORDER } from "@/lib/ai/providerCatalog";
+import {
+  PROVIDER_CATALOG,
+  PROVIDER_ORDER,
+  getProviderConnectionGroup
+} from "@/lib/ai/providerCatalog";
 import {
   APP_FOLDER_PLACEHOLDER,
   APP_NAME
@@ -13,10 +18,14 @@ import type { AIProvider } from "@/types";
 
 interface OnboardingProviderStepProps {
   apiKeyRef: RefObject<HTMLInputElement>;
+  baseUrlRef: RefObject<HTMLInputElement>;
+  modelRef: RefObject<HTMLInputElement>;
   errorMessage: string;
+  isStartingOAuth: boolean;
   isStartingCodexLogin: boolean;
   isVerifying: boolean;
   onSkip: () => void;
+  onStartOAuth: () => void;
   onStartCodexLogin: () => void;
   onSelectProvider: (provider: AIProvider) => void;
   onToggleApiVisibility: () => void;
@@ -27,10 +36,14 @@ interface OnboardingProviderStepProps {
 
 export const OnboardingProviderStep = ({
   apiKeyRef,
+  baseUrlRef,
+  modelRef,
   errorMessage,
+  isStartingOAuth,
   isStartingCodexLogin,
   isVerifying,
   onSkip,
+  onStartOAuth,
   onStartCodexLogin,
   onSelectProvider,
   onToggleApiVisibility,
@@ -39,7 +52,16 @@ export const OnboardingProviderStep = ({
   showApiKey
 }: OnboardingProviderStepProps): JSX.Element => {
   const providerConfig = PROVIDER_CATALOG[selectedProvider];
-  const isLocalBridgeProvider = providerConfig.authMode === "local-bridge";
+  const authMode = providerConfig.authMode ?? "api-key";
+  const isLocalBridgeProvider = authMode === "local-bridge";
+  const supportsOAuthPkce = authMode === "oauth-pkce";
+  const isCustomProvider = selectedProvider === "custom";
+  const signInProviders = PROVIDER_ORDER.filter(
+    (provider) => getProviderConnectionGroup(provider) === "sign-in"
+  );
+  const apiKeyProviders = PROVIDER_ORDER.filter(
+    (provider) => getProviderConnectionGroup(provider) === "api-key"
+  );
 
   return (
     <div className="p-10">
@@ -71,52 +93,101 @@ export const OnboardingProviderStep = ({
         <label className="mb-4 block font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
           Select Provider
         </label>
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-          {PROVIDER_ORDER.map((provider) => {
-            const item = PROVIDER_CATALOG[provider];
-            const isSelected = provider === selectedProvider;
+        <div className="space-y-6">
+          <div>
+            <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
+              Sign in
+            </p>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              {signInProviders.map((provider) => {
+                const item = PROVIDER_CATALOG[provider];
+                const isSelected = provider === selectedProvider;
 
-            return (
-              <button
-                key={provider}
-                type="button"
-                onClick={() => onSelectProvider(provider)}
-                className={`rounded-xl border p-4 text-center transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
-                  isSelected
-                    ? "border-primary bg-primary/10 text-on-surface"
-                    : "border-outline-variant/20 bg-surface-container-lowest text-on-surface-variant"
-                }`}
-              >
-                <span
-                  className={`material-symbols-outlined text-3xl ${
-                    isSelected ? "text-primary" : "opacity-50"
-                  }`}
-                >
-                  {item.icon}
-                </span>
-                <p className="mt-3 font-headline text-sm font-semibold">{item.label}</p>
-              </button>
-            );
-          })}
+                return (
+                  <button
+                    key={provider}
+                    type="button"
+                    onClick={() => onSelectProvider(provider)}
+                    className={`rounded-xl border p-4 text-center transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-on-surface"
+                        : "border-outline-variant/20 bg-surface-container-lowest text-on-surface-variant"
+                    }`}
+                  >
+                    <span
+                      className={`material-symbols-outlined text-3xl ${
+                        isSelected ? "text-primary" : "opacity-50"
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <p className="mt-3 font-headline text-sm font-semibold">{item.label}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
+              API key
+            </p>
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+              {apiKeyProviders.map((provider) => {
+                const item = PROVIDER_CATALOG[provider];
+                const isSelected = provider === selectedProvider;
+
+                return (
+                  <button
+                    key={provider}
+                    type="button"
+                    onClick={() => onSelectProvider(provider)}
+                    className={`rounded-xl border p-4 text-center transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                      isSelected
+                        ? "border-primary bg-primary/10 text-on-surface"
+                        : "border-outline-variant/20 bg-surface-container-lowest text-on-surface-variant"
+                    }`}
+                  >
+                    <span
+                      className={`material-symbols-outlined text-3xl ${
+                        isSelected ? "text-primary" : "opacity-50"
+                      }`}
+                    >
+                      {item.icon}
+                    </span>
+                    <p className="mt-3 font-headline text-sm font-semibold">{item.label}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         <div className="mt-10">
           <div className="mb-2 flex items-center justify-between gap-3">
-          <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
-            {isLocalBridgeProvider ? "Codex Bridge" : providerConfig.keyLabel}
-          </label>
-          {isLocalBridgeProvider ? (
-            <span className="text-xs text-primary">Uses local Codex login</span>
-          ) : (
-            <a
-              href={providerConfig.helpUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs text-primary transition hover:underline"
-            >
-              How to get your API key
-            </a>
-          )}
+            <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
+            {isLocalBridgeProvider
+              ? "Codex Bridge"
+              : isCustomProvider
+                ? "Custom provider connection"
+                : providerConfig.keyLabel}
+            </label>
+            {isLocalBridgeProvider ? (
+              <span className="text-xs text-primary">Uses local Codex login</span>
+            ) : supportsOAuthPkce ? (
+              <span className="text-xs text-primary">
+                Sign in or use an API key
+              </span>
+            ) : (
+              <a
+                href={providerConfig.helpUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs text-primary transition hover:underline"
+              >
+                How to get your API key
+              </a>
+            )}
           </div>
 
           {isLocalBridgeProvider ? (
@@ -179,6 +250,125 @@ export const OnboardingProviderStep = ({
                 If the sign-in button says it cannot reach the bridge, use the
                 manual fallback steps above, then try the button again.
               </p>
+            </div>
+          ) : supportsOAuthPkce ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-primary/15 bg-primary/5 px-5 py-4 text-sm leading-6 text-on-surface-variant">
+                <p className="font-semibold text-on-surface">Sign in with OpenRouter</p>
+                <p className="mt-2">
+                  Use browser sign-in if you want the fastest setup. You can also paste
+                  an OpenRouter API key below if you already have one.
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={onStartOAuth}
+                    disabled={isStartingOAuth}
+                    className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+                  >
+                    {isStartingOAuth ? "Opening..." : "Sign in with OpenRouter"}
+                  </button>
+                  <a
+                    href={providerConfig.helpUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+                  >
+                    Learn more
+                  </a>
+                </div>
+              </div>
+
+              <div className="relative">
+                <input
+                  ref={apiKeyRef}
+                  data-autofocus
+                  type={showApiKey ? "text" : "password"}
+                  placeholder={`Paste your ${providerConfig.keyLabel.toLowerCase()}`}
+                  className="w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 pr-14 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
+                />
+                <button
+                  type="button"
+                  onClick={onToggleApiVisibility}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition hover:text-on-surface"
+                >
+                  <span className="material-symbols-outlined">
+                    {showApiKey ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
+              </div>
+            </div>
+          ) : isCustomProvider ? (
+            <div className="space-y-4">
+              <div className="rounded-xl border border-primary/15 bg-primary/5 px-5 py-4 text-sm leading-6 text-on-surface-variant">
+                <p className="font-semibold text-on-surface">Connect any OpenAI-compatible endpoint</p>
+                <p className="mt-2">
+                  Point Gameplan Turbo at a hosted provider or a local server like
+                  LM Studio, Ollama, or vLLM. Local endpoints can use a placeholder key.
+                </p>
+              </div>
+
+              <label className="block">
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
+                  Base URL
+                </span>
+                <input
+                  ref={baseUrlRef}
+                  data-autofocus
+                  type="url"
+                  defaultValue={CUSTOM_BASE_URL_PRESETS[0].value}
+                  placeholder="https://your-endpoint.example.com/v1"
+                  className="mt-2 w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
+                />
+              </label>
+
+              <div className="flex flex-wrap gap-2">
+                {CUSTOM_BASE_URL_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    onClick={() => {
+                      if (baseUrlRef.current) {
+                        baseUrlRef.current.value = preset.value;
+                      }
+                    }}
+                    className="rounded-full bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+
+              <label className="block">
+                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
+                  Model ID
+                </span>
+                <input
+                  ref={modelRef}
+                  type="text"
+                  defaultValue={providerConfig.defaultModel}
+                  placeholder="gpt-4o-mini or your local model id"
+                  className="mt-2 w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
+                />
+              </label>
+
+              <div className="relative">
+                <input
+                  ref={apiKeyRef}
+                  type={showApiKey ? "text" : "password"}
+                  placeholder="Paste an API key, or leave blank for local endpoints"
+                  className="w-full rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 pr-14 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
+                />
+                <button
+                  type="button"
+                  onClick={onToggleApiVisibility}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant transition hover:text-on-surface"
+                >
+                  <span className="material-symbols-outlined">
+                    {showApiKey ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
+              </div>
             </div>
           ) : (
             <div className="relative">

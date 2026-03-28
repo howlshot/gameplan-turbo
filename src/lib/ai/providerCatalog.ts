@@ -1,5 +1,11 @@
 import type { AIProvider, AgentPlatform } from "@/types";
 
+export type ProviderAuthMode =
+  | "api-key"
+  | "local-bridge"
+  | "oauth-pkce"
+  | "tool-login";
+
 export interface ProviderCatalogEntry {
   provider: AIProvider;
   label: string;
@@ -8,17 +14,22 @@ export interface ProviderCatalogEntry {
   keyLabel: string;
   defaultModel: string;
   models: string[];
-  authMode?: "api-key" | "local-bridge";
+  authMode?: ProviderAuthMode;
+  supportsApiKey?: boolean;
 }
 
 export const PROVIDER_ORDER: AIProvider[] = [
   "codex",
+  "openrouter",
   "anthropic",
   "openai",
   "google",
   "deepseek",
   "groq",
   "qwen",
+  "glm",
+  "moonshot",
+  "minimax",
   "custom"
 ];
 
@@ -32,6 +43,21 @@ export const PROVIDER_CATALOG: Record<AIProvider, ProviderCatalogEntry> = {
     defaultModel: "codex-default",
     models: ["codex-default", "gpt-5.3-codex", "gpt-5-codex", "gpt-5"],
     authMode: "local-bridge"
+  },
+  openrouter: {
+    provider: "openrouter",
+    label: "OpenRouter",
+    icon: "hub",
+    helpUrl: "https://openrouter.ai/docs/api/reference/authentication",
+    keyLabel: "OpenRouter API key",
+    defaultModel: "openai/gpt-4o-mini",
+    models: [
+      "openai/gpt-4o-mini",
+      "anthropic/claude-3.5-sonnet",
+      "google/gemini-2.0-flash-001"
+    ],
+    authMode: "oauth-pkce",
+    supportsApiKey: true
   },
   anthropic: {
     provider: "anthropic",
@@ -87,6 +113,33 @@ export const PROVIDER_CATALOG: Record<AIProvider, ProviderCatalogEntry> = {
     defaultModel: "qwen-plus",
     models: ["qwen-plus", "qwen-max"]
   },
+  glm: {
+    provider: "glm",
+    label: "GLM / Zhipu",
+    icon: "neurology",
+    helpUrl: "https://docs.bigmodel.cn/cn/guide/start/introduction",
+    keyLabel: "GLM API key",
+    defaultModel: "glm-4.7-flash",
+    models: ["glm-4.7-flash", "glm-4.7", "glm-4.5-air"]
+  },
+  moonshot: {
+    provider: "moonshot",
+    label: "Kimi / Moonshot",
+    icon: "rocket_launch",
+    helpUrl: "https://platform.moonshot.ai/blog/posts/Kimi_API_Newsletter",
+    keyLabel: "Moonshot API key",
+    defaultModel: "kimi-latest",
+    models: ["kimi-latest", "moonshot-v1-8k", "moonshot-v1-32k"]
+  },
+  minimax: {
+    provider: "minimax",
+    label: "MiniMax",
+    icon: "smart_toy",
+    helpUrl: "https://platform.minimax.io/docs/faq/history-modelinfo",
+    keyLabel: "MiniMax API key",
+    defaultModel: "MiniMax-Text-01",
+    models: ["MiniMax-Text-01", "MiniMax-M1"]
+  },
   custom: {
     provider: "custom",
     label: "Custom",
@@ -112,6 +165,17 @@ export const PLATFORM_TOGGLE_OPTIONS = [
 export const getProviderLabel = (provider: AIProvider): string =>
   PROVIDER_CATALOG[provider].label;
 
+export const getProviderConnectionGroup = (
+  provider: AIProvider
+): "sign-in" | "api-key" => {
+  const authMode = PROVIDER_CATALOG[provider].authMode ?? "api-key";
+  return authMode === "local-bridge" ||
+    authMode === "oauth-pkce" ||
+    authMode === "tool-login"
+    ? "sign-in"
+    : "api-key";
+};
+
 export const getPreferredAgentPlatformForProvider = (
   provider: AIProvider
 ): AgentPlatform | null => {
@@ -126,6 +190,7 @@ export const getPreferredAgentPlatformForProvider = (
       return "qwen-code";
     case "openai":
       return "chatgpt";
+    case "openrouter":
     default:
       return null;
   }

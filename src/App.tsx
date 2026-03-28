@@ -4,6 +4,7 @@ import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
 import { SplashScreen } from "@/components/splash/SplashScreen";
+import { OpenRouterOAuthCallbackPage } from "@/components/settings/OpenRouterOAuthCallbackPage";
 import { ToastProvider } from "@/components/shared/ToastProvider";
 import { useFirstLaunch } from "@/hooks/useFirstLaunch";
 import { useSettings } from "@/hooks/useSettings";
@@ -45,6 +46,8 @@ const App = (): JSX.Element => {
   const { settings } = useSettings();
   const [phase, setPhase] = useState<AppPhase>("splash");
   const [hasSplashCompleted, setHasSplashCompleted] = useState(false);
+  const isOpenRouterOAuthCallback =
+    window.location.pathname === "/oauth/openrouter/callback";
 
   // Theme is always dark - no switching needed
   useEffect(() => {
@@ -78,6 +81,10 @@ const App = (): JSX.Element => {
     () => (
       <Suspense fallback={<RouteFallback />}>
         <Routes>
+          <Route
+            path="/oauth/openrouter/callback"
+            element={<OpenRouterOAuthCallbackPage />}
+          />
           <Route element={<AppLayout />}>
             <Route path="/" element={<ProjectHubPage />} />
             <Route path="/project/:projectId" element={<ProjectWorkspacePage />} />
@@ -88,6 +95,10 @@ const App = (): JSX.Element => {
     ),
     []
   );
+
+  if (isOpenRouterOAuthCallback) {
+    return <OpenRouterOAuthCallbackPage />;
+  }
 
   if (phase === "splash") {
     return <SplashScreen onComplete={() => setHasSplashCompleted(true)} />;

@@ -35,9 +35,9 @@ export const PROMPT_LAB_OUTPUTS: PromptLabOutputDefinition[] = [
   {
     type: "full_gdd",
     agentType: "full-gdd",
-    title: "Full GDD",
+    title: "Full Game Design Document",
     description: "A more complete design document for production guidance.",
-    emptyTitle: "No full GDD yet",
+    emptyTitle: "No full game design document yet",
     emptyDescription: "Generate a full game design document grounded in the workspace data.",
     fileLabel: "FULL_GDD.md",
     recommendedPlatforms: ["chatgpt", "gemini", "claude-code"]
