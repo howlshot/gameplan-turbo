@@ -3,6 +3,7 @@ import { Route, Routes } from "react-router-dom";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { HostedModeNotice } from "@/components/shared/HostedModeNotice";
 import { SplashScreen } from "@/components/splash/SplashScreen";
 import { OpenRouterOAuthCallbackPage } from "@/components/settings/OpenRouterOAuthCallbackPage";
 import { ToastProvider } from "@/components/shared/ToastProvider";
@@ -108,6 +109,7 @@ const App = (): JSX.Element => {
     <ToastProvider>
       <ErrorBoundary>
         {appRoutes}
+        <HostedModeNotice />
         {phase === "onboarding" ? (
           <OnboardingFlow
             onComplete={async () => {
