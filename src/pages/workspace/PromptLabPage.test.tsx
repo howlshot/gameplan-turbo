@@ -184,7 +184,13 @@ describe("PromptLabPage", () => {
     expect(screen.getByText("Build Roadmap")).toBeInTheDocument();
     expect(screen.getByText("Add references before you generate")).toBeInTheDocument();
     expect(
+      screen.getByText(/you can export a full planning package here/i)
+    ).toBeInTheDocument();
+    expect(
       screen.getByRole("button", { name: /build roadmap/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /export planning package/i })
     ).toBeInTheDocument();
     expect(screen.getByText("Large Project Mode")).toBeInTheDocument();
   });

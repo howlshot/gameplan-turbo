@@ -19,6 +19,7 @@ import { useVaultFiles } from "@/hooks/useVaultFiles";
 import { isLegacyLargeBuildPlan } from "@/lib/buildPlanUtils";
 import { getPreferredAgentPlatformForProvider } from "@/lib/ai/providerCatalog";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
+import { exportPlanningPackage } from "@/lib/planningPackageExport";
 import { parsePlanningQuestions, type PlanningQuestion } from "@/lib/planningQuestions";
 import { AIServiceError } from "@/services/ai/errors";
 import { generateWithAgent } from "@/services/ai";
@@ -138,6 +139,7 @@ export const PromptLabPage = (): JSX.Element => {
   const [streamingByType, setStreamingByType] = useState<Partial<Record<ArtifactType, string>>>({});
   const [loadingByType, setLoadingByType] = useState<Partial<Record<ArtifactType, boolean>>>({});
   const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
+  const [isExportingPlanningPackage, setIsExportingPlanningPackage] = useState(false);
   const [pendingScrollStageId, setPendingScrollStageId] = useState<string | null>(null);
   const [highlightedStageId, setHighlightedStageId] = useState<string | null>(null);
   const [planningQuestions, setPlanningQuestions] = useState<PlanningQuestion[]>([]);
@@ -278,6 +280,33 @@ export const PromptLabPage = (): JSX.Element => {
       toast.success("Build roadmap generated.");
     } finally {
       setIsGeneratingRoadmap(false);
+    }
+  };
+
+  const handleExportPlanningPackage = async (): Promise<void> => {
+    if (!project || !gameDesignDoc) {
+      toast.error("Project context is still loading.");
+      return;
+    }
+
+    setIsExportingPlanningPackage(true);
+    try {
+      await exportPlanningPackage({
+        artifacts,
+        gameDesignDoc,
+        project,
+        stages,
+        vaultFiles: files
+      });
+      toast.success("Planning package exported.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not export the planning package right now."
+      );
+    } finally {
+      setIsExportingPlanningPackage(false);
     }
   };
 
@@ -635,6 +664,9 @@ export const PromptLabPage = (): JSX.Element => {
                 <p className="mt-2 text-sm leading-6 text-on-surface-variant">
                   This creates the persistent stage timeline, handoff briefs, and checkpoint order for the project. It does not build the game for you.
                 </p>
+                <p className="mt-3 rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                  After roadmap generation, you can export a full planning package here. Individual generated files can still be downloaded separately from the Output Library.
+                </p>
                 {planningNotes ? (
                   <p className="mt-3 rounded-2xl border border-secondary/15 bg-secondary/5 px-4 py-3 text-sm leading-6 text-on-surface-variant">
                     Your clarifying answers will be folded into this roadmap generation pass automatically.
@@ -674,6 +706,16 @@ export const PromptLabPage = (): JSX.Element => {
                   className="w-full rounded-2xl border border-outline-variant/15 bg-surface-container px-4 py-3 text-sm text-on-surface disabled:opacity-50"
                 >
                   Export Roadmap Briefs
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleExportPlanningPackage()}
+                  disabled={isExportingPlanningPackage}
+                  className="w-full rounded-2xl border border-outline-variant/15 bg-surface px-4 py-3 text-sm text-on-surface transition hover:bg-surface-container-high disabled:opacity-50"
+                >
+                  {isExportingPlanningPackage
+                    ? "Exporting Planning Package…"
+                    : "Export Planning Package (.zip)"}
                 </button>
                 {needsClarifyingRound ? (
                   <p className="text-sm text-on-surface-variant">

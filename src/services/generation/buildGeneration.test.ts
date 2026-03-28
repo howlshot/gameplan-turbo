@@ -114,6 +114,9 @@ describe("generateBuildStages", () => {
     expect(stages).toHaveLength(15);
     expect(stages[0]?.stageKey).toBe("scope-lock");
     expect(stages[stages.length - 1]?.stageKey).toBe("qa-release-prep");
+    expect(stages[0]?.promptContent).toContain("## Shared Guardrails");
+    expect(stages[0]?.promptContent).toContain("## Stage-Relevant Notes");
+    expect(stages[0]?.promptContent).not.toContain("## Project Context");
     expect(stages[0]?.promptContent).toContain("## Large Project Mode Requirements");
     expect(stages[0]?.promptContent).toContain("cut boundary");
   });
@@ -144,6 +147,8 @@ describe("generateBuildStages", () => {
 
     expect(cameraStage?.promptContent).toContain("jump feel");
     expect(cameraStage?.promptContent).toContain("landing zones");
+    expect(cameraStage?.promptContent).toContain("## Shared Guardrails");
+    expect(cameraStage?.promptContent).toContain("## Stage-Relevant Notes");
   });
 
   it("threads clarifying notes into generated roadmap briefs", async () => {

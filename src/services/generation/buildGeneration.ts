@@ -26,26 +26,154 @@ interface BuildStageDraft {
   updatedAt: number;
 }
 
-const buildSharedStageContext = (
+const joinOrTbd = (values: string[]): string =>
+  values.map((value) => value.trim()).filter(Boolean).join(" | ") || "TBD";
+
+const buildProjectSnapshot = (
   project: Project,
-  gameDesignDoc: GameDesignDoc,
-  planningNotes?: string
-): string => {
-  return [
-    `Project: ${project.title}`,
-    `Pitch: ${project.oneLinePitch || "TBD"}`,
-    `Genre: ${project.genre || "TBD"} / ${project.subgenre || "TBD"}`,
-    `Scope: ${project.scopeCategory}`,
-    `Typical Session: ${gameDesignDoc.concept.sessionLength || "TBD"}`,
-    `Player Fantasy: ${gameDesignDoc.concept.playerFantasy || "TBD"}`,
-    `Design Pillars: ${gameDesignDoc.designPillars.pillars.join(" | ") || "TBD"}`,
-    `Core Loop: ${gameDesignDoc.coreLoop.secondToSecond || "TBD"}`,
-    `Controls: ${gameDesignDoc.controlsFeel.controlScheme || "TBD"}`,
-    `Technical Constraints: ${gameDesignDoc.technicalDesign.platformConstraints || "TBD"}`,
-    planningNotes ? `Clarifying Notes:\n${planningNotes}` : ""
-  ]
-    .filter(Boolean)
-    .join("\n");
+  gameDesignDoc: GameDesignDoc
+): string[] => [
+  `- Project: ${project.title}`,
+  `- Pitch: ${project.oneLinePitch || "TBD"}`,
+  `- Genre: ${project.genre || "TBD"} / ${project.subgenre || "TBD"}`,
+  `- Scope: ${project.scopeCategory}`,
+  `- Typical Session: ${gameDesignDoc.concept.sessionLength || "TBD"}`
+];
+
+const buildSharedGuardrails = (
+  project: Project,
+  gameDesignDoc: GameDesignDoc
+): string[] => [
+  `- Protect these pillars: ${joinOrTbd(gameDesignDoc.designPillars.pillars)}`,
+  `- Preserve this player fantasy: ${gameDesignDoc.concept.playerFantasy || "TBD"}`,
+  `- Avoid these anti-goals: ${joinOrTbd(gameDesignDoc.designPillars.antiGoals)}`,
+  `- Keep the gameplay expression centered on: ${gameDesignDoc.coreLoop.secondToSecond || "TBD"}`,
+  `- Respect platform and technical constraints: ${gameDesignDoc.technicalDesign.platformConstraints || "TBD"}`,
+  `- Keep monetization assumptions aligned with: ${project.monetizationModel || "TBD"}`
+];
+
+const buildStageRelevantNotes = (
+  stageKey: BuildStage["stageKey"],
+  gameDesignDoc: GameDesignDoc
+): string[] => {
+  const { artTone, contentBible, controlsFeel, coreLoop, designPillars, technicalDesign } =
+    gameDesignDoc;
+
+  switch (stageKey) {
+    case "scope-lock":
+      return [
+        `- Differentiators and scope guardrails: ${gameDesignDoc.concept.differentiators || "TBD"}`,
+        `- Anti-goals already identified: ${joinOrTbd(designPillars.antiGoals)}`,
+        `- Target audience: ${gameDesignDoc.concept.targetAudience || "TBD"}`
+      ];
+    case "foundation":
+      return [
+        `- Engine/runtime: ${technicalDesign.engine || "TBD"}`,
+        `- Folder structure: ${technicalDesign.folderStructure || "TBD"}`,
+        `- Naming conventions: ${technicalDesign.namingConventions || "TBD"}`,
+        `- Content pipeline: ${technicalDesign.contentPipeline || "TBD"}`
+      ];
+    case "first-playable":
+      return [
+        `- Session loop target: ${coreLoop.sessionLoop || "TBD"}`,
+        `- Failure model: ${coreLoop.failureStates || "TBD"}`,
+        `- First playable content slice: ${contentBible.levelsMissions || "TBD"}`,
+        `- Required HUD elements: ${contentBible.uiHudElements || "TBD"}`
+      ];
+    case "core-controls":
+      return [
+        `- Control scheme: ${controlsFeel.controlScheme || "TBD"}`,
+        `- Movement philosophy: ${controlsFeel.movementPhilosophy || "TBD"}`,
+        `- Responsiveness standard: ${controlsFeel.responsivenessStandards || "TBD"}`,
+        `- Platform input notes: ${controlsFeel.platformInputNotes || "TBD"}`
+      ];
+    case "camera-movement":
+      return [
+        `- Camera rules: ${controlsFeel.cameraRules || "TBD"}`,
+        `- Movement philosophy: ${controlsFeel.movementPhilosophy || "TBD"}`,
+        `- Readability principle: ${designPillars.readabilityPrinciples || "TBD"}`
+      ];
+    case "combat-feel":
+      return [
+        `- Combat feel goals: ${controlsFeel.combatFeelGoals || "TBD"}`,
+        `- Weapons and abilities: ${contentBible.weaponsAbilities || "TBD"}`,
+        `- Failure model: ${coreLoop.failureStates || "TBD"}`
+      ];
+    case "enemy-behavior":
+      return [
+        `- Enemy roster: ${contentBible.enemies || "TBD"}`,
+        `- Encounter constraints: ${contentBible.encounters || "TBD"}`,
+        `- Combat feel target: ${controlsFeel.combatFeelGoals || "TBD"}`
+      ];
+    case "encounter-scripting":
+      return [
+        `- Encounter scripting target: ${contentBible.encounters || "TBD"}`,
+        `- Level or mission structure: ${contentBible.levelsMissions || "TBD"}`,
+        `- Special events or bosses: ${contentBible.bossesSpecialEvents || "TBD"}`
+      ];
+    case "hud-feedback":
+      return [
+        `- UI/HUD elements: ${contentBible.uiHudElements || "TBD"}`,
+        `- Accessibility constraints: ${controlsFeel.accessibilityConsiderations || "TBD"}`,
+        `- Readability principles: ${designPillars.readabilityPrinciples || "TBD"}`
+      ];
+    case "progression-meta":
+      return [
+        `- Long-term progression: ${coreLoop.longTermProgression || "TBD"}`,
+        `- Reward cadence: ${coreLoop.rewardCadence || "TBD"}`,
+        `- Pickups and rewards: ${contentBible.pickupsRewards || "TBD"}`
+      ];
+    case "content-slice":
+      return [
+        `- Content slice target: ${contentBible.levelsMissions || "TBD"}`,
+        `- Bosses or special events: ${contentBible.bossesSpecialEvents || "TBD"}`,
+        `- Art direction guardrail: ${artTone.artDirection || "TBD"}`
+      ];
+    case "systems-foundation":
+      return [
+        `- Core loop foundation: ${coreLoop.secondToSecond || "TBD"}`,
+        `- Save system needs: ${technicalDesign.saveSystem || "TBD"}`,
+        `- Content pipeline dependency: ${technicalDesign.contentPipeline || "TBD"}`
+      ];
+    case "content-pipeline":
+      return [
+        `- Content pipeline: ${technicalDesign.contentPipeline || "TBD"}`,
+        `- Folder structure: ${technicalDesign.folderStructure || "TBD"}`,
+        `- Naming conventions: ${technicalDesign.namingConventions || "TBD"}`,
+        `- Engine/runtime: ${technicalDesign.engine || "TBD"}`
+      ];
+    case "content-production":
+      return [
+        `- Production content target: ${contentBible.levelsMissions || "TBD"}`,
+        `- Enemy and encounter breadth: ${contentBible.enemies || "TBD"} / ${contentBible.encounters || "TBD"}`,
+        `- UI/HUD coverage: ${contentBible.uiHudElements || "TBD"}`
+      ];
+    case "vertical-slice-integration":
+      return [
+        `- Loop expression to prove: ${coreLoop.secondToSecond || "TBD"}`,
+        `- Session loop to prove: ${coreLoop.sessionLoop || "TBD"}`,
+        `- Art/tone integration target: ${artTone.artDirection || "TBD"}`
+      ];
+    case "polish":
+      return [
+        `- Art/tone polish target: ${artTone.artDirection || "TBD"}`,
+        `- Audio/music direction: ${artTone.audioMusicDirection || "TBD"}`,
+        `- Performance target: ${technicalDesign.targetFramerate || "TBD"}`
+      ];
+    case "packaging-release-prep":
+    case "qa-release-prep":
+      return [
+        `- Platform constraints: ${technicalDesign.platformConstraints || "TBD"}`,
+        `- Save system expectations: ${technicalDesign.saveSystem || "TBD"}`,
+        `- Accessibility considerations: ${controlsFeel.accessibilityConsiderations || "TBD"}`
+      ];
+    default:
+      return [
+        `- Controls / feel: ${controlsFeel.combatFeelGoals || "TBD"}`,
+        `- Encounter / content constraints: ${contentBible.encounters || "TBD"}`,
+        `- Art / tone constraints: ${artTone.artDirection || "TBD"}`
+      ];
+  }
 };
 
 const LARGE_STAGE_DEFAULTS: Partial<Record<BuildStage["stageKey"], string>> = {
@@ -140,6 +268,9 @@ const buildStagePrompt = (
       : undefined);
   const largeRequirements = buildLargeProjectRequirements(project, stage.key);
   const acceptanceCriteria = buildAcceptanceCriteria(project, stage.key);
+  const projectSnapshot = buildProjectSnapshot(project, gameDesignDoc);
+  const sharedGuardrails = buildSharedGuardrails(project, gameDesignDoc);
+  const stageRelevantNotes = buildStageRelevantNotes(stage.key, gameDesignDoc);
 
   return [
     `# ${stage.label}`,
@@ -147,12 +278,18 @@ const buildStagePrompt = (
     `Target Tool: ${targetPlatform}`,
     `Stage Goal: ${stage.description}`,
     "",
-    "## Project Context",
-    buildSharedStageContext(project, gameDesignDoc, planningNotes),
+    "## Quick Project Snapshot",
+    ...projectSnapshot,
+    "",
+    "## Shared Guardrails",
+    ...sharedGuardrails,
     "",
     "## Stage-Specific Focus",
     templateFocus || "Advance the project without compromising the design pillars or scope guardrails.",
     "",
+    ...(planningNotes
+      ? ["## Clarifying Notes", planningNotes, ""]
+      : []),
     "## In Scope",
     "- Implement only the systems required for this stage.",
     "- Keep the work aligned to the current design document and technical constraints.",
@@ -173,10 +310,8 @@ const buildStagePrompt = (
     "## Acceptance Criteria",
     ...acceptanceCriteria.map((criterion) => `- ${criterion}`),
     "",
-    "## Notes",
-    `- Controls / feel: ${gameDesignDoc.controlsFeel.combatFeelGoals || "TBD"}`,
-    `- Encounter / content constraints: ${gameDesignDoc.contentBible.encounters || "TBD"}`,
-    `- Art / tone constraints: ${gameDesignDoc.artTone.artDirection || "TBD"}`
+    "## Stage-Relevant Notes",
+    ...stageRelevantNotes
   ].join("\n");
 };
 
@@ -209,13 +344,14 @@ export const generateBuildStages = async ({
   }));
 };
 
-export const exportAllPrompts = (stages: BuildStage[]): void => {
-  const content = stages
+export const serializeBuildStages = (stages: BuildStage[]): string =>
+  stages
     .map(
       (stage) =>
         `# ${stage.stageNumber}. ${stage.name}\n\nStatus: ${stage.status}\n\n${stage.promptContent}`
     )
     .join("\n\n---\n\n");
 
-  downloadAsFile(content, APP_BUILD_PLAN_FILE_NAME);
+export const exportAllPrompts = (stages: BuildStage[]): void => {
+  downloadAsFile(serializeBuildStages(stages), APP_BUILD_PLAN_FILE_NAME);
 };
