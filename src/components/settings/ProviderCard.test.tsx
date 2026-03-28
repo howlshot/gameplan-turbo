@@ -62,6 +62,7 @@ describe("ProviderCard", () => {
           maskedKey: "",
           isDefault: false
         }}
+        onDisconnect={vi.fn()}
         onSave={vi.fn()}
         onSetDefault={vi.fn()}
       />
@@ -95,6 +96,7 @@ describe("ProviderCard", () => {
           maskedKey: "",
           isDefault: false
         }}
+        onDisconnect={vi.fn()}
         onSave={vi.fn()}
         onSetDefault={vi.fn()}
       />
@@ -104,6 +106,32 @@ describe("ProviderCard", () => {
 
     await waitFor(() => {
       expect(mocks.openLoginFlow).toHaveBeenCalled();
+    });
+  });
+
+  it("shows disconnect for connected providers and triggers it", async () => {
+    const onDisconnect = vi.fn();
+
+    render(
+      <ProviderCard
+        provider={{
+          id: "claude-provider",
+          provider: "claude-code",
+          model: "claude-code-default",
+          hasKey: true,
+          maskedKey: "claude...",
+          isDefault: false
+        }}
+        onDisconnect={onDisconnect}
+        onSave={vi.fn()}
+        onSetDefault={vi.fn()}
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /Disconnect/i }));
+
+    await waitFor(() => {
+      expect(onDisconnect).toHaveBeenCalledWith("claude-provider");
     });
   });
 });

@@ -7,6 +7,7 @@ interface ProviderSettingsSectionProps {
   connectedCount: number;
   isLoading: boolean;
   providerCards: AIProviderSummary[];
+  onDisconnectProvider: (providerId: string) => Promise<void>;
   onSaveProvider: (input: {
     provider: AIProvider;
     apiKey: string;
@@ -20,6 +21,7 @@ interface ProviderSettingsSectionProps {
 export const ProviderSettingsSection = ({
   connectedCount,
   isLoading,
+  onDisconnectProvider,
   providerCards,
   onSaveProvider,
   onSetDefault
@@ -44,6 +46,7 @@ export const ProviderSettingsSection = ({
             <ProviderCard
               key={provider.provider}
               provider={provider}
+              onDisconnect={onDisconnectProvider}
               onSave={onSaveProvider}
               onSetDefault={onSetDefault}
             />

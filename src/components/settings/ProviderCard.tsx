@@ -30,12 +30,14 @@ interface ProviderCardProps {
     baseUrl?: string;
     authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
   }) => Promise<void>;
+  onDisconnect: (providerId: string) => Promise<void>;
   onSetDefault: (providerId: string) => Promise<void>;
 }
 
 export const ProviderCard = ({
   provider,
   onSave,
+  onDisconnect,
   onSetDefault
 }: ProviderCardProps): JSX.Element => {
   const toast = useToast();
@@ -68,6 +70,7 @@ export const ProviderCard = ({
   const bridgeOfflineMessage = toolLoginProvider
     ? `Bridge offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
     : "";
+  const canDisconnect = Boolean(providerId);
 
   const handleSave = async (): Promise<void> => {
     const value = inputRef.current?.value.trim() ?? "";
@@ -238,20 +241,35 @@ export const ProviderCard = ({
           <h3 className="font-headline text-sm font-semibold text-on-surface">
             {config.label}
           </h3>
-          {providerId ? (
-            <button
-              type="button"
-              onClick={() => void onSetDefault(providerId)}
-              className={cn(
-                "rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                provider.isDefault
-                  ? "bg-primary/10 text-primary"
-                  : "bg-surface text-on-surface-variant hover:text-on-surface"
-              )}
-            >
-              {provider.isDefault ? "Default" : "Set Default"}
-            </button>
-          ) : null}
+          <div className="flex items-center gap-2">
+            {canDisconnect ? (
+              <button
+                type="button"
+                onClick={() => {
+                  if (providerId) {
+                    void onDisconnect(providerId);
+                  }
+                }}
+                className="rounded-full bg-surface px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-tertiary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-container-high hover:text-on-surface"
+              >
+                Disconnect
+              </button>
+            ) : null}
+            {providerId ? (
+              <button
+                type="button"
+                onClick={() => void onSetDefault(providerId)}
+                className={cn(
+                  "rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                  provider.isDefault
+                    ? "bg-primary/10 text-primary"
+                    : "bg-surface text-on-surface-variant hover:text-on-surface"
+                )}
+              >
+                {provider.isDefault ? "Default" : "Set Default"}
+              </button>
+            ) : null}
+          </div>
         </div>
 
         {toolLoginProvider ? (

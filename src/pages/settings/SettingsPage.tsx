@@ -27,7 +27,7 @@ import type { AIProvider } from "@/types";
 export const SettingsPage = (): JSX.Element => {
   const toast = useToast();
   const { settings, updateSettings } = useSettings();
-  const { providers, defaultProvider, isLoading: isProvidersLoading, saveProvider, setDefault } =
+  const { providers, defaultProvider, isLoading: isProvidersLoading, saveProvider, deleteProvider, setDefault } =
     useAIProviders();
   const { prompts, isLoading: isPromptsLoading, updatePrompt, resetToDefault } =
     useAgentPrompts();
@@ -169,6 +169,10 @@ export const SettingsPage = (): JSX.Element => {
           <ProviderSettingsSection
             connectedCount={connectedCount}
             isLoading={isProvidersLoading}
+            onDisconnectProvider={async (providerId) => {
+              await deleteProvider(providerId);
+              toast.success("Provider disconnected.");
+            }}
             onSaveProvider={handleSaveProvider}
             onSetDefault={async (providerId) => {
               await setDefault(providerId);
