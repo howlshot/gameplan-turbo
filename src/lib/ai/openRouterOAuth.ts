@@ -3,11 +3,13 @@ const OPENROUTER_EXCHANGE_URL = "https://openrouter.ai/api/v1/auth/keys";
 const OPENROUTER_OAUTH_CALLBACK_PATH = "/oauth/openrouter/callback";
 const OPENROUTER_OAUTH_MESSAGE_TYPE = "gameplan-turbo:openrouter-oauth";
 const OPENROUTER_CODE_VERIFIER_KEY = "gameplan-turbo:openrouter-code-verifier";
+const OPENROUTER_STATE_KEY = "gameplan-turbo:openrouter-state";
 
 interface OpenRouterOAuthMessage {
   type: typeof OPENROUTER_OAUTH_MESSAGE_TYPE;
   code?: string;
   error?: string;
+  state?: string;
 }
 
 const toBase64Url = (bytes: Uint8Array): string =>
@@ -32,6 +34,16 @@ const createCodeChallenge = async (codeVerifier: string): Promise<string> => {
 const getCallbackUrl = (): string =>
   `${window.location.origin}${OPENROUTER_OAUTH_CALLBACK_PATH}`;
 
+const createState = (): string => {
+  const bytes = crypto.getRandomValues(new Uint8Array(16));
+  return toBase64Url(bytes);
+};
+
+const clearOpenRouterOAuthSession = (): void => {
+  sessionStorage.removeItem(OPENROUTER_CODE_VERIFIER_KEY);
+  sessionStorage.removeItem(OPENROUTER_STATE_KEY);
+};
+
 const exchangeCodeForApiKey = async (code: string): Promise<string> => {
   const codeVerifier = sessionStorage.getItem(OPENROUTER_CODE_VERIFIER_KEY);
 
@@ -54,41 +66,46 @@ const exchangeCodeForApiKey = async (code: string): Promise<string> => {
     })
   });
 
-  sessionStorage.removeItem(OPENROUTER_CODE_VERIFIER_KEY);
+  try {
+    if (!response.ok) {
+      let message = "OpenRouter sign-in could not be completed.";
 
-  if (!response.ok) {
-    let message = "OpenRouter sign-in could not be completed.";
+      try {
+        const payload = (await response.json()) as { error?: { message?: string }; message?: string };
+        message =
+          payload.error?.message ??
+          payload.message ??
+          message;
+      } catch {
+        // Ignore JSON parse issues and keep the fallback message.
+      }
 
-    try {
-      const payload = (await response.json()) as { error?: { message?: string }; message?: string };
-      message =
-        payload.error?.message ??
-        payload.message ??
-        message;
-    } catch {
-      // Ignore JSON parse issues and keep the fallback message.
+      throw new Error(message);
     }
 
-    throw new Error(message);
-  }
+    const payload = (await response.json()) as { key?: string };
+    if (!payload.key) {
+      throw new Error("OpenRouter sign-in completed, but no API key was returned.");
+    }
 
-  const payload = (await response.json()) as { key?: string };
-  if (!payload.key) {
-    throw new Error("OpenRouter sign-in completed, but no API key was returned.");
+    return payload.key;
+  } finally {
+    clearOpenRouterOAuthSession();
   }
-
-  return payload.key;
 };
 
 export const startOpenRouterOAuth = async (): Promise<string> => {
   const codeVerifier = createCodeVerifier();
   const codeChallenge = await createCodeChallenge(codeVerifier);
+  const state = createState();
   sessionStorage.setItem(OPENROUTER_CODE_VERIFIER_KEY, codeVerifier);
+  sessionStorage.setItem(OPENROUTER_STATE_KEY, state);
 
   const authUrl = new URL(OPENROUTER_AUTH_URL);
   authUrl.searchParams.set("callback_url", getCallbackUrl());
   authUrl.searchParams.set("code_challenge", codeChallenge);
   authUrl.searchParams.set("code_challenge_method", "S256");
+  authUrl.searchParams.set("state", state);
 
   const popup = window.open(
     authUrl.toString(),
@@ -115,6 +132,7 @@ export const startOpenRouterOAuth = async (): Promise<string> => {
     };
 
     const finishError = (message: string): void => {
+      clearOpenRouterOAuthSession();
       cleanup();
       reject(new Error(message));
     };
@@ -125,6 +143,12 @@ export const startOpenRouterOAuth = async (): Promise<string> => {
       }
 
       if (event.data?.type !== OPENROUTER_OAUTH_MESSAGE_TYPE) {
+        return;
+      }
+
+      const expectedState = sessionStorage.getItem(OPENROUTER_STATE_KEY);
+      if (!expectedState || event.data.state !== expectedState) {
+        finishError("OpenRouter sign-in returned an invalid state. Start sign-in again.");
         return;
       }
 
@@ -161,6 +185,7 @@ export const startOpenRouterOAuth = async (): Promise<string> => {
 export const completeOpenRouterOAuthInPopup = (): void => {
   const params = new URLSearchParams(window.location.search);
   const code = params.get("code") ?? undefined;
+  const state = params.get("state") ?? undefined;
   const error =
     params.get("error_description") ??
     params.get("error") ??
@@ -170,7 +195,8 @@ export const completeOpenRouterOAuthInPopup = (): void => {
     const payload: OpenRouterOAuthMessage = {
       type: OPENROUTER_OAUTH_MESSAGE_TYPE,
       code,
-      error
+      error,
+      state
     };
     window.opener.postMessage(payload, window.location.origin);
   }

@@ -1,3 +1,4 @@
+import { getBridgeRequestHeaders, parseBridgeErrorMessage } from "@/lib/bridgeAuth";
 import { getCodexBridgeUrl } from "@/lib/codexBridge";
 import { AIServiceError, toAIServiceError } from "@/services/ai/errors";
 import type { AICompleteParams, AIProvider } from "@/services/ai/types";
@@ -42,10 +43,10 @@ const requestCodexBridge = async (
   try {
     const response = await fetch(`${bridgeUrl ?? getCodexBridgeUrl()}/generate`, {
       method: "POST",
-      headers: {
+      headers: getBridgeRequestHeaders({
         "Content-Type": "application/json",
         Accept: "application/json"
-      },
+      }),
       signal: controller.signal,
       body: JSON.stringify({
         model: params.model,
@@ -54,11 +55,13 @@ const requestCodexBridge = async (
     });
 
     if (!response.ok) {
-      const message = await response.text();
+      const message = await parseBridgeErrorMessage(
+        response,
+        "The local Codex bridge could not complete the request."
+      );
       throw new AIServiceError(
         "PROVIDER",
-        message ||
-          "The local Codex bridge could not complete the request.",
+        message,
         { status: response.status }
       );
     }
@@ -110,9 +113,9 @@ export const createCodexBridgeProvider = (
   validateKey: async () => {
     try {
       const response = await fetch(`${bridgeUrl ?? getCodexBridgeUrl()}/auth/status`, {
-        headers: {
+        headers: getBridgeRequestHeaders({
           Accept: "application/json"
-        }
+        })
       });
 
       if (!response.ok) {

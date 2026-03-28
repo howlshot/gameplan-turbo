@@ -2,7 +2,7 @@
 
 Date: 2026-03-27
 
-Scope: current local WIP in `<workspace-root>`
+Scope: current local WIP in the active workspace checkout
 
 Baseline checks:
 - `corepack pnpm typecheck` passed

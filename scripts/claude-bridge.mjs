@@ -2,6 +2,9 @@
 
 import http from "node:http";
 import { spawn } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
 
 const HOST =
   process.env.GAMEPLAN_TURBO_CLAUDE_BRIDGE_HOST ||
@@ -14,29 +17,52 @@ const PORT = Number(
 );
 const MAX_BODY_BYTES = 1024 * 1024;
 const BRIDGE_VERSION = "0.1.0";
-const ALLOWED_ORIGIN = /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/;
 const CLAUDE_GENERATE_TIMEOUT_MS = 90_000;
+const readPersistedBridgeToken = () => {
+  try {
+    return fs.readFileSync(path.join(os.homedir(), ".gameplan-turbo", "bridge-token"), "utf8");
+  } catch {
+    return "";
+  }
+};
+
+const BRIDGE_TOKEN = (
+  process.env.GAMEPLAN_TURBO_BRIDGE_TOKEN ||
+  process.env.PREFLIGHT_BRIDGE_TOKEN ||
+  readPersistedBridgeToken()
+).trim();
+const ALLOWED_ORIGINS = new Set(
+  (
+    process.env.GAMEPLAN_TURBO_ALLOWED_ORIGINS ||
+    process.env.PREFLIGHT_ALLOWED_ORIGINS ||
+    "http://127.0.0.1:5173,http://localhost:5173"
+  )
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+);
+const BRIDGE_TOKEN_HEADER = "x-gameplan-bridge-token";
+const GENERIC_BRIDGE_FAILURE =
+  "Claude Code could not complete the request. Check the local bridge log for details.";
 
 const isAllowedOrigin = (origin) =>
-  typeof origin === "string" && ALLOWED_ORIGIN.test(origin);
+  typeof origin === "string" && ALLOWED_ORIGINS.has(origin);
+
+const getBridgeTokenHeaderValue = (req) => {
+  const value = req.headers[BRIDGE_TOKEN_HEADER];
+  if (Array.isArray(value)) {
+    return value[0]?.trim() ?? "";
+  }
+
+  return typeof value === "string" ? value.trim() : "";
+};
 
 const createCorsHeaders = (origin) => ({
   "Access-Control-Allow-Origin": isAllowedOrigin(origin) ? origin : "null",
   "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type,Accept",
+  "Access-Control-Allow-Headers": "Content-Type,Accept,X-Gameplan-Bridge-Token",
   Vary: "Origin"
 });
-
-const rejectDisallowedOrigin = (req, res) => {
-  if (!req.headers.origin || isAllowedOrigin(req.headers.origin)) {
-    return false;
-  }
-
-  sendJson(req, res, 403, {
-    error: "This bridge only accepts requests from localhost origins."
-  });
-  return true;
-};
 
 const sendJson = (req, res, statusCode, payload) => {
   const corsHeaders = createCorsHeaders(req.headers.origin);
@@ -46,6 +72,38 @@ const sendJson = (req, res, statusCode, payload) => {
     "Cache-Control": "no-store"
   });
   res.end(JSON.stringify(payload));
+};
+
+const rejectUnauthorizedRequest = (req, res) => {
+  if (!isAllowedOrigin(req.headers.origin)) {
+    sendJson(req, res, 403, {
+      error:
+        "This bridge only accepts requests from the local Gameplan Turbo app origin."
+    });
+    return true;
+  }
+
+  if (req.method === "OPTIONS") {
+    return false;
+  }
+
+  if (!BRIDGE_TOKEN.trim()) {
+    sendJson(req, res, 503, {
+      error:
+        "Bridge authentication is not configured. Relaunch the desktop app to restart the bridge securely."
+    });
+    return true;
+  }
+
+  if (getBridgeTokenHeaderValue(req) !== BRIDGE_TOKEN.trim()) {
+    sendJson(req, res, 401, {
+      error:
+        "This bridge request could not be authenticated. Relaunch the desktop app and try again."
+    });
+    return true;
+  }
+
+  return false;
 };
 
 const runCommand = (command, args, options = {}) =>
@@ -221,7 +279,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  if (rejectDisallowedOrigin(req, res)) {
+  if (rejectUnauthorizedRequest(req, res)) {
     return;
   }
 
@@ -278,10 +336,7 @@ const server = http.createServer(async (req, res) => {
 
       if (result.code !== 0 || !content) {
         sendJson(req, res, 502, {
-          error:
-            result.stderr.trim() ||
-            result.stdout.trim() ||
-            "Claude Code bridge did not return a final message."
+          error: GENERIC_BRIDGE_FAILURE
         });
         return;
       }
@@ -291,9 +346,7 @@ const server = http.createServer(async (req, res) => {
     } catch (error) {
       sendJson(req, res, 500, {
         error:
-          error instanceof Error
-            ? error.message
-            : "Unexpected Claude Code bridge error."
+          error instanceof Error ? error.message : GENERIC_BRIDGE_FAILURE
       });
       return;
     }

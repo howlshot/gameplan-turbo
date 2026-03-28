@@ -1,3 +1,5 @@
+import { getBridgeRequestHeaders, parseBridgeErrorMessage } from "@/lib/bridgeAuth";
+
 const DEFAULT_CODEX_BRIDGE_URL = "http://127.0.0.1:8765";
 
 export interface CodexBridgeStatus {
@@ -26,9 +28,9 @@ export const fetchCodexBridgeStatus = async (): Promise<CodexBridgeStatus> => {
 
   try {
     response = await fetch(`${getCodexBridgeUrl()}/auth/status`, {
-      headers: {
+      headers: getBridgeRequestHeaders({
         Accept: "application/json"
-      }
+      })
     });
   } catch (error) {
     if (error instanceof TypeError) {
@@ -41,7 +43,12 @@ export const fetchCodexBridgeStatus = async (): Promise<CodexBridgeStatus> => {
   }
 
   if (!response.ok) {
-    throw new Error(`Codex bridge status request failed (${response.status}).`);
+    throw new Error(
+      await parseBridgeErrorMessage(
+        response,
+        `Codex bridge status request failed (${response.status}).`
+      )
+    );
   }
 
   return (await response.json()) as CodexBridgeStatus;
@@ -53,9 +60,9 @@ export const openCodexLoginFlow = async (): Promise<void> => {
   try {
     response = await fetch(`${getCodexBridgeUrl()}/auth/open-login`, {
       method: "POST",
-      headers: {
+      headers: getBridgeRequestHeaders({
         Accept: "application/json"
-      }
+      })
     });
   } catch (error) {
     if (error instanceof TypeError) {
@@ -68,17 +75,8 @@ export const openCodexLoginFlow = async (): Promise<void> => {
   }
 
   if (!response.ok) {
-    let message = "Could not open the Codex login flow.";
-
-    try {
-      const payload = (await response.json()) as { error?: string };
-      if (payload.error) {
-        message = payload.error;
-      }
-    } catch {
-      // Ignore JSON parse failures and use the fallback message.
-    }
-
-    throw new Error(message);
+    throw new Error(
+      await parseBridgeErrorMessage(response, "Could not open the Codex login flow.")
+    );
   }
 };

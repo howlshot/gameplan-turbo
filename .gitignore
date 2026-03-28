@@ -31,6 +31,9 @@ Thumbs.db
 # Qwen Code
 .qwen/
 
+# Local automation and browser artifacts
+.playwright-cli/
+
 # Testing
 coverage/
 .nyc_output/

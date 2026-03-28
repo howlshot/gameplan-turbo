@@ -1,3 +1,5 @@
+import { getBridgeRequestHeaders, parseBridgeErrorMessage } from "@/lib/bridgeAuth";
+
 const DEFAULT_CLAUDE_BRIDGE_URL = "http://127.0.0.1:8766";
 
 export interface ClaudeBridgeStatus {
@@ -26,9 +28,9 @@ export const fetchClaudeBridgeStatus = async (): Promise<ClaudeBridgeStatus> => 
 
   try {
     response = await fetch(`${getClaudeBridgeUrl()}/auth/status`, {
-      headers: {
+      headers: getBridgeRequestHeaders({
         Accept: "application/json"
-      }
+      })
     });
   } catch (error) {
     if (error instanceof TypeError) {
@@ -42,7 +44,10 @@ export const fetchClaudeBridgeStatus = async (): Promise<ClaudeBridgeStatus> => 
 
   if (!response.ok) {
     throw new Error(
-      `Claude Code bridge status request failed (${response.status}).`
+      await parseBridgeErrorMessage(
+        response,
+        `Claude Code bridge status request failed (${response.status}).`
+      )
     );
   }
 
@@ -55,9 +60,9 @@ export const openClaudeLoginFlow = async (): Promise<void> => {
   try {
     response = await fetch(`${getClaudeBridgeUrl()}/auth/open-login`, {
       method: "POST",
-      headers: {
+      headers: getBridgeRequestHeaders({
         Accept: "application/json"
-      }
+      })
     });
   } catch (error) {
     if (error instanceof TypeError) {
@@ -70,17 +75,11 @@ export const openClaudeLoginFlow = async (): Promise<void> => {
   }
 
   if (!response.ok) {
-    let message = "Could not open the Claude Code login flow.";
-
-    try {
-      const payload = (await response.json()) as { error?: string };
-      if (payload.error) {
-        message = payload.error;
-      }
-    } catch {
-      // Ignore JSON parse failures and use the fallback message.
-    }
-
-    throw new Error(message);
+    throw new Error(
+      await parseBridgeErrorMessage(
+        response,
+        "Could not open the Claude Code login flow."
+      )
+    );
   }
 };
