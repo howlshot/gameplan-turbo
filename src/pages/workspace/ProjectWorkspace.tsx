@@ -4,8 +4,17 @@ import {
   getProjectTabFromSearch,
   getProjectTabPath
 } from "@/components/layout/sidebarConfig";
+import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ContextNodeSelector } from "@/components/workspace/ContextNodeSelector";
+import { useBuildStages } from "@/hooks/useBuildStages";
+import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
+import { useProjects } from "@/hooks/useProjects";
+import { useToast } from "@/hooks/useToast";
+import {
+  getProjectPhaseRecommendation,
+  getProjectStatusLabel
+} from "@/lib/gameProjectUtils";
 import { cn } from "@/lib/utils";
 import { useUIStore } from "@/stores/uiStore";
 
@@ -104,6 +113,10 @@ export const ProjectWorkspace = (): JSX.Element => {
   const navigate = useNavigate();
   const { projectId } = useParams();
   const { project, isLoading } = useProject(projectId);
+  const { gameDesignDoc } = useGameDesignDoc(projectId);
+  const { stages } = useBuildStages(projectId);
+  const { updateProject } = useProjects();
+  const toast = useToast();
   const activeTab = useUIStore((state) => state.activeTab);
   const setActiveTab = useUIStore((state) => state.setActiveTab);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
@@ -144,6 +157,31 @@ export const ProjectWorkspace = (): JSX.Element => {
 
     return project ? STATUS_STAGE_INDEX[project.status] ?? 0 : 0;
   }, [project, resolvedTab]);
+
+  const phaseRecommendation = useMemo(
+    () =>
+      project
+        ? getProjectPhaseRecommendation({
+            buildStages: stages,
+            gameDesignDoc,
+            project
+          })
+        : null,
+    [gameDesignDoc, project, stages]
+  );
+
+  const handleUseSuggestedPhase = async (): Promise<void> => {
+    if (!project || !phaseRecommendation?.recommendedNextPhase) {
+      return;
+    }
+
+    await updateProject(project.id, {
+      status: phaseRecommendation.recommendedNextPhase
+    });
+    toast.success(
+      `Project moved to ${getProjectStatusLabel(phaseRecommendation.recommendedNextPhase)}.`
+    );
+  };
 
   if (!isLoading && !project) {
     return (
@@ -221,6 +259,36 @@ export const ProjectWorkspace = (): JSX.Element => {
               <span>/</span>
               <span className="text-on-surface">{project?.title ?? "Loading..."}</span>
             </div>
+
+            {project && phaseRecommendation ? (
+              <div className="mt-4 rounded-2xl border border-outline-variant/12 bg-surface-container/80 px-4 py-3">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <StatusBadge status={phaseRecommendation.currentPhase} />
+                      {phaseRecommendation.recommendedNextPhase ? (
+                        <span className="rounded-full bg-secondary/12 px-2.5 py-1 text-[10px] uppercase tracking-[0.22em] text-secondary">
+                          Suggested: {getProjectStatusLabel(phaseRecommendation.recommendedNextPhase)}
+                        </span>
+                      ) : null}
+                    </div>
+                    <p className="text-sm leading-6 text-on-surface-variant">
+                      {phaseRecommendation.rationale}
+                    </p>
+                  </div>
+
+                  {phaseRecommendation.recommendedNextPhase ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleUseSuggestedPhase()}
+                      className="rounded-xl border border-secondary/25 bg-secondary/12 px-4 py-2 text-sm font-semibold text-secondary transition hover:border-secondary/35 hover:bg-secondary/18"
+                    >
+                      Use Suggestion
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
 
             <div className="mt-4 flex flex-wrap gap-2">
               {WORKSPACE_STAGES.map((stage, index) => {

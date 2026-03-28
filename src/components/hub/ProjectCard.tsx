@@ -7,7 +7,13 @@ import { useBuildStages } from "@/hooks/useBuildStages";
 import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProjects } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/useToast";
-import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
+import {
+  getAgentPlatformLabel,
+  getNextProjectPhase,
+  getPreviousProjectPhase,
+  getProjectPhaseRecommendation,
+  getProjectStatusLabel
+} from "@/lib/gameProjectUtils";
 import { getScopeProfile, SCOPE_ORDER } from "@/lib/projectFraming";
 import { cn, formatDate } from "@/lib/utils";
 import { useProjectStore } from "@/stores/projectStore";
@@ -91,6 +97,18 @@ export const ProjectCard = memo(
     const progress = stages.length === 0 ? 0 : Math.round((completedStages / stages.length) * 100);
     const artifactCount = artifacts.length;
     const pillarsCount = gameDesignDoc?.designPillars.pillars.length ?? 0;
+    const previousPhase = getPreviousProjectPhase(project.status);
+    const nextPhase = getNextProjectPhase(project.status);
+    const phaseRecommendation = useMemo(
+      () =>
+        getProjectPhaseRecommendation({
+          buildStages: stages,
+          gameDesignDoc,
+          project
+        }),
+      [gameDesignDoc, project, stages]
+    );
+    const suggestedPhase = phaseRecommendation.recommendedNextPhase;
 
     const openProject = (): void => {
       if (isInBatchMode || isEditing) {
@@ -135,6 +153,15 @@ export const ProjectCard = memo(
 
       toast.success("Game project updated.");
       setIsEditing(false);
+    };
+
+    const handleSetPhase = async (
+      event: React.MouseEvent,
+      nextStatus: ProjectStatus
+    ): Promise<void> => {
+      event.stopPropagation();
+      await updateProject(project.id, { status: nextStatus });
+      toast.success(`Project moved to ${getProjectStatusLabel(nextStatus)}.`);
     };
 
     const handleDelete = async (event: React.MouseEvent): Promise<void> => {
@@ -348,7 +375,36 @@ export const ProjectCard = memo(
 
         <div className="relative z-10">
           <div className="flex items-start justify-between gap-4">
-            <StatusBadge status={project.status} />
+            <div className="space-y-3">
+              <StatusBadge status={project.status} />
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  disabled={!previousPhase}
+                  onClick={(event) =>
+                    previousPhase
+                      ? void handleSetPhase(event, previousPhase)
+                      : event.stopPropagation()
+                  }
+                  className="rounded-full border border-outline-variant/15 bg-surface px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] text-on-surface-variant transition hover:border-primary/30 hover:text-on-surface disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  disabled={!nextPhase}
+                  onClick={(event) =>
+                    nextPhase
+                      ? void handleSetPhase(event, nextPhase)
+                      : event.stopPropagation()
+                  }
+                  className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] text-primary transition hover:border-primary/35 hover:bg-primary/15 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Advance
+                </button>
+              </div>
+            </div>
 
             {isInBatchMode ? (
               <button
@@ -464,6 +520,33 @@ export const ProjectCard = memo(
               </p>
             </div>
           </div>
+
+          {suggestedPhase ? (
+            <div className="mt-5 rounded-2xl border border-secondary/15 bg-secondary/8 px-4 py-3">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-secondary">
+                Suggested Next Phase
+              </p>
+              <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-on-surface">
+                    Move to {getProjectStatusLabel(suggestedPhase)}
+                  </p>
+                  <p className="text-xs leading-5 text-on-surface-variant">
+                    {phaseRecommendation.rationale}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={(event) =>
+                    void handleSetPhase(event, suggestedPhase)
+                  }
+                  className="rounded-full border border-secondary/25 bg-secondary/12 px-3 py-1.5 text-[11px] uppercase tracking-[0.18em] text-secondary transition hover:border-secondary/35 hover:bg-secondary/18"
+                >
+                  Use Suggestion
+                </button>
+              </div>
+            </div>
+          ) : null}
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             <div>
