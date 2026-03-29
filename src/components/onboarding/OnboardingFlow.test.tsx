@@ -174,7 +174,7 @@ describe("OnboardingFlow", () => {
     fireEvent.click(screen.getByRole("button", { name: /Claude Code/i }));
 
     expect(
-      screen.getByText(/Codex and Claude Code need the local desktop version/i)
+      screen.getByText(/Codex and Claude Code need the desktop app because they connect through local bridges/i)
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Available in Local Desktop Mode/i })

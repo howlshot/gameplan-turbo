@@ -89,6 +89,9 @@ export const HostedModeNotice = (): JSX.Element | null => {
               <p>
                 <strong>Download Desktop</strong> if you want local bridge sign-in with Codex or Claude Code.
               </p>
+              <p>
+                <strong>Skip AI for now</strong> if you want to create a project and generate the roadmap first.
+              </p>
             </div>
           </div>
           <div className="rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
@@ -110,7 +113,7 @@ export const HostedModeNotice = (): JSX.Element | null => {
             }}
             className="gradient-cta glow-primary rounded-xl px-4 py-3 text-sm font-semibold text-on-primary"
           >
-            Continue in Browser
+            Stay in Browser
           </button>
           <a
             href={APP_LATEST_DESKTOP_RELEASE_URL}

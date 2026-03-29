@@ -225,7 +225,7 @@ export const OutputLibraryPage = (): JSX.Element => {
             {!defaultProvider ? (
               <div className="mt-3 space-y-3">
                 <p className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-on-surface-variant">
-                  Output generation here uses a connected AI provider. Downloads and planning-package export still work anytime, but generating a new output requires connecting a provider first.
+                  Output generation here uses a connected AI provider. Planning-package export still works anytime, but generating a new output requires a provider first.
                   {hostedRuntime
                     ? " In the hosted app, OpenRouter and API-key providers are the fastest way to turn generation on."
                     : ""}

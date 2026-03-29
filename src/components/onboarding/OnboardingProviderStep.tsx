@@ -87,8 +87,8 @@ export const OnboardingProviderStep = ({
             <p className="font-semibold text-on-surface">Best first path</p>
             <p className="mt-2">
               Use <strong>OpenRouter</strong> or an <strong>API key</strong> if you
-              want AI in the browser right away. Use <strong>Skip for now</strong> if
-              you just want to map the game and generate the roadmap first.
+              want AI right away. Use <strong>Skip for now</strong> if you want to
+              create the project and generate the roadmap first.
             </p>
           </div>
         </div>
@@ -97,11 +97,11 @@ export const OnboardingProviderStep = ({
             <p className="font-medium text-on-surface">Using the browser-hosted version?</p>
             <p className="mt-2 text-sm leading-6 text-on-surface-variant">
               OpenRouter and API-key providers work here. Codex and Claude Code
-              need the local desktop version because they connect through local bridges.
+              need the desktop app because they connect through local bridges.
             </p>
             <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-              If your main goal is to use Codex or Claude Code sign-in, skip the browser
-              setup and install the desktop app first.
+              If your main goal is Codex or Claude Code sign-in, download the desktop
+              app first. Otherwise, stay here and choose a hosted provider or skip AI for now.
             </p>
             <div className="mt-4">
               <a
@@ -242,7 +242,7 @@ export const OnboardingProviderStep = ({
                     <p className="mt-2">
                       For the hosted app, choose <strong>OpenRouter</strong> or an
                       <strong> API key</strong> provider. If you want bridge-based sign-in,
-                      run {APP_NAME} locally and reconnect {toolLoginProvider.label} there.
+                      download the desktop app and reconnect {toolLoginProvider.label} there.
                     </p>
                     <div className="mt-4">
                       <a

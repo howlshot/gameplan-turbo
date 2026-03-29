@@ -26,7 +26,8 @@ describe("HostedModeNotice", () => {
     expect(
       screen.getByRole("heading", { name: /You are using the browser-hosted version/i })
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Continue in Browser/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Stay in Browser/i })).toBeInTheDocument();
+    expect(screen.getByText(/Skip AI for now/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Download Desktop/i })).toHaveAttribute(
       "href",
       expect.stringContaining("github.com/howlshot/gameplan-turbo/releases/latest")
@@ -36,7 +37,7 @@ describe("HostedModeNotice", () => {
   it("does not show after dismissal", () => {
     render(<HostedModeNotice />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Continue in Browser/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Stay in Browser/i }));
 
     expect(
       localStorage.getItem("gameplan-turbo:hosted-mode-notice-dismissed")

@@ -7,7 +7,7 @@ This guide covers the current open-source setup for Gameplan Turbo.
 - Browser version: [gameplan-turbo.vercel.app](https://gameplan-turbo.vercel.app)
 - macOS desktop alpha: [latest release](https://github.com/howlshot/gameplan-turbo/releases/latest)
 
-Use the browser version if you want to evaluate the planning workflow quickly. Use the desktop build if you want local bridge integrations like `Codex` or `Claude Code`.
+Use the browser version if you want to try planning, roadmap generation, exports, or hosted providers quickly. Use the desktop build if you want local bridge integrations like `Codex` or `Claude Code`.
 
 ## Contributor prerequisites
 
@@ -117,7 +117,7 @@ This is the right path for local or self-hosted endpoints such as LM Studio, Oll
 
 ### "Connect AI to generate" appears in Prompt Lab or Output Library
 
-That means the feature you clicked is AI-backed and no default provider is connected yet. Connect a provider in onboarding or `Settings`, then return to the same project.
+That means the feature you clicked is AI-backed and no default provider is connected yet. You can still plan, track, and generate the roadmap without AI. Connect a provider in onboarding or `Settings` when you want generated outputs or planning help.
 
 ### A Codex or Claude bridge says it is offline
 

@@ -67,7 +67,7 @@ export const ProviderSettingsSection = ({
           </h2>
         </div>
         <span className="rounded-full bg-secondary/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-secondary">
-          {connectedCount} core links active
+          {connectedCount} provider{connectedCount === 1 ? "" : "s"} connected
         </span>
       </div>
 
@@ -105,9 +105,8 @@ export const ProviderSettingsSection = ({
                 Sign in
               </h3>
               <p className="text-sm leading-6 text-on-surface-variant">
-                Connect through a browser login or local tool bridge. Browser sign-in
-                opens a normal web flow. Tool-login providers ask you to sign in first,
-                then confirm the running bridge.
+                Connect through a browser login or a local tool session. Browser sign-in
+                opens a normal web flow. Codex and Claude Code use your local desktop session.
               </p>
             </div>
           </div>
@@ -122,7 +121,7 @@ export const ProviderSettingsSection = ({
                 API key
               </h3>
               <p className="text-sm leading-6 text-on-surface-variant">
-                Add an API key for hosted providers that use direct key auth.
+                Add an API key for providers that use direct key auth.
               </p>
             </div>
           </div>

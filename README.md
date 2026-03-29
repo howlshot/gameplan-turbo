@@ -2,6 +2,15 @@
 
 Gameplan Turbo helps solo developers and small teams turn a rough game idea into a complete, usable production plan. Use it to shape the core loop, pressure-test mechanics, generate polished game-development prompts and briefs, and keep your roadmap, references, and outputs aligned as the project moves toward a playable build.
 
+## Quick start
+
+- Try in browser: [gameplan-turbo.vercel.app](https://gameplan-turbo.vercel.app)
+- Download the macOS desktop app: [latest release](https://github.com/howlshot/gameplan-turbo/releases/latest)
+- Contribute from source: see [Contributor setup](#contributor-setup)
+
+Browser mode is best for planning, roadmap generation, exports, and hosted providers.
+Desktop mode is for `Codex` and `Claude Code` integrations.
+
 ## What the app does
 
 - capture the game in structured modules: `Concept`, `Design Pillars`, `Core Loop`, `Controls & Feel`, `Content Bible`, `Art & Tone`, and `Technical Design`
@@ -25,19 +34,6 @@ Without AI configured, you can:
 - export the roadmap and planning package
 
 AI is only required for model-generated outputs and planning-question assists.
-
-## Try in browser or run locally
-
-- **Browser-hosted mode** is the fastest way to share or evaluate the app. It is great for planning, roadmap generation, exports, OpenRouter, and API-key providers.
-- **Local desktop mode** is what you want if you also need bridge-based sign-in with `Codex` or `Claude Code`.
-- Local bridge providers are intentionally not available from the hosted web app.
-
-## Quick start
-
-- If you just want to use Gameplan Turbo, do not clone the repo. Start here:
-- Try instantly in browser: [gameplan-turbo.vercel.app](https://gameplan-turbo.vercel.app)
-- Download the macOS desktop app (`.dmg` first, `.zip` fallback): [latest release](https://github.com/howlshot/gameplan-turbo/releases/latest)
-- The desktop package is the easiest path for `Codex` and `Claude Code` integrations.
 
 ### Desktop package contents
 

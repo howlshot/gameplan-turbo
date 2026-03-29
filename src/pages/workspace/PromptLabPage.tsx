@@ -710,10 +710,10 @@ export const PromptLabPage = (): JSX.Element => {
           {!defaultProvider ? (
             <div className="mt-4 space-y-3">
               <p className="text-sm leading-6 text-on-surface-variant">
-                No AI provider is connected. Guided Planning will skip the clarifying round and use local generation only.
+                No AI provider is connected. You can still generate the roadmap locally and keep planning without AI.
               </p>
               <p className="rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-3 text-sm leading-6 text-on-surface-variant">
-                Connect your AI if you want project-specific question generation here. Roadmap generation still works without it.
+                Connect AI if you want project-specific question generation here. Roadmap generation still works without it.
                 {hostedRuntime
                   ? " In the hosted app, OpenRouter and API-key providers are the fastest path."
                   : ""}
