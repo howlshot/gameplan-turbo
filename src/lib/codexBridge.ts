@@ -1,4 +1,5 @@
 import { getBridgeRequestHeaders, parseBridgeErrorMessage } from "@/lib/bridgeAuth";
+import { getDesktopRuntimeContext, isDesktopRuntime } from "@/lib/runtimeMode";
 
 const DEFAULT_CODEX_BRIDGE_URL = "http://127.0.0.1:8765";
 
@@ -14,6 +15,7 @@ export interface CodexBridgeStatus {
 
 export const getCodexBridgeUrl = (): string =>
   (
+    getDesktopRuntimeContext()?.bridgeUrls.codex ??
     import.meta.env.VITE_CODEX_BRIDGE_URL ??
     DEFAULT_CODEX_BRIDGE_URL
   ).trim();
@@ -35,7 +37,9 @@ export const fetchCodexBridgeStatus = async (): Promise<CodexBridgeStatus> => {
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        "Could not reach the local Codex bridge. Start it with `corepack pnpm codex:bridge` or relaunch the desktop app."
+        isDesktopRuntime()
+          ? "Could not reach the local Codex bridge. Relaunch the desktop app and try again."
+          : "Could not reach the local Codex bridge. Start it with `corepack pnpm codex:bridge` or relaunch the desktop app."
       );
     }
 
@@ -67,7 +71,9 @@ export const openCodexLoginFlow = async (): Promise<void> => {
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        "Could not reach the local Codex bridge. Start it with `corepack pnpm codex:bridge` or relaunch the desktop app, then try again."
+        isDesktopRuntime()
+          ? "Could not reach the local Codex bridge. Relaunch the desktop app and try again."
+          : "Could not reach the local Codex bridge. Start it with `corepack pnpm codex:bridge` or relaunch the desktop app, then try again."
       );
     }
 

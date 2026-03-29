@@ -1,20 +1,94 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PromptLabPage } from "@/pages/workspace/PromptLabPage";
 import type { BuildStage, GameDesignDoc, Project } from "@/types";
 
+const {
+  navigate,
+  successToast,
+  errorToast,
+  warningToast,
+  createStages,
+  replaceStages,
+  updateStageStatus,
+  generateWithAgent,
+  exportAllPrompts,
+  setPlanningQuestions,
+  setHasSkippedVaultPreflight,
+  setHasSkippedClarifyingRound,
+  setTargetPlatform
+} = vi.hoisted(() => ({
+  navigate: vi.fn(),
+  successToast: vi.fn(),
+  errorToast: vi.fn(),
+  warningToast: vi.fn(),
+  createStages: vi.fn(),
+  replaceStages: vi.fn(),
+  updateStageStatus: vi.fn(),
+  generateWithAgent: vi.fn(),
+  exportAllPrompts: vi.fn(),
+  setPlanningQuestions: vi.fn(),
+  setHasSkippedVaultPreflight: vi.fn(),
+  setHasSkippedClarifyingRound: vi.fn(),
+  setTargetPlatform: vi.fn()
+}));
+
 let defaultProviderValue: { provider: string } | null = null;
+
+const stageKeys = [
+  "scope-lock",
+  "foundation",
+  "first-playable",
+  "core-controls"
+] as const;
+
+const buildStages = (): BuildStage[] =>
+  stageKeys.map((stageKey, index) => ({
+    id: `stage-${index + 1}`,
+    projectId: "project-1",
+    stageKey,
+    stageNumber: index + 1,
+    name:
+      stageKey === "scope-lock"
+        ? "Scope Lock"
+        : stageKey === "foundation"
+          ? "Foundation"
+          : stageKey === "first-playable"
+            ? "First Playable"
+            : "Core Controls",
+    description: `Description ${index + 1}`,
+    status: index === 0 ? "not-started" : "locked",
+    promptContent: `Prompt ${index + 1}`,
+    platform: "codex",
+    createdAt: 1,
+    updatedAt: 1
+  }));
+
+let stagesValue: BuildStage[] = buildStages();
+
+const generatedDraftStages = stageKeys.map((stageKey, index) => ({
+  id: `generated-${index + 1}`,
+  stageKey,
+  stageNumber: index + 1,
+  name: `Generated ${index + 1}`,
+  description: `Generated description ${index + 1}`,
+  status: index === 0 ? "not-started" : "locked",
+  promptContent: `Generated prompt ${index + 1}`,
+  platform: "codex",
+  createdAt: 1,
+  updatedAt: 1
+}));
 
 vi.mock("react-router-dom", () => ({
   useParams: () => ({ projectId: "project-1" }),
-  useNavigate: () => vi.fn()
+  useNavigate: () => navigate
 }));
 
 vi.mock("@/hooks/useToast", () => ({
   useToast: () => ({
-    error: vi.fn(),
-    success: vi.fn(),
-    warning: vi.fn()
+    error: errorToast,
+    success: successToast,
+    warning: warningToast
   })
 }));
 
@@ -138,21 +212,10 @@ vi.mock("@/hooks/useGameDesignDoc", () => ({
 
 vi.mock("@/hooks/useBuildStages", () => ({
   useBuildStages: () => ({
-    stages: Array.from({ length: 12 }, (_, index) => ({
-      id: `stage-${index + 1}`,
-      projectId: "project-1",
-      stageKey: "foundation",
-      stageNumber: index + 1,
-      name: `Stage ${index + 1}`,
-      description: "Legacy stage",
-      status: index === 0 ? "not-started" : "locked",
-      promptContent: "Prompt",
-      platform: "codex",
-      createdAt: 1,
-      updatedAt: 1
-    })) satisfies BuildStage[],
-    createStages: vi.fn(),
-    updateStageStatus: vi.fn()
+    stages: stagesValue,
+    createStages,
+    replaceStages,
+    updateStageStatus
   })
 }));
 
@@ -180,16 +243,40 @@ vi.mock("@/stores/promptLabSessionStore", () => ({
           targetPlatform: "codex"
         }
       },
-      setPlanningQuestions: vi.fn(),
-      setHasSkippedVaultPreflight: vi.fn(),
-      setHasSkippedClarifyingRound: vi.fn(),
-      setTargetPlatform: vi.fn()
+      setPlanningQuestions,
+      setHasSkippedVaultPreflight,
+      setHasSkippedClarifyingRound,
+      setTargetPlatform
     })
 }));
 
+vi.mock("@/services/ai", () => ({
+  generateWithAgent
+}));
+
+vi.mock("@/services/generation/buildGeneration", () => ({
+  exportAllPrompts,
+  generateBuildStages: vi.fn(async () => generatedDraftStages),
+  serializeBuildStages: (stages: BuildStage[]) =>
+    stages.map((stage) => `${stage.stageNumber}. ${stage.name}`).join("\n")
+}));
+
 describe("PromptLabPage", () => {
-  it("shows the guided planning roadmap workflow without the old internal view switcher", () => {
+  beforeEach(() => {
     defaultProviderValue = null;
+    stagesValue = buildStages();
+    createStages.mockReset();
+    replaceStages.mockReset();
+    updateStageStatus.mockReset();
+    generateWithAgent.mockReset();
+    exportAllPrompts.mockReset();
+    navigate.mockReset();
+    successToast.mockReset();
+    errorToast.mockReset();
+    warningToast.mockReset();
+  });
+
+  it("shows the guided planning roadmap workflow without the old internal view switcher", () => {
     render(<PromptLabPage />);
 
     expect(screen.getByText("Build Roadmap")).toBeInTheDocument();
@@ -198,7 +285,7 @@ describe("PromptLabPage", () => {
       screen.getByText(/you can export a full planning package here/i)
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /build roadmap/i })
+      screen.getByRole("button", { name: /regenerate build roadmap/i })
     ).toBeInTheDocument();
     expect(
       screen.getAllByRole("button", { name: /connect ai to generate/i }).length
@@ -207,19 +294,75 @@ describe("PromptLabPage", () => {
       screen.getByRole("button", { name: /export planning package/i })
     ).toBeInTheDocument();
     expect(screen.getByText("Large Project Mode")).toBeInTheDocument();
-    expect(screen.queryByText("Output Library")).not.toBeInTheDocument();
+    expect(screen.queryByText("Guided Planning")).not.toBeInTheDocument();
   });
 
-  it("uses the connected provider name in planning actions while keeping stage recommendations separate", () => {
+  it("uses the connected provider name in roadmap polish actions while keeping recommendations separate", () => {
     defaultProviderValue = { provider: "claude-code" };
 
     render(<PromptLabPage />);
 
     expect(
-      screen.getAllByRole("button", { name: /ask planning questions with claude code/i })
-        .length
+      screen.getAllByRole("button", { name: /polish with claude code/i }).length
     ).toBeGreaterThan(0);
-    expect(screen.getByText(/planning help here uses your connected ai:/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/planning help here uses your connected ai:/i)
+    ).toBeInTheDocument();
     expect(screen.getAllByText(/recommended tool: codex/i).length).toBeGreaterThan(0);
+  });
+
+  it("creates a regeneration draft instead of overwriting the current roadmap immediately", async () => {
+    render(<PromptLabPage />);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /regenerate build roadmap/i })
+    );
+
+    expect(
+      await screen.findByRole("heading", { name: /regenerated roadmap draft/i })
+    ).toBeInTheDocument();
+    expect(createStages).not.toHaveBeenCalled();
+    expect(replaceStages).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: /apply draft/i }));
+
+    await waitFor(() => {
+      expect(replaceStages).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("creates a polished roadmap draft without overwriting the current roadmap immediately", async () => {
+    defaultProviderValue = { provider: "claude-code" };
+    generateWithAgent.mockResolvedValue(
+      JSON.stringify({
+        summary: "Tighten the first four stages before content spread expands.",
+        sequencingIssues: ["Move controls validation before content work."],
+        risks: ["Current stage order proves content too early."],
+        scopeCuts: ["Defer advanced camera variants until after first playable."],
+        revisedStages: stagesValue.map((stage) => ({
+          stageKey: stage.stageKey,
+          name: `${stage.name} Revised`,
+          description: `${stage.description} Revised`,
+          promptContent: `${stage.promptContent} Revised`,
+          platform: stage.platform
+        }))
+      })
+    );
+
+    render(<PromptLabPage />);
+
+    fireEvent.click(screen.getAllByRole("button", { name: /polish with claude code/i })[0]);
+
+    expect(
+      await screen.findByRole("heading", { name: /polished roadmap draft/i })
+    ).toBeInTheDocument();
+    expect(replaceStages).not.toHaveBeenCalled();
+    expect(screen.getByText(/move controls validation before content work/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /apply draft/i }));
+
+    await waitFor(() => {
+      expect(replaceStages).toHaveBeenCalledTimes(1);
+    });
   });
 });

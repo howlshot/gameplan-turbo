@@ -5,6 +5,7 @@ import {
   LEGACY_APP_DATABASE_NAME,
   LEGACY_CHECKPOINT_STORAGE_KEY
 } from "@/lib/brand";
+import { clearSessionProviderConfigs } from "@/lib/providerStorage";
 import { estimateTokens } from "@/lib/utils";
 import {
   createEmptyGameDesignDoc,
@@ -179,4 +180,5 @@ export const clearAllAppData = async (): Promise<void> => {
   await Dexie.delete(LEGACY_APP_DATABASE_NAME);
   localStorage.removeItem(APP_CHECKPOINT_STORAGE_KEY);
   localStorage.removeItem(LEGACY_CHECKPOINT_STORAGE_KEY);
+  clearSessionProviderConfigs();
 };

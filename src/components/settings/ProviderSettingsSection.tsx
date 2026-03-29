@@ -1,21 +1,31 @@
 import { ProviderCard } from "@/components/settings/ProviderCard";
 import type { AIProviderSummary } from "@/hooks/useAIProviders";
 import { getProviderConnectionGroup } from "@/lib/ai/providerCatalog";
+import { APP_LATEST_DESKTOP_RELEASE_URL } from "@/lib/brand";
+import type { ProviderStorageLocation } from "@/lib/providerStorage";
+import { isHostedRuntime } from "@/lib/runtimeMode";
 import type { AIProvider } from "@/types";
 
 interface ProviderSettingsSectionProps {
   connectedCount: number;
   isLoading: boolean;
   providerCards: AIProviderSummary[];
-  onDisconnectProvider: (providerId: string) => Promise<void>;
+  onDisconnectProvider: (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ) => Promise<void>;
   onSaveProvider: (input: {
     provider: AIProvider;
     apiKey: string;
     model: string;
     baseUrl?: string;
     authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
+    rememberOnDevice?: boolean;
   }) => Promise<void>;
-  onSetDefault: (providerId: string) => Promise<void>;
+  onSetDefault: (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ) => Promise<void>;
 }
 
 export const ProviderSettingsSection = ({
@@ -26,6 +36,7 @@ export const ProviderSettingsSection = ({
   onSaveProvider,
   onSetDefault
 }: ProviderSettingsSectionProps): JSX.Element => {
+  const hostedRuntime = isHostedRuntime();
   const signInProviders = providerCards.filter(
     (provider) => getProviderConnectionGroup(provider.provider) === "sign-in"
   );
@@ -64,11 +75,41 @@ export const ProviderSettingsSection = ({
           </h2>
         </div>
         <span className="rounded-full bg-secondary/10 px-3 py-1 font-mono text-[10px] uppercase tracking-[0.2em] text-secondary">
-          {connectedCount} core links active
+          {connectedCount} provider{connectedCount === 1 ? "" : "s"} connected
         </span>
       </div>
 
       <div className="mt-6 space-y-8">
+        {hostedRuntime ? (
+          <div className="rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 text-sm leading-6 text-on-surface-variant">
+            <p className="font-semibold text-on-surface">Hosted web mode</p>
+            <p className="mt-2">
+              OpenRouter and API-key providers work in the browser-hosted app. Codex
+              and Claude Code use local bridges and are available when Gameplan Turbo
+              is running locally.
+            </p>
+            <p className="mt-2">
+              Fastest browser setup: connect <strong>OpenRouter</strong> or paste an
+              <strong> API key</strong>. If you specifically want Codex or Claude Code,
+              download the desktop build first.
+            </p>
+            <p className="mt-2">
+              By default, hosted provider credentials stay only for the current browser
+              session. Check <strong>Remember on this device</strong> only if you want
+              the browser to keep them locally after you close the app.
+            </p>
+            <div className="mt-4">
+              <a
+                href={APP_LATEST_DESKTOP_RELEASE_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15"
+              >
+                Download Desktop
+              </a>
+            </div>
+          </div>
+        ) : null}
         <div>
           <div className="flex items-center gap-3">
             <span className="material-symbols-outlined text-primary">login</span>
@@ -77,9 +118,8 @@ export const ProviderSettingsSection = ({
                 Sign in
               </h3>
               <p className="text-sm leading-6 text-on-surface-variant">
-                Connect through a browser login or local tool bridge. Browser sign-in
-                opens a normal web flow. Tool-login providers ask you to sign in first,
-                then confirm the running bridge.
+                Connect through a browser login or a local tool session. Browser sign-in
+                opens a normal web flow. Codex and Claude Code use your local desktop session.
               </p>
             </div>
           </div>
@@ -94,7 +134,7 @@ export const ProviderSettingsSection = ({
                 API key
               </h3>
               <p className="text-sm leading-6 text-on-surface-variant">
-                Add an API key for hosted providers that use direct key auth.
+                Add an API key for providers that use direct key auth.
               </p>
             </div>
           </div>

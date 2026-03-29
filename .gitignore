@@ -3,11 +3,14 @@ node_modules/
 .pnp
 .pnp.js
 .corepack/
+.cache/
 
 # Build output
 dist/
 dist-ssr/
 build/
+electron-dist/
+release/
 
 # Environment files — NEVER COMMIT
 .env
@@ -46,3 +49,4 @@ yarn-error.log*
 
 # TypeScript build info
 *.tsbuildinfo
+.vercel

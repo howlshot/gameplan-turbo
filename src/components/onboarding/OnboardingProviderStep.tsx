@@ -2,12 +2,14 @@ import type { RefObject } from "react";
 import { BrandMark } from "@/components/branding/BrandMark";
 import { CUSTOM_BASE_URL_PRESETS } from "@/lib/ai/customProviderUtils";
 import { getToolLoginProviderMeta } from "@/lib/toolLoginProviders";
+import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import {
   PROVIDER_CATALOG,
   PROVIDER_ORDER,
   getProviderConnectionGroup
 } from "@/lib/ai/providerCatalog";
 import {
+  APP_LATEST_DESKTOP_RELEASE_URL,
   APP_FOLDER_PLACEHOLDER,
   APP_NAME
 } from "@/lib/brand";
@@ -25,8 +27,10 @@ interface OnboardingProviderStepProps {
   onStartOAuth: () => void;
   onStartToolLogin: () => void;
   onSelectProvider: (provider: AIProvider) => void;
+  onSetRememberOnDevice: (remember: boolean) => void;
   onToggleApiVisibility: () => void;
   onVerify: () => void;
+  rememberOnDevice: boolean;
   selectedProvider: AIProvider;
   showApiKey: boolean;
 }
@@ -43,22 +47,30 @@ export const OnboardingProviderStep = ({
   onStartOAuth,
   onStartToolLogin,
   onSelectProvider,
+  onSetRememberOnDevice,
   onToggleApiVisibility,
   onVerify,
+  rememberOnDevice,
   selectedProvider,
   showApiKey
 }: OnboardingProviderStepProps): JSX.Element => {
   const providerConfig = PROVIDER_CATALOG[selectedProvider];
   const authMode = providerConfig.authMode ?? "api-key";
   const toolLoginProvider = getToolLoginProviderMeta(selectedProvider);
+  const isHostedBridgeUnavailable =
+    Boolean(toolLoginProvider) && isHostedRuntime();
   const supportsOAuthPkce = authMode === "oauth-pkce";
   const isCustomProvider = selectedProvider === "custom";
+  const desktopRuntime = isDesktopRuntime();
   const signInProviders = PROVIDER_ORDER.filter(
     (provider) => getProviderConnectionGroup(provider) === "sign-in"
   );
   const apiKeyProviders = PROVIDER_ORDER.filter(
     (provider) => getProviderConnectionGroup(provider) === "api-key"
   );
+  const hostedRuntime = isHostedRuntime();
+  const shouldShowRememberPreference =
+    hostedRuntime && !toolLoginProvider;
 
   return (
     <div className="p-10">
@@ -77,7 +89,42 @@ export const OnboardingProviderStep = ({
             still work without AI. Connect a provider later when you want help
             generating prompts or polishing briefs.
           </p>
+          <div className="mt-4 rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
+            <p className="font-semibold text-on-surface">Best first path</p>
+            <p className="mt-2">
+              Use <strong>OpenRouter</strong> or an <strong>API key</strong> if you
+              want AI right away. Use <strong>Skip for now</strong> if you want to
+              create the project and generate the roadmap first.
+            </p>
+          </div>
         </div>
+        {hostedRuntime ? (
+          <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-left">
+            <p className="font-medium text-on-surface">Using the browser-hosted version?</p>
+              <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                OpenRouter and API-key providers work here. Codex and Claude Code
+                need the desktop app because they connect through local bridges.
+              </p>
+              <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                If your main goal is Codex or Claude Code sign-in, download the desktop
+                app first. Otherwise, stay here and choose a hosted provider or skip AI for now.
+              </p>
+              <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                Hosted providers stay only for this browser session unless you later
+                check <strong>Remember on this device</strong>.
+              </p>
+            <div className="mt-4">
+              <a
+                href={APP_LATEST_DESKTOP_RELEASE_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15"
+              >
+                Download Desktop
+              </a>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <form
@@ -171,7 +218,9 @@ export const OnboardingProviderStep = ({
             </label>
             {toolLoginProvider ? (
               <span className="text-xs text-primary">
-                Uses local {toolLoginProvider.signInLabel} login
+                {isHostedBridgeUnavailable
+                  ? "Local desktop mode only"
+                  : `Uses local ${toolLoginProvider.signInLabel} login`}
               </span>
             ) : supportsOAuthPkce ? (
               <span className="text-xs text-primary">
@@ -191,75 +240,137 @@ export const OnboardingProviderStep = ({
 
           {toolLoginProvider ? (
             <div className="space-y-4 rounded-xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-sm leading-6 text-on-surface-variant">
-              <p>
-                {toolLoginProvider.helpSentence}
-              </p>
-              <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
-                <p className="font-semibold text-on-surface">Fastest path</p>
-                <p className="mt-2">
-                  If you launched the app using the Desktop icon, try{" "}
-                  <button
-                    type="button"
-                    onClick={onStartToolLogin}
-                    disabled={isStartingToolLogin}
-                    className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {toolLoginProvider.openLoginButtonLabel}
-                  </button>{" "}
-                  first. The bridge should usually already be running.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <p className="font-semibold text-on-surface">If the bridge did not start automatically</p>
-                <p>1. Open Terminal.</p>
-                <p>
-                  2. Run <code>{toolLoginProvider.loginCommand}</code>
-                </p>
-                <p>
-                  3. Finish the {toolLoginProvider.signInLabel} sign-in flow that opens in your browser.
-                </p>
-                <p>4. In Terminal, switch to your {APP_NAME} folder.</p>
-                <p>
-                  If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
-                </p>
-                <p>
-                  5. Run <code>{toolLoginProvider.startCommand}</code>
-                </p>
-                <p>6. Leave that Terminal window open while you use the app.</p>
-                <p>
-                  7. Come back here and click <strong>{toolLoginProvider.continueButtonLabel}</strong>.
-                </p>
-              </div>
-              <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
-                <p className="font-semibold text-on-surface">What the buttons mean</p>
-                <p className="mt-2">
-                  <strong>{toolLoginProvider.openLoginButtonLabel}</strong> starts the
-                  {toolLoginProvider.signInLabel} sign-in flow. <strong>{toolLoginProvider.continueButtonLabel}</strong>
-                  checks the bridge and saves that running session into {APP_NAME}.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={onStartToolLogin}
-                  disabled={isStartingToolLogin}
-                  className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
-                >
-                  {isStartingToolLogin ? "Opening..." : toolLoginProvider.openLoginButtonLabel}
-                </button>
-              </div>
-              <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3">
-                <p className="font-semibold text-on-surface">What success looks like</p>
-                <p className="mt-2">
-                  The bridge terminal should stay running, and Settings will show
-                  <strong> Bridge Ready</strong> once connected.
-                </p>
-              </div>
-              <p className="text-xs">
-                If the sign-in button says it cannot reach the bridge, relaunch the
-                desktop app first. If that still does not work, use the manual
-                fallback steps above.
-              </p>
+              {isHostedBridgeUnavailable ? (
+                <>
+                  <p>{toolLoginProvider.helpSentence}</p>
+                  <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
+                    <p className="font-semibold text-on-surface">Available in local desktop mode</p>
+                    <p className="mt-2">
+                      {toolLoginProvider.label} uses a local bridge, so it is intentionally
+                      unavailable in the browser-hosted version of {APP_NAME}.
+                    </p>
+                    <p className="mt-2">
+                      For the hosted app, choose <strong>OpenRouter</strong> or an
+                      <strong> API key</strong> provider. If you want bridge-based sign-in,
+                      download the desktop app and reconnect {toolLoginProvider.label} there.
+                    </p>
+                    <div className="mt-4">
+                      <a
+                        href={APP_LATEST_DESKTOP_RELEASE_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15"
+                      >
+                        Download Desktop
+                      </a>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3">
+                    <p className="font-semibold text-on-surface">What works here</p>
+                    <p className="mt-2">
+                      You can still explore the app, build the roadmap, and export planning
+                      files without AI, or connect a hosted provider on this screen.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p>
+                    {toolLoginProvider.helpSentence}
+                  </p>
+                  <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
+                    <p className="font-semibold text-on-surface">Fastest path</p>
+                    <p className="mt-2">
+                      If you launched the app using the Desktop icon, try{" "}
+                      <button
+                        type="button"
+                        onClick={onStartToolLogin}
+                        disabled={isStartingToolLogin}
+                        className="font-semibold text-primary underline decoration-primary/40 underline-offset-4 transition hover:text-primary/80 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {toolLoginProvider.openLoginButtonLabel}
+                      </button>{" "}
+                      first. The bridge should usually already be running.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-semibold text-on-surface">If the bridge did not start automatically</p>
+                    {desktopRuntime ? (
+                      <>
+                        <p>1. Click <strong>{toolLoginProvider.openLoginButtonLabel}</strong>.</p>
+                        <p>
+                          2. Finish the {toolLoginProvider.signInLabel} sign-in flow that opens in your browser.
+                        </p>
+                        <p>3. Come back here and click <strong>Check Status</strong>.</p>
+                        <p>
+                          4. When the bridge is ready, click <strong>{toolLoginProvider.continueButtonLabel}</strong>.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p>1. Open Terminal.</p>
+                        <p>
+                          2. Run <code>{toolLoginProvider.loginCommand}</code>
+                        </p>
+                        <p>
+                          3. Finish the {toolLoginProvider.signInLabel} sign-in flow that opens in your browser.
+                        </p>
+                        <p>4. In Terminal, switch to your {APP_NAME} folder.</p>
+                        <p>
+                          If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
+                        </p>
+                        <p>
+                          5. Run <code>{toolLoginProvider.startCommand}</code>
+                        </p>
+                        <p>6. Leave that Terminal window open while you use the app.</p>
+                        <p>
+                          7. Come back here and click <strong>{toolLoginProvider.continueButtonLabel}</strong>.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                  <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
+                    <p className="font-semibold text-on-surface">What the buttons mean</p>
+                    <p className="mt-2">
+                      <strong>{toolLoginProvider.openLoginButtonLabel}</strong> starts the
+                      {toolLoginProvider.signInLabel} sign-in flow. <strong>{toolLoginProvider.continueButtonLabel}</strong>
+                      checks the bridge and saves that running session into {APP_NAME}.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={onStartToolLogin}
+                      disabled={isStartingToolLogin}
+                      className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+                    >
+                      {isStartingToolLogin ? "Opening..." : toolLoginProvider.openLoginButtonLabel}
+                    </button>
+                  </div>
+                  <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3">
+                    <p className="font-semibold text-on-surface">What success looks like</p>
+                    <p className="mt-2">
+                      {desktopRuntime
+                        ? (
+                            <>
+                              Settings will show <strong>Bridge Ready</strong> once the desktop-managed connection is live.
+                            </>
+                          )
+                        : (
+                            <>
+                              The bridge terminal should stay running, and Settings will show
+                              <strong> Bridge Ready</strong> once connected.
+                            </>
+                          )}
+                    </p>
+                  </div>
+                  <p className="text-xs">
+                    {desktopRuntime
+                      ? "If the sign-in button cannot reach the bridge, relaunch the desktop app and try again."
+                      : "If the sign-in button says it cannot reach the bridge, relaunch the desktop app first. If that still does not work, use the manual fallback steps above."}
+                  </p>
+                </>
+              )}
             </div>
           ) : supportsOAuthPkce ? (
             <div className="space-y-4">
@@ -413,6 +524,26 @@ export const OnboardingProviderStep = ({
             </div>
           )}
 
+          {shouldShowRememberPreference ? (
+            <label className="mt-4 flex items-start gap-3 rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
+              <input
+                type="checkbox"
+                checked={rememberOnDevice}
+                onChange={(event) => onSetRememberOnDevice(event.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-outline-variant/30 bg-surface-container-lowest text-primary focus:ring-primary/30"
+              />
+              <span>
+                <span className="block font-semibold text-on-surface">
+                  Remember on this device
+                </span>
+                <span className="block">
+                  Leave this unchecked to keep the provider only for this browser
+                  session. It will clear when you close the hosted app.
+                </span>
+              </span>
+            </label>
+          ) : null}
+
           {errorMessage ? (
             <div className="mt-4 rounded-xl border border-tertiary/20 bg-tertiary/10 px-4 py-3 text-sm text-tertiary">
               {errorMessage}
@@ -431,7 +562,7 @@ export const OnboardingProviderStep = ({
 
           <button
             type="submit"
-            disabled={isVerifying}
+            disabled={isVerifying || isHostedBridgeUnavailable}
             className="gradient-cta glow-primary flex w-full items-center justify-center gap-3 rounded-xl px-5 py-4 font-semibold text-on-primary disabled:opacity-70"
           >
             {isVerifying ? (
@@ -443,7 +574,13 @@ export const OnboardingProviderStep = ({
               </>
             ) : (
               <>
-                <span>{toolLoginProvider ? toolLoginProvider.continueButtonLabel : "Verify & Continue"}</span>
+                <span>
+                  {isHostedBridgeUnavailable
+                    ? "Available in Local Desktop Mode"
+                    : toolLoginProvider
+                      ? toolLoginProvider.continueButtonLabel
+                      : "Verify & Continue"}
+                </span>
                 <span className="material-symbols-outlined text-base">arrow_forward</span>
               </>
             )}
@@ -451,21 +588,13 @@ export const OnboardingProviderStep = ({
         </div>
       </form>
 
-      <div className="mt-6 flex flex-col gap-3 text-[10px] uppercase tracking-[0.22em] text-outline/60 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-sm">verified_user</span>
-          <span>Encrypted on-device</span>
-        </div>
-        <div className="flex gap-4">
-          <span>Privacy</span>
-          <span>Terms</span>
-        </div>
-      </div>
-
-      <div className="pointer-events-none absolute bottom-8 left-8 hidden font-mono text-[10px] uppercase tracking-[0.24em] text-primary/40 md:block">
-        <p>Latency: 24ms</p>
-        <p className="mt-1">Region: EU-WEST</p>
-        <p className="mt-1">Uptime: 99.98%</p>
+      <div className="mt-6 flex flex-col gap-2 text-xs text-outline/80 md:flex-row md:items-center md:justify-between">
+        <p>
+          {hostedRuntime
+            ? "Hosted providers stay in this browser session unless you choose Remember on this device."
+            : "Stored locally in your browser or desktop app."}
+        </p>
+        <p>Skip AI now and connect a provider later in Settings.</p>
       </div>
 
       <div className="pointer-events-none absolute right-8 top-8 hidden text-right font-mono text-[10px] uppercase tracking-[0.24em] text-primary/40 md:block">

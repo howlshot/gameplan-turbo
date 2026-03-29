@@ -16,6 +16,8 @@ import { clearAllAppData, exportAppData, getUsageLogs } from "@/lib/appData";
 import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { APP_EXPORT_FILE_NAME, APP_NAME } from "@/lib/brand";
+import type { ProviderStorageLocation } from "@/lib/providerStorage";
+import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import { getToolLoginProviderMeta } from "@/lib/toolLoginProviders";
 import { createProviderFromConfig } from "@/services/ai";
 import {
@@ -31,6 +33,8 @@ export const SettingsPage = (): JSX.Element => {
     useAIProviders();
   const { prompts, isLoading: isPromptsLoading, updatePrompt, resetToDefault } =
     useAgentPrompts();
+  const hostedRuntime = isHostedRuntime();
+  const desktopRuntime = isDesktopRuntime();
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [usageLogs, setUsageLogs] = useState<UsageLogEntry[]>([]);
 
@@ -48,6 +52,7 @@ export const SettingsPage = (): JSX.Element => {
       model: string;
       baseUrl?: string;
       authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
+      rememberOnDevice?: boolean;
     }
   ): Promise<void> => {
     const existing = providers.find((item) => item.provider === input.provider);
@@ -59,6 +64,13 @@ export const SettingsPage = (): JSX.Element => {
         : input.apiKey;
 
     if (toolLoginProvider) {
+      if (hostedRuntime) {
+        toast.error(
+          `${toolLoginProvider.label} is available only when Gameplan Turbo is running locally. Use OpenRouter or an API-key provider in the hosted app.`
+        );
+        return;
+      }
+
       try {
         const status = await toolLoginProvider.fetchStatus();
 
@@ -69,13 +81,17 @@ export const SettingsPage = (): JSX.Element => {
 
         if (!status.loggedIn) {
           toast.error(
-            `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` and retry.`
+            desktopRuntime
+              ? `${toolLoginProvider.label} is not logged in yet. Use ${toolLoginProvider.openLoginButtonLabel} on the provider card, finish sign-in in your browser, then retry.`
+              : `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` and retry.`
           );
           return;
         }
       } catch {
         toast.error(
-          `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
+          desktopRuntime
+            ? `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app and try again.`
+            : `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
         );
         return;
       }
@@ -112,6 +128,7 @@ export const SettingsPage = (): JSX.Element => {
         ? toolLoginProvider.sentinelApiKey
         : resolvedApiKey,
       authMethod: input.authMethod,
+      rememberOnDevice: input.rememberOnDevice,
       isDefault: existing?.isDefault ?? connectedCount === 0,
       model: input.model,
       baseUrl: input.baseUrl
@@ -169,13 +186,19 @@ export const SettingsPage = (): JSX.Element => {
           <ProviderSettingsSection
             connectedCount={connectedCount}
             isLoading={isProvidersLoading}
-            onDisconnectProvider={async (providerId) => {
-              await deleteProvider(providerId);
+            onDisconnectProvider={async (
+              providerId,
+              storageLocation: ProviderStorageLocation
+            ) => {
+              await deleteProvider(providerId, storageLocation);
               toast.success("Provider disconnected.");
             }}
             onSaveProvider={handleSaveProvider}
-            onSetDefault={async (providerId) => {
-              await setDefault(providerId);
+            onSetDefault={async (
+              providerId,
+              storageLocation: ProviderStorageLocation
+            ) => {
+              await setDefault(providerId, storageLocation);
               toast.success("Default provider updated.");
             }}
             providerCards={providerCards}

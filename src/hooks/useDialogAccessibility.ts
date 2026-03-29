@@ -26,6 +26,18 @@ const getAutofocusElements = (container: HTMLElement): HTMLElement[] =>
     (element) => !element.hasAttribute("disabled") && element.tabIndex !== -1
   );
 
+const focusWithoutScrolling = (element: HTMLElement | null): void => {
+  if (!element) {
+    return;
+  }
+
+  try {
+    element.focus({ preventScroll: true });
+  } catch {
+    element.focus();
+  }
+};
+
 export const useDialogAccessibility = <T extends HTMLElement>(
   isOpen: boolean,
   onClose: () => void
@@ -57,12 +69,12 @@ export const useDialogAccessibility = <T extends HTMLElement>(
 
       const [autofocusElement] = getAutofocusElements(container);
       if (autofocusElement) {
-        autofocusElement.focus();
+        focusWithoutScrolling(autofocusElement);
         return;
       }
 
       const [firstFocusable] = getFocusableElements(container);
-      firstFocusable?.focus();
+      focusWithoutScrolling(firstFocusable ?? null);
     };
 
     const frameId = window.requestAnimationFrame(focusFirstElement);
@@ -117,7 +129,7 @@ export const useDialogAccessibility = <T extends HTMLElement>(
         document.documentElement.style.overflow = previousHtmlOverflow;
       }
 
-      previousActiveElement?.focus();
+      focusWithoutScrolling(previousActiveElement);
     };
   }, [isOpen, onClose]);
 

@@ -12,6 +12,7 @@ interface AiActionCopyOptions {
 export interface AiActionCopy {
   connectedToolLabel: string | null;
   connectAiLabel: string;
+  roadmapPolishLabel: string;
   planningAssistLabel: string;
   planningAssistResponseLabel: string;
   selectedTargetLabel: string | null;
@@ -31,6 +32,9 @@ export const getAiActionCopy = ({
   return {
     connectedToolLabel,
     connectAiLabel: noProviderLabel,
+    roadmapPolishLabel: connectedToolLabel
+      ? `Polish with ${connectedToolLabel}`
+      : noProviderLabel,
     planningAssistLabel: connectedToolLabel
       ? `Ask planning questions with ${connectedToolLabel}`
       : noProviderLabel,

@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 
 const mocks = vi.hoisted(() => ({
+  hostedRuntime: false,
+  desktopRuntime: false,
   onComplete: vi.fn(),
   saveProvider: vi.fn(),
   toastError: vi.fn(),
@@ -43,6 +45,11 @@ vi.mock("@/hooks/useDialogAccessibility", () => ({
   useDialogAccessibility: () => ({ current: null })
 }));
 
+vi.mock("@/lib/runtimeMode", () => ({
+  isDesktopRuntime: () => mocks.desktopRuntime,
+  isHostedRuntime: () => mocks.hostedRuntime
+}));
+
 vi.mock("@/services/ai", () => ({
   createProviderFromConfig: vi.fn(async () => ({
     validateKey: mocks.validateKey
@@ -70,6 +77,8 @@ vi.mock("@/lib/ai/openRouterOAuth", () => ({
 describe("OnboardingFlow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.hostedRuntime = false;
+    mocks.desktopRuntime = false;
     mocks.updateSettings.mockResolvedValue(null);
     mocks.validateKey.mockResolvedValue(true);
     mocks.fetchCodexBridgeStatus.mockResolvedValue({
@@ -91,12 +100,8 @@ describe("OnboardingFlow", () => {
   it("lets the user skip provider setup and continue onboarding", async () => {
     render(<OnboardingFlow onComplete={mocks.onComplete} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
-
     await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: /Skip for now/i })
-      ).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Skip for now/i })).toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByRole("button", { name: /Skip for now/i }));
@@ -109,8 +114,6 @@ describe("OnboardingFlow", () => {
     mocks.startOpenRouterOAuth.mockResolvedValue("openrouter-test-key");
 
     render(<OnboardingFlow onComplete={mocks.onComplete} />);
-
-    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /OpenRouter/i })).toBeInTheDocument();
@@ -133,10 +136,34 @@ describe("OnboardingFlow", () => {
     expect(screen.getByText(/Quick Tour/i)).toBeInTheDocument();
   });
 
-  it("lets the user connect Claude Code through the tool-login workflow", async () => {
+  it("defaults hosted providers to session-only storage unless remember is checked", async () => {
+    mocks.hostedRuntime = true;
+    mocks.startOpenRouterOAuth.mockResolvedValue("openrouter-test-key");
+
     render(<OnboardingFlow onComplete={mocks.onComplete} />);
 
-    fireEvent.click(screen.getByRole("button", { name: /Continue/i }));
+    fireEvent.click(screen.getByRole("button", { name: /OpenRouter/i }));
+
+    const rememberCheckbox = screen.getByRole("checkbox", {
+      name: /Remember on this device/i
+    });
+
+    expect(rememberCheckbox).not.toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: /Sign in with OpenRouter/i }));
+
+    await waitFor(() => {
+      expect(mocks.saveProvider).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: "openrouter",
+          rememberOnDevice: false
+        })
+      );
+    });
+  });
+
+  it("lets the user connect Claude Code through the tool-login workflow", async () => {
+    render(<OnboardingFlow onComplete={mocks.onComplete} />);
 
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Claude Code/i })).toBeInTheDocument();
@@ -159,5 +186,52 @@ describe("OnboardingFlow", () => {
     });
 
     expect(screen.getByText(/Quick Tour/i)).toBeInTheDocument();
+  });
+
+  it("marks Claude Code as local-only in the hosted app", async () => {
+    mocks.hostedRuntime = true;
+
+    render(<OnboardingFlow onComplete={mocks.onComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Claude Code/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Claude Code/i }));
+
+    expect(
+      screen.getByText(/Codex and Claude Code need the desktop app because they connect through local bridges/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Available in Local Desktop Mode/i })
+    ).toBeDisabled();
+  });
+
+  it("uses desktop-oriented guidance for tool-login in desktop runtime", async () => {
+    mocks.desktopRuntime = true;
+    mocks.fetchClaudeBridgeStatus.mockResolvedValue({
+      ok: true,
+      cliAvailable: true,
+      loggedIn: false,
+      loginMethod: null,
+      message: "not logged in"
+    });
+
+    render(<OnboardingFlow onComplete={mocks.onComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Claude Code/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Claude Code/i }));
+    fireEvent.click(
+      screen.getByRole("button", { name: /Continue with Claude Code/i })
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Use `Open Claude Sign-In`, finish sign-in in your browser/i)
+      ).toBeInTheDocument();
+    });
   });
 });

@@ -17,17 +17,25 @@ import { useToast } from "@/hooks/useToast";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
 import { getAiActionCopy } from "@/lib/ai/aiActionCopy";
 import { getPreferredAgentPlatformForProvider } from "@/lib/ai/providerCatalog";
+import { APP_LATEST_DESKTOP_RELEASE_URL } from "@/lib/brand";
 import { isLegacyLargeBuildPlan } from "@/lib/buildPlanUtils";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
 import { exportPlanningPackage } from "@/lib/planningPackageExport";
 import {
+  buildDraftFromExistingStages,
+  parseRoadmapPolishResponse,
+  type RoadmapDraftReview
+} from "@/lib/roadmapDraft";
+import {
   buildPlanningNotes,
   parsePlanningQuestions
 } from "@/lib/planningQuestions";
+import { isHostedRuntime } from "@/lib/runtimeMode";
 import { generateWithAgent } from "@/services/ai";
 import {
   exportAllPrompts,
-  generateBuildStages
+  generateBuildStages,
+  serializeBuildStages
 } from "@/services/generation/buildGeneration";
 import { getOutputDefinition } from "@/services/generation/outputDefinitions";
 import { usePromptLabSessionStore } from "@/stores/promptLabSessionStore";
@@ -101,13 +109,76 @@ const buildStagePlanningReviewPrompt = (
     stage.promptContent
   ].join("\n");
 
+const buildFullRoadmapPolishPrompt = ({
+  activeVaultFiles,
+  currentStages,
+  planningNotes,
+  projectTitle,
+  targetToolLabel
+}: {
+  activeVaultFiles: VaultFile[];
+  currentStages: BuildStage[];
+  planningNotes?: string;
+  projectTitle: string;
+  targetToolLabel: string;
+}): string =>
+  [
+    "You are refining a game-production roadmap for planning only.",
+    "Do not write code, repo commands, implementation steps, or file diffs.",
+    "Review the current staged roadmap and return a stronger version if sequencing, scope, or handoff quality can be improved.",
+    "",
+    "Return strict JSON with this exact shape:",
+    "{",
+    '  "summary": "short paragraph",',
+    '  "sequencingIssues": ["issue"],',
+    '  "risks": ["risk"],',
+    '  "scopeCuts": ["cut"],',
+    '  "revisedStages": [',
+    '    {',
+    '      "stageKey": "foundation",',
+    '      "name": "Foundation",',
+    '      "description": "short description",',
+    '      "promptContent": "full revised stage brief",',
+    '      "platform": "codex"',
+    "    }",
+    "  ]",
+    "}",
+    "",
+    "Rules:",
+    "- Return the full roadmap, not a partial patch.",
+    "- Keep the same number of stages as the current roadmap.",
+    "- Keep the same stage keys, but you may reorder them in revisedStages if the sequence should change.",
+    "- Every revised stage needs a handoff-ready promptContent.",
+    "- Use scope cuts only when they materially reduce delivery risk.",
+    "",
+    `Project: ${projectTitle}`,
+    `Preferred implementation tool: ${targetToolLabel}`,
+    activeVaultFiles.length > 0
+      ? `Active vault context: ${activeVaultFiles.map(formatActiveVaultLabel).join(", ")}`
+      : "Active vault context: none",
+    ...(planningNotes ? ["", "Clarifying Notes:", planningNotes] : []),
+    "",
+    "Current Roadmap:",
+    serializeBuildStages(currentStages)
+  ].join("\n");
+
+const hydrateGeneratedStages = (
+  projectId: string,
+  generatedStages: Awaited<ReturnType<typeof generateBuildStages>>
+): BuildStage[] =>
+  generatedStages.map((stage) => ({
+    ...stage,
+    projectId
+  }));
+
 export const PromptLabPage = (): JSX.Element => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const toast = useToast();
   const { project } = useProject(projectId);
   const { gameDesignDoc } = useGameDesignDoc(projectId);
-  const { stages, createStages, updateStageStatus } = useBuildStages(projectId);
+  const { stages, createStages, replaceStages, updateStageStatus } =
+    useBuildStages(projectId);
   const { files } = useVaultFiles(projectId);
   const { artifacts } = useArtifacts(projectId);
   const { defaultProvider } = useAIProviders();
@@ -131,9 +202,11 @@ export const PromptLabPage = (): JSX.Element => {
     () => files.filter((file) => file.isActiveContext),
     [files]
   );
+  const hostedRuntime = isHostedRuntime();
   const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
   const [isExportingPlanningPackage, setIsExportingPlanningPackage] =
     useState(false);
+  const [isPolishingRoadmap, setIsPolishingRoadmap] = useState(false);
   const [pendingScrollStageId, setPendingScrollStageId] = useState<string | null>(
     null
   );
@@ -142,6 +215,9 @@ export const PromptLabPage = (): JSX.Element => {
   );
   const [isLoadingPlanningQuestions, setIsLoadingPlanningQuestions] =
     useState(false);
+  const [roadmapDraft, setRoadmapDraft] = useState<RoadmapDraftReview | null>(
+    null
+  );
 
   const availableTargets = useMemo(
     () => project?.agentTargets ?? ["codex", "cursor", "claude-code"],
@@ -216,7 +292,9 @@ export const PromptLabPage = (): JSX.Element => {
 
     if (!defaultProvider) {
       toast.warning(
-        "Connect an AI provider in Settings to run a clarifying round."
+        hostedRuntime
+          ? "Connect OpenRouter or an API-key provider in Settings to run a clarifying round in the hosted app."
+          : "Connect an AI provider in Settings to run a clarifying round."
       );
       return;
     }
@@ -280,14 +358,31 @@ export const PromptLabPage = (): JSX.Element => {
     setIsGeneratingRoadmap(true);
 
     try {
-      const nextStages = await generateBuildStages({
+      const generatedStages = await generateBuildStages({
         gameDesignDoc,
         planningNotes,
         project,
         targetPlatform
       });
 
-      await createStages(nextStages);
+      if (stages.length > 0) {
+        const hydratedStages = hydrateGeneratedStages(project.id, generatedStages);
+        setRoadmapDraft(
+          buildDraftFromExistingStages({
+            currentStages: stages,
+            nextStages: hydratedStages,
+            rawResponse: serializeBuildStages(hydratedStages),
+            sourceLabel: "Regenerated roadmap draft",
+            summary:
+              "Review the regenerated roadmap and apply it only if it better matches the latest design context and clarifying notes.",
+            title: "Regenerated roadmap draft"
+          })
+        );
+        toast.success("Regenerated roadmap draft ready for review.");
+        return;
+      }
+
+      const nextStages = await createStages(generatedStages);
       setPendingScrollStageId(
         nextStages.find((stage) => stage.status === "not-started")?.id ??
           nextStages[0]?.id ??
@@ -297,6 +392,67 @@ export const PromptLabPage = (): JSX.Element => {
     } finally {
       setIsGeneratingRoadmap(false);
     }
+  };
+
+  const handlePolishRoadmap = async (): Promise<void> => {
+    if (!project || !defaultProvider || stages.length === 0) {
+      return;
+    }
+
+    setIsPolishingRoadmap(true);
+    try {
+      const response = await generateWithAgent(
+        "roadmap-polish",
+        buildFullRoadmapPolishPrompt({
+          activeVaultFiles,
+          currentStages: stages,
+          planningNotes,
+          projectTitle: project.title,
+          targetToolLabel:
+            aiActionCopy.connectedToolLabel ??
+            aiActionCopy.selectedTargetLabel ??
+            getAgentPlatformLabel(targetPlatform)
+        }),
+        undefined,
+        project.id
+      );
+
+      setRoadmapDraft(
+        parseRoadmapPolishResponse({
+          content: response,
+          currentStages: stages
+        })
+      );
+      toast.success("Polished roadmap draft ready for review.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not polish the roadmap right now."
+      );
+    } finally {
+      setIsPolishingRoadmap(false);
+    }
+  };
+
+  const handleApplyRoadmapDraft = async (): Promise<void> => {
+    if (!roadmapDraft) {
+      return;
+    }
+
+    const appliedStages = await replaceStages(roadmapDraft.revisedStages);
+    const nextStages =
+      Array.isArray(appliedStages) && appliedStages.length > 0
+        ? appliedStages
+        : roadmapDraft.revisedStages;
+    setPendingScrollStageId(
+      nextStages.find((stage) => stage.status === "not-started")?.id ??
+        nextStages.find((stage) => stage.status === "in-progress")?.id ??
+        nextStages[0]?.id ??
+        null
+    );
+    setRoadmapDraft(null);
+    toast.success("Roadmap draft applied.");
   };
 
   const handleExportPlanningPackage = async (): Promise<void> => {
@@ -445,7 +601,7 @@ export const PromptLabPage = (): JSX.Element => {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">
-                Preflight Context
+                Vault Context
               </p>
               <h2 className="mt-2 font-headline text-2xl font-semibold text-on-surface">
                 Add references before you generate
@@ -554,11 +710,28 @@ export const PromptLabPage = (): JSX.Element => {
           {!defaultProvider ? (
             <div className="mt-4 space-y-3">
               <p className="text-sm leading-6 text-on-surface-variant">
-                No AI provider is connected. Guided Planning will skip the clarifying round and use local generation only.
+                No AI provider is connected. You can still generate the roadmap locally and keep planning without AI.
               </p>
               <p className="rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-3 text-sm leading-6 text-on-surface-variant">
-                Connect your AI if you want project-specific question generation here. Roadmap generation still works without it.
+                Connect AI if you want project-specific question generation here. Roadmap generation still works without it.
+                {hostedRuntime
+                  ? " In the hosted app, OpenRouter and API-key providers are the fastest path."
+                  : ""}
               </p>
+              {hostedRuntime ? (
+                <p className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                  Want Codex or Claude Code instead? Download the desktop app for local bridge sign-in:{" "}
+                  <a
+                    href={APP_LATEST_DESKTOP_RELEASE_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-primary underline decoration-primary/40 underline-offset-4"
+                  >
+                    latest desktop release
+                  </a>
+                  .
+                </p>
+              ) : null}
             </div>
           ) : (
             <div className="mt-4 space-y-4">
@@ -671,6 +844,28 @@ export const PromptLabPage = (): JSX.Element => {
                     ? "Regenerate Build Roadmap"
                     : "Generate Build Roadmap"}
               </button>
+              {stages.length > 0 ? (
+                defaultProvider ? (
+                  <button
+                    type="button"
+                    onClick={() => void handlePolishRoadmap()}
+                    disabled={isPolishingRoadmap}
+                    className="w-full rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary transition hover:border-primary/35 hover:bg-primary/15 disabled:opacity-50"
+                  >
+                    {isPolishingRoadmap
+                      ? "Polishing roadmap…"
+                      : aiActionCopy.roadmapPolishLabel}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={navigateToSettings}
+                    className="w-full rounded-2xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-semibold text-primary transition hover:border-primary/35 hover:bg-primary/15"
+                  >
+                    {aiActionCopy.connectAiLabel}
+                  </button>
+                )
+              ) : null}
               <button
                 type="button"
                 onClick={() => exportAllPrompts(stages)}
@@ -694,9 +889,118 @@ export const PromptLabPage = (): JSX.Element => {
                   Run or skip the clarifying round first so the roadmap can use the latest planning context.
                 </p>
               ) : null}
+              {stages.length > 0 ? (
+                <p className="text-sm text-on-surface-variant">
+                  Roadmap polish creates a review draft only. Your current roadmap stays untouched until you apply the draft.
+                </p>
+              ) : null}
             </div>
           </div>
         </section>
+
+        {roadmapDraft ? (
+          <section className="rounded-3xl border border-secondary/15 bg-secondary/5 p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-secondary">
+                  {roadmapDraft.sourceLabel}
+                </p>
+                <h3 className="mt-2 font-headline text-2xl font-semibold text-on-surface">
+                  {roadmapDraft.title}
+                </h3>
+                <p className="mt-3 max-w-4xl text-sm leading-6 text-on-surface-variant">
+                  {roadmapDraft.summary}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => void handleApplyRoadmapDraft()}
+                  className="gradient-cta glow-primary rounded-2xl px-4 py-3 text-sm font-semibold text-on-primary"
+                >
+                  Apply Draft
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoadmapDraft(null)}
+                  className="rounded-2xl border border-outline-variant/15 bg-surface px-4 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high"
+                >
+                  Discard Draft
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-3">
+              <div className="rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                  Sequencing issues
+                </p>
+                {roadmapDraft.sequencingIssues.length > 0 ? (
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-on-surface-variant">
+                    {roadmapDraft.sequencingIssues.map((issue) => (
+                      <li key={issue}>• {issue}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+                    No sequencing changes were called out beyond the revised stage order below.
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                  Risks
+                </p>
+                {roadmapDraft.risks.length > 0 ? (
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-on-surface-variant">
+                    {roadmapDraft.risks.map((risk) => (
+                      <li key={risk}>• {risk}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+                    No new roadmap-level risks were called out.
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                  Scope cuts
+                </p>
+                {roadmapDraft.scopeCuts.length > 0 ? (
+                  <ul className="mt-3 space-y-2 text-sm leading-6 text-on-surface-variant">
+                    {roadmapDraft.scopeCuts.map((cut) => (
+                      <li key={cut}>• {cut}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+                    No additional cuts were recommended in this draft.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+              <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                Revised stage order
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {roadmapDraft.revisedStages.map((stage) => (
+                  <span
+                    key={stage.id}
+                    className="rounded-full bg-surface-container-high px-3 py-1 text-xs text-on-surface"
+                  >
+                    {stage.stageNumber}. {stage.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {stages.length > 0 ? (
           <section className="space-y-4">
@@ -734,6 +1038,9 @@ export const PromptLabPage = (): JSX.Element => {
                 {!defaultProvider ? (
                   <p className="mt-3 text-sm leading-6 text-on-surface-variant sm:text-base">
                     No provider is connected yet, so stage-level planning help will ask you to connect AI first. Copying briefs and tracking stage status still work now.
+                    {hostedRuntime
+                      ? " In the hosted app, use OpenRouter or an API-key provider if you want planning help here."
+                      : ""}
                   </p>
                 ) : null}
               </div>
@@ -751,7 +1058,7 @@ export const PromptLabPage = (): JSX.Element => {
                   connectAiLabel={stageActionCopy.connectAiLabel}
                   key={stage.id}
                   planningAssistLabel={
-                    defaultProvider ? stageActionCopy.planningAssistLabel : undefined
+                    defaultProvider ? stageActionCopy.roadmapPolishLabel : undefined
                   }
                   planningAssistResponseLabel={
                     defaultProvider
@@ -766,7 +1073,7 @@ export const PromptLabPage = (): JSX.Element => {
                     defaultProvider
                       ? async (nextStage) =>
                           generateWithAgent(
-                            "planning-questions",
+                            "roadmap-polish",
                             buildStagePlanningReviewPrompt(
                               nextStage,
                               project.title,

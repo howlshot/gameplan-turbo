@@ -3,8 +3,17 @@ import {
   CUSTOM_BASE_URL_PRESETS
 } from "@/lib/ai/customProviderUtils";
 import { startOpenRouterOAuth } from "@/lib/ai/openRouterOAuth";
-import { APP_FOLDER_PLACEHOLDER, APP_NAME } from "@/lib/brand";
+import {
+  APP_FOLDER_PLACEHOLDER,
+  APP_LATEST_DESKTOP_RELEASE_URL,
+  APP_NAME
+} from "@/lib/brand";
+import {
+  isProviderStoredOnDevice,
+  type ProviderStorageLocation
+} from "@/lib/providerStorage";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
+import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import { getToolLoginProviderMeta, type ToolLoginBridgeStatus } from "@/lib/toolLoginProviders";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
@@ -19,6 +28,7 @@ export interface ProviderCardValue {
   isDefault: boolean;
   hasKey: boolean;
   maskedKey: string;
+  storageLocation?: ProviderStorageLocation;
 }
 
 interface ProviderCardProps {
@@ -29,9 +39,16 @@ interface ProviderCardProps {
     model: string;
     baseUrl?: string;
     authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
+    rememberOnDevice?: boolean;
   }) => Promise<void>;
-  onDisconnect: (providerId: string) => Promise<void>;
-  onSetDefault: (providerId: string) => Promise<void>;
+  onDisconnect: (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ) => Promise<void>;
+  onSetDefault: (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ) => Promise<void>;
 }
 
 export const ProviderCard = ({
@@ -53,24 +70,51 @@ export const ProviderCard = ({
   const [bridgeStatusMessage, setBridgeStatusMessage] = useState("");
   const [isCheckingBridge, setIsCheckingBridge] = useState(false);
   const [isBridgeReady, setIsBridgeReady] = useState<boolean | null>(null);
+  const [rememberOnDevice, setRememberOnDevice] = useState(
+    provider.hasKey ? isProviderStoredOnDevice(provider.storageLocation ?? "device") : false
+  );
   const authMode = config.authMode ?? "api-key";
   const toolLoginProvider = getToolLoginProviderMeta(provider.provider);
+  const desktopRuntime = isDesktopRuntime();
+  const hostedRuntime = isHostedRuntime();
+  const isHostedBridgeUnavailable =
+    Boolean(toolLoginProvider) && hostedRuntime;
   const supportsOAuthPkce = authMode === "oauth-pkce";
   const isCustomProvider = provider.provider === "custom";
-  const isConnected = toolLoginProvider ? isBridgeReady === true : provider.hasKey;
+  const isConnected = toolLoginProvider
+    ? isHostedBridgeUnavailable
+      ? false
+      : isBridgeReady === true
+    : provider.hasKey;
   const statusLabel = toolLoginProvider
-    ? isCheckingBridge
-      ? "Checking"
-      : isConnected
-        ? "Bridge Ready"
-        : "Bridge Offline"
+    ? isHostedBridgeUnavailable
+      ? "Local Only"
+      : isCheckingBridge
+        ? "Checking"
+        : isConnected
+          ? "Bridge Ready"
+          : "Bridge Offline"
     : provider.hasKey
       ? "Connected"
       : "Disconnected";
   const bridgeOfflineMessage = toolLoginProvider
-    ? `Bridge offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
+    ? desktopRuntime
+      ? "Bridge offline. Relaunch the desktop app and try again."
+      : `Bridge offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
     : "";
   const canDisconnect = Boolean(providerId);
+
+  useEffect(() => {
+    if (!hostedRuntime || toolLoginProvider) {
+      return;
+    }
+
+    setRememberOnDevice(
+      provider.hasKey
+        ? isProviderStoredOnDevice(provider.storageLocation ?? "device")
+        : false
+    );
+  }, [hostedRuntime, provider.hasKey, provider.storageLocation, toolLoginProvider]);
 
   const handleSave = async (): Promise<void> => {
     const value = inputRef.current?.value.trim() ?? "";
@@ -87,7 +131,8 @@ export const ProviderCard = ({
         apiKey: value,
         model: nextModel,
         baseUrl: isCustomProvider ? nextBaseUrl : undefined,
-        authMethod: "api-key"
+        authMethod: "api-key",
+        ...(hostedRuntime ? { rememberOnDevice } : {})
       });
       setIsEditing(false);
       if (inputRef.current) {
@@ -103,6 +148,14 @@ export const ProviderCard = ({
       return null;
     }
 
+    if (isHostedBridgeUnavailable) {
+      setIsBridgeReady(false);
+      setBridgeStatusMessage(
+        `${toolLoginProvider.label} is available only when Gameplan Turbo is running locally.`
+      );
+      return null;
+    }
+
     setIsCheckingBridge(true);
 
     try {
@@ -114,7 +167,9 @@ export const ProviderCard = ({
       } else if (!status.loggedIn) {
         setIsBridgeReady(false);
         setBridgeStatusMessage(
-          `Bridge is online, but ${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` first.`
+          desktopRuntime
+            ? `Bridge is online, but ${toolLoginProvider.label} is not logged in yet. Use ${toolLoginProvider.openLoginButtonLabel}, finish the browser sign-in, then click Check Status.`
+            : `Bridge is online, but ${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` first.`
         );
       } else {
         setIsBridgeReady(true);
@@ -133,10 +188,17 @@ export const ProviderCard = ({
     } finally {
       setIsCheckingBridge(false);
     }
-  }, [bridgeOfflineMessage, toolLoginProvider]);
+  }, [bridgeOfflineMessage, desktopRuntime, isHostedBridgeUnavailable, toolLoginProvider]);
 
   const handleToolLoginConnect = useCallback(async (): Promise<void> => {
     if (!toolLoginProvider) {
+      return;
+    }
+
+    if (isHostedBridgeUnavailable) {
+      toast.error(
+        `${toolLoginProvider.label} uses a local bridge and is only available when running Gameplan Turbo locally.`
+      );
       return;
     }
 
@@ -157,10 +219,26 @@ export const ProviderCard = ({
     } finally {
       setIsSaving(false);
     }
-  }, [authMode, checkBridgeStatus, onSave, provider.model, provider.provider, toolLoginProvider]);
+  }, [
+    authMode,
+    checkBridgeStatus,
+    isHostedBridgeUnavailable,
+    onSave,
+    provider.model,
+    provider.provider,
+    toast,
+    toolLoginProvider
+  ]);
 
   const handleOpenLogin = useCallback(async (): Promise<void> => {
     if (!toolLoginProvider) {
+      return;
+    }
+
+    if (isHostedBridgeUnavailable) {
+      toast.error(
+        `${toolLoginProvider.label} sign-in is available only in local desktop mode.`
+      );
       return;
     }
 
@@ -169,7 +247,9 @@ export const ProviderCard = ({
     try {
       await toolLoginProvider.openLoginFlow();
       setBridgeStatusMessage(
-        `${toolLoginProvider.label} login flow opened. Finish sign-in in the Terminal/browser window, then click Check Status.`
+        desktopRuntime
+          ? `${toolLoginProvider.label} login flow opened. Finish sign-in in the browser window, then click Check Status.`
+          : `${toolLoginProvider.label} login flow opened. Finish sign-in in the Terminal/browser window, then click Check Status.`
       );
       toast.success(`Opened the ${toolLoginProvider.label} login flow.`);
     } catch (error) {
@@ -182,7 +262,7 @@ export const ProviderCard = ({
     } finally {
       setIsStartingLogin(false);
     }
-  }, [toast, toolLoginProvider]);
+  }, [desktopRuntime, isHostedBridgeUnavailable, toast, toolLoginProvider]);
 
   const handleOpenRouterConnect = useCallback(async (): Promise<void> => {
     setIsStartingOAuth(true);
@@ -193,7 +273,8 @@ export const ProviderCard = ({
         provider: provider.provider,
         apiKey,
         model: provider.model,
-        authMethod: "oauth-pkce"
+        authMethod: "oauth-pkce",
+        ...(hostedRuntime ? { rememberOnDevice } : {})
       });
     } catch (error) {
       toast.error(
@@ -204,13 +285,21 @@ export const ProviderCard = ({
     } finally {
       setIsStartingOAuth(false);
     }
-  }, [config.label, onSave, provider.provider, toast]);
+  }, [
+    config.label,
+    hostedRuntime,
+    onSave,
+    provider.model,
+    provider.provider,
+    rememberOnDevice,
+    toast
+  ]);
 
   useEffect(() => {
-    if (toolLoginProvider) {
+    if (toolLoginProvider && !isHostedBridgeUnavailable) {
       void checkBridgeStatus();
     }
-  }, [checkBridgeStatus, provider.hasKey, toolLoginProvider]);
+  }, [checkBridgeStatus, isHostedBridgeUnavailable, provider.hasKey, toolLoginProvider]);
 
   return (
     <article className="flex min-h-[220px] flex-col justify-between rounded-2xl border border-outline-variant/10 bg-surface-container-low p-5">
@@ -247,7 +336,10 @@ export const ProviderCard = ({
                 type="button"
                 onClick={() => {
                   if (providerId) {
-                    void onDisconnect(providerId);
+                    void onDisconnect(
+                      providerId,
+                      provider.storageLocation ?? "device"
+                    );
                   }
                 }}
                 className="rounded-full bg-surface px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-tertiary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-container-high hover:text-on-surface"
@@ -258,7 +350,12 @@ export const ProviderCard = ({
             {providerId ? (
               <button
                 type="button"
-                onClick={() => void onSetDefault(providerId)}
+                onClick={() =>
+                  void onSetDefault(
+                    providerId,
+                    provider.storageLocation ?? "device"
+                  )
+                }
                 className={cn(
                   "rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   provider.isDefault
@@ -277,81 +374,139 @@ export const ProviderCard = ({
             <p className="text-sm leading-6 text-on-surface-variant">
               {toolLoginProvider.usesSentence}
             </p>
-            <p className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 font-mono text-[11px] leading-5 text-on-surface-variant">
-              {bridgeStatusMessage || `Checking ${toolLoginProvider.connectionLabel} status...`}
-            </p>
-            <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
-              <p className="font-semibold text-on-surface">First-time setup</p>
-              {toolLoginProvider.launcherUsuallyStartsBridge ? (
-                <p>
-                  If you launched {APP_NAME} from the desktop app, it will usually
-                  start this bridge for you. Use the steps below only if relaunching
-                  the app does not bring the bridge online.
+            {isHostedBridgeUnavailable ? (
+              <>
+                <p className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3 font-mono text-[11px] leading-5 text-on-surface-variant">
+                  {toolLoginProvider.label} is available only in local desktop mode.
                 </p>
-              ) : null}
-              <p>1. Open Terminal.</p>
-              <p>
-                2. Run <code>{toolLoginProvider.loginCommand}</code>
-              </p>
-              <p>3. Finish the {toolLoginProvider.signInLabel} sign-in in your browser.</p>
-              <p>4. Switch Terminal into your {APP_NAME} folder.</p>
-              <p>
-                If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
-              </p>
-              <p>
-                5. Run <code>{toolLoginProvider.startCommand}</code>
-              </p>
-              <p>6. Leave that Terminal window open.</p>
-            </div>
-            <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
-              <p className="font-semibold text-on-surface">What each button does</p>
-              <p>
-                <strong>{toolLoginProvider.openLoginButtonLabel}</strong> opens the
-                {toolLoginProvider.signInLabel} sign-in flow.
-              </p>
-              <p>
-                <strong>Check Status</strong> confirms that the bridge is running and
-                the CLI is logged in.
-              </p>
-              <p>
-                <strong>{toolLoginProvider.connectButtonLabel}</strong> saves that
-                running session into {APP_NAME}.
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={isStartingLogin}
-                onClick={() => void handleOpenLogin()}
-                className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
-              >
-                {isStartingLogin ? "Opening..." : toolLoginProvider.openLoginButtonLabel}
-              </button>
-              <button
-                type="button"
-                disabled={isSaving || isCheckingBridge}
-                onClick={() => void handleToolLoginConnect()}
-                className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
-              >
-                {isSaving
-                  ? "Connecting..."
-                  : provider.hasKey
-                    ? "Reconnect"
-                    : toolLoginProvider.connectButtonLabel}
-              </button>
-              <button
-                type="button"
-                disabled={isCheckingBridge}
-                onClick={() => void checkBridgeStatus()}
-                className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
-              >
-                {isCheckingBridge ? "Checking..." : "Check Status"}
-              </button>
-            </div>
-            <p className="text-xs leading-5 text-on-surface-variant">
-              Relaunch the desktop app first if the bridge is offline. If that does not
-              work, start it manually with <code>{toolLoginProvider.startCommand}</code>.
-            </p>
+                <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
+                  <p className="font-semibold text-on-surface">Use this when running locally</p>
+                  <p>
+                    {toolLoginProvider.label} relies on a bridge that talks to your local
+                    CLI session, so it is intentionally disabled on the hosted web app.
+                  </p>
+                  <p>
+                    Use <strong>OpenRouter</strong> or an <strong>API key</strong>
+                    provider here, or run {APP_NAME} locally if you want to connect{" "}
+                    {toolLoginProvider.label}.
+                  </p>
+                  <div className="pt-2">
+                    <a
+                      href={APP_LATEST_DESKTOP_RELEASE_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15"
+                    >
+                      Download Desktop
+                    </a>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 font-mono text-[11px] leading-5 text-on-surface-variant">
+                  {bridgeStatusMessage || `Checking ${toolLoginProvider.connectionLabel} status...`}
+                </p>
+                <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
+                  <p className="font-semibold text-on-surface">First-time setup</p>
+                  {desktopRuntime ? (
+                    <>
+                      <p>
+                        The desktop app manages the local bridge for you. You should
+                        not need Terminal for normal use.
+                      </p>
+                      <p>1. Click <strong>{toolLoginProvider.openLoginButtonLabel}</strong>.</p>
+                      <p>
+                        2. Finish the {toolLoginProvider.signInLabel} sign-in flow in your browser.
+                      </p>
+                      <p>3. Click <strong>Check Status</strong>.</p>
+                      <p>
+                        4. When the bridge is ready, click{" "}
+                        <strong>{toolLoginProvider.connectButtonLabel}</strong>.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      {toolLoginProvider.launcherUsuallyStartsBridge ? (
+                        <p>
+                          If you launched {APP_NAME} from the desktop app, it will usually
+                          start this bridge for you. Use the steps below only if relaunching
+                          the app does not bring the bridge online.
+                        </p>
+                      ) : null}
+                      <p>1. Open Terminal.</p>
+                      <p>
+                        2. Run <code>{toolLoginProvider.loginCommand}</code>
+                      </p>
+                      <p>3. Finish the {toolLoginProvider.signInLabel} sign-in in your browser.</p>
+                      <p>4. Switch Terminal into your {APP_NAME} folder.</p>
+                      <p>
+                        If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
+                      </p>
+                      <p>
+                        5. Run <code>{toolLoginProvider.startCommand}</code>
+                      </p>
+                      <p>6. Leave that Terminal window open.</p>
+                    </>
+                  )}
+                </div>
+                <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
+                  <p className="font-semibold text-on-surface">What each button does</p>
+                  <p>
+                    <strong>{toolLoginProvider.openLoginButtonLabel}</strong> opens the
+                    {toolLoginProvider.signInLabel} sign-in flow.
+                  </p>
+                  <p>
+                    <strong>Check Status</strong> confirms that the bridge is running and
+                    the CLI is logged in.
+                  </p>
+                  <p>
+                    <strong>{toolLoginProvider.connectButtonLabel}</strong> saves that
+                    running session into {APP_NAME}.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={isStartingLogin}
+                    onClick={() => void handleOpenLogin()}
+                    className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
+                  >
+                    {isStartingLogin ? "Opening..." : toolLoginProvider.openLoginButtonLabel}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSaving || isCheckingBridge}
+                    onClick={() => void handleToolLoginConnect()}
+                    className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+                  >
+                    {isSaving
+                      ? "Connecting..."
+                      : provider.hasKey
+                        ? "Reconnect"
+                        : toolLoginProvider.connectButtonLabel}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isCheckingBridge}
+                    onClick={() => void checkBridgeStatus()}
+                    className="rounded-xl bg-surface px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface disabled:opacity-60"
+                  >
+                    {isCheckingBridge ? "Checking..." : "Check Status"}
+                  </button>
+                </div>
+                <p className="text-xs leading-5 text-on-surface-variant">
+                  {desktopRuntime
+                    ? "If the bridge still looks offline, relaunch the desktop app and try again."
+                    : (
+                        <>
+                          Relaunch the desktop app first if the bridge is offline. If that does not
+                          work, start it manually with <code>{toolLoginProvider.startCommand}</code>.
+                        </>
+                      )}
+                </p>
+              </>
+            )}
           </div>
         ) : isEditing ? (
           <div className="mt-4 space-y-3">
@@ -411,6 +566,25 @@ export const ProviderCard = ({
               placeholder={`Paste your ${config.keyLabel.toLowerCase()}`}
               className="w-full rounded-xl border border-outline-variant/15 bg-surface px-4 py-3 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
             />
+            {hostedRuntime ? (
+              <label className="flex items-start gap-3 rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={rememberOnDevice}
+                  onChange={(event) => setRememberOnDevice(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-outline-variant/30 bg-surface-container-lowest text-primary focus:ring-primary/30"
+                />
+                <span>
+                  <span className="block font-semibold text-on-surface">
+                    Remember on this device
+                  </span>
+                  <span className="block">
+                    Leave this unchecked to keep the provider only for this browser
+                    session. It will clear when you close the hosted app.
+                  </span>
+                </span>
+              </label>
+            ) : null}
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -465,6 +639,25 @@ export const ProviderCard = ({
                 </a>
               </div>
             </div>
+            {hostedRuntime ? (
+              <label className="flex items-start gap-3 rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={rememberOnDevice}
+                  onChange={(event) => setRememberOnDevice(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-outline-variant/30 bg-surface-container-lowest text-primary focus:ring-primary/30"
+                />
+                <span>
+                  <span className="block font-semibold text-on-surface">
+                    Remember on this device
+                  </span>
+                  <span className="block">
+                    Leave this unchecked to keep the OpenRouter connection only for
+                    this browser session.
+                  </span>
+                </span>
+              </label>
+            ) : null}
 
             <div className="flex items-center justify-between gap-3">
               <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
@@ -473,6 +666,7 @@ export const ProviderCard = ({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
+                aria-label={`Edit ${config.label} connection`}
                 className="rounded-full p-2 text-on-surface-variant transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface hover:text-primary"
               >
                 <span className="material-symbols-outlined text-base">vpn_key</span>
@@ -483,6 +677,13 @@ export const ProviderCard = ({
               on the card. If you already have an OpenRouter key, you can also paste it
               manually instead of using browser sign-in.
             </p>
+            {hostedRuntime && provider.hasKey ? (
+              <p className="text-xs leading-5 text-on-surface-variant">
+                {isProviderStoredOnDevice(provider.storageLocation ?? "device")
+                  ? "This provider is remembered on this device."
+                  : "This provider is active only for the current browser session."}
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="mt-4 space-y-3">
@@ -493,11 +694,19 @@ export const ProviderCard = ({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
+                aria-label={`Edit ${config.label} connection`}
                 className="rounded-full p-2 text-on-surface-variant transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface hover:text-primary"
               >
                 <span className="material-symbols-outlined text-base">edit</span>
               </button>
             </div>
+            {hostedRuntime && provider.hasKey ? (
+              <p className="text-xs leading-5 text-on-surface-variant">
+                {isProviderStoredOnDevice(provider.storageLocation ?? "device")
+                  ? "Remembered on this device."
+                  : "Active only for this browser session."}
+              </p>
+            ) : null}
             {isCustomProvider ? (
               <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
                 <p className="font-semibold text-on-surface">OpenAI-compatible endpoint</p>

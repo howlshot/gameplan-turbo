@@ -49,8 +49,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: Preflight Version
-      description: What version of Preflight are you using?
+      label: Gameplan Turbo Version
+      description: What version of Gameplan Turbo are you using?
       placeholder: e.g., v0.1.0
 
   - type: textarea

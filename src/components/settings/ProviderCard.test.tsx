@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProviderCard } from "@/components/settings/ProviderCard";
 
 const mocks = vi.hoisted(() => ({
+  hostedRuntime: false,
+  desktopRuntime: false,
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
   fetchStatus: vi.fn(),
@@ -14,6 +16,11 @@ vi.mock("@/hooks/useToast", () => ({
     error: mocks.toastError,
     success: mocks.toastSuccess
   })
+}));
+
+vi.mock("@/lib/runtimeMode", () => ({
+  isDesktopRuntime: () => mocks.desktopRuntime,
+  isHostedRuntime: () => mocks.hostedRuntime
 }));
 
 vi.mock("@/lib/toolLoginProviders", () => ({
@@ -44,6 +51,8 @@ vi.mock("@/lib/toolLoginProviders", () => ({
 describe("ProviderCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.hostedRuntime = false;
+    mocks.desktopRuntime = false;
     mocks.fetchStatus.mockResolvedValue({
       ok: false,
       cliAvailable: false,
@@ -131,7 +140,111 @@ describe("ProviderCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /Disconnect/i }));
 
     await waitFor(() => {
-      expect(onDisconnect).toHaveBeenCalledWith("claude-provider");
+      expect(onDisconnect).toHaveBeenCalledWith("claude-provider", "device");
+    });
+  });
+
+  it("shows local-only guidance for tool-login providers in hosted mode", async () => {
+    mocks.hostedRuntime = true;
+
+    render(
+      <ProviderCard
+        provider={{
+          provider: "claude-code",
+          model: "claude-code-default",
+          hasKey: false,
+          maskedKey: "",
+          isDefault: false
+        }}
+        onDisconnect={vi.fn()}
+        onSave={vi.fn()}
+        onSetDefault={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText(/available only in local desktop mode/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Open Claude Sign-In/i })
+    ).not.toBeInTheDocument();
+    expect(mocks.fetchStatus).not.toHaveBeenCalled();
+  });
+
+  it("shows desktop-managed instructions in desktop runtime", async () => {
+    mocks.desktopRuntime = true;
+    mocks.fetchStatus.mockResolvedValue({
+      ok: false,
+      cliAvailable: true,
+      loggedIn: false,
+      message: "not logged in"
+    });
+
+    render(
+      <ProviderCard
+        provider={{
+          provider: "claude-code",
+          model: "claude-code-default",
+          hasKey: false,
+          maskedKey: "",
+          isDefault: false
+        }}
+        onDisconnect={vi.fn()}
+        onSave={vi.fn()}
+        onSetDefault={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/desktop app manages the local bridge/i)).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText(/Open Terminal/i)).not.toBeInTheDocument();
+  });
+
+  it("defaults hosted API-key providers to session-only unless remember is checked", async () => {
+    mocks.hostedRuntime = true;
+    const onSave = vi.fn();
+
+    render(
+      <ProviderCard
+        provider={{
+          provider: "anthropic",
+          model: "claude-sonnet",
+          hasKey: false,
+          maskedKey: "",
+          isDefault: false,
+          storageLocation: "device"
+        }}
+        onDisconnect={vi.fn()}
+        onSave={onSave}
+        onSetDefault={vi.fn()}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Edit Anthropic connection/i })
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText(/Paste your .* api key/i),
+      { target: { value: "anthropic-test-key" } }
+    );
+
+    const rememberCheckbox = screen.getByRole("checkbox", {
+      name: /Remember on this device/i
+    });
+
+    expect(rememberCheckbox).not.toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: /Save/i }));
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: "anthropic",
+          rememberOnDevice: false
+        })
+      );
     });
   });
 });

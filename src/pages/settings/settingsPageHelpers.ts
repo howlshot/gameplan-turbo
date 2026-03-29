@@ -14,7 +14,8 @@ export const buildProviderCards = (
         hasKey: false,
         id: undefined,
         isDefault: false,
-        maskedKey: ""
+        maskedKey: "",
+        storageLocation: "device"
       }
     );
   });
