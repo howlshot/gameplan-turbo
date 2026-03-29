@@ -34,10 +34,16 @@ AI is only required for model-generated outputs and planning-question assists.
 
 ## Quick start
 
+- If you just want to use Gameplan Turbo, do not clone the repo. Start here:
 - Try instantly in browser: [gameplan-turbo.vercel.app](https://gameplan-turbo.vercel.app)
-- Download the macOS desktop alpha: [latest release](https://github.com/howlshot/gameplan-turbo/releases/latest)
+- Download the macOS desktop app: [latest release](https://github.com/howlshot/gameplan-turbo/releases/latest)
+- The desktop package is the easiest path for `Codex` and `Claude Code` integrations.
 
-The desktop build is the easiest local path for bridge-based `Codex` and `Claude Code` integrations.
+### Desktop package contents
+
+- `Gameplan Turbo-...dmg` for the normal macOS install flow
+- `Gameplan Turbo-...zip` as a fallback if the DMG gives you trouble
+- New desktop builds are published through GitHub Releases
 
 ## Contributor setup
 
