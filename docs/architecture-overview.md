@@ -43,6 +43,8 @@ Preserved from the upstream app:
 
 The fork also adds an optional localhost Codex bridge. That bridge shells out to the installed `codex` CLI, so users can route generations through their existing ChatGPT-backed Codex login without putting OAuth tokens into the browser app.
 
+The legacy database import and checkpoint compatibility remain in the codebase only to help older local Preflight installs migrate safely into Gameplan Turbo. They are not part of the current public product surface.
+
 On first launch, the renamed app can also import existing browser data from the prior `preflight-game-os` IndexedDB name before continuing under `gameplan-turbo`.
 
 This means the product can stay local-first while still supporting external generation when keys are configured or when the local Codex bridge is available.

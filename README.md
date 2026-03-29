@@ -113,7 +113,3 @@ corepack pnpm build
 - [Architecture overview](docs/architecture-overview.md)
 - [Using with Codex for game projects](docs/using-with-codex-for-games.md)
 - [Migration from the upstream Preflight project](docs/migration-from-preflight.md)
-
-## Legacy note
-
-The repository still contains some inherited Preflight-era docs for historical context. The files linked from `README.md` and `docs/README.md` are the current public starting point; older Preflight guides are marked as legacy where they remain in the tree.

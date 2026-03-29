@@ -468,6 +468,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(
-    `[preflight-codex-bridge] listening on http://${HOST}:${PORT} using local Codex CLI`
+    `[gameplan-turbo-codex-bridge] listening on http://${HOST}:${PORT} using local Codex CLI`
   );
 });

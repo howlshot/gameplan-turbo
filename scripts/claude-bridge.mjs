@@ -418,6 +418,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(
-    `[preflight-claude-bridge] listening on http://${HOST}:${PORT} using local Claude Code CLI`
+    `[gameplan-turbo-claude-bridge] listening on http://${HOST}:${PORT} using local Claude Code CLI`
   );
 });

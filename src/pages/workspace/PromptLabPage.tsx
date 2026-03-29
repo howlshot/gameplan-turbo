@@ -601,7 +601,7 @@ export const PromptLabPage = (): JSX.Element => {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">
-                Preflight Context
+                Vault Context
               </p>
               <h2 className="mt-2 font-headline text-2xl font-semibold text-on-surface">
                 Add references before you generate

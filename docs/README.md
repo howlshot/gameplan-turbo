@@ -27,13 +27,6 @@ The main workflow is:
 4. generate outputs in `Output Library`
 5. export the planning package for handoff
 
-## Legacy docs
+## Migration note
 
-Some inherited docs from the upstream Preflight project are still present for historical context. They are not the source of truth for the current Gameplan Turbo product.
-
-Legacy entry points:
-
-- [Legacy user guide index](user-guide/README.md)
-- [Legacy architecture notes](technical/architecture.md)
-
-If a legacy doc conflicts with the current product overview or getting-started guide, trust the current Gameplan Turbo docs.
+The repo keeps a small [migration note](migration-from-preflight.md) for users coming from the older Preflight fork. Apart from that migration context, the docs linked above are the current public source of truth for Gameplan Turbo.
