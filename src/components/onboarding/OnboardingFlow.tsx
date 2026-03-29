@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { OnboardingCompleteStep } from "@/components/onboarding/OnboardingCompleteStep";
 import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
 import { OnboardingProviderStep } from "@/components/onboarding/OnboardingProviderStep";
@@ -42,6 +42,15 @@ export const OnboardingFlow = ({
   const baseUrlRef = useRef<HTMLInputElement>(null);
   const modelRef = useRef<HTMLInputElement>(null);
   const dialogRef = useDialogAccessibility<HTMLDivElement>(true, () => undefined);
+
+  useEffect(() => {
+    const container = dialogRef.current;
+    if (!container) {
+      return;
+    }
+
+    container.scrollTop = 0;
+  }, [dialogRef, step]);
 
   const handleSkipProvider = (): void => {
     setErrorMessage("");
