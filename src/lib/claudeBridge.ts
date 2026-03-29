@@ -1,4 +1,5 @@
 import { getBridgeRequestHeaders, parseBridgeErrorMessage } from "@/lib/bridgeAuth";
+import { getDesktopRuntimeContext, isDesktopRuntime } from "@/lib/runtimeMode";
 
 const DEFAULT_CLAUDE_BRIDGE_URL = "http://127.0.0.1:8766";
 
@@ -14,6 +15,7 @@ export interface ClaudeBridgeStatus {
 
 export const getClaudeBridgeUrl = (): string =>
   (
+    getDesktopRuntimeContext()?.bridgeUrls.claude ??
     import.meta.env.VITE_CLAUDE_BRIDGE_URL ??
     DEFAULT_CLAUDE_BRIDGE_URL
   ).trim();
@@ -35,7 +37,9 @@ export const fetchClaudeBridgeStatus = async (): Promise<ClaudeBridgeStatus> => 
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        "Could not reach the local Claude Code bridge. Relaunch the desktop app or start it with `corepack pnpm claude:bridge`."
+        isDesktopRuntime()
+          ? "Could not reach the local Claude Code bridge. Relaunch the desktop app and try again."
+          : "Could not reach the local Claude Code bridge. Relaunch the desktop app or start it with `corepack pnpm claude:bridge`."
       );
     }
 
@@ -67,7 +71,9 @@ export const openClaudeLoginFlow = async (): Promise<void> => {
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        "Could not reach the local Claude Code bridge. Relaunch the desktop app or start it with `corepack pnpm claude:bridge`, then try again."
+        isDesktopRuntime()
+          ? "Could not reach the local Claude Code bridge. Relaunch the desktop app and try again."
+          : "Could not reach the local Claude Code bridge. Relaunch the desktop app or start it with `corepack pnpm claude:bridge`, then try again."
       );
     }
 

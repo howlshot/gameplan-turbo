@@ -1,12 +1,10 @@
 import { useRef, useState } from "react";
 import { OnboardingCompleteStep } from "@/components/onboarding/OnboardingCompleteStep";
-import { OnboardingNameStep } from "@/components/onboarding/OnboardingNameStep";
 import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
 import { OnboardingProviderStep } from "@/components/onboarding/OnboardingProviderStep";
 import { OnboardingTutorialStep } from "@/components/onboarding/OnboardingTutorialStep";
 import { useAIProviders } from "@/hooks/useAIProviders";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
-import { useSettings } from "@/hooks/useSettings";
 import {
   getToolLoginProviderMeta
 } from "@/lib/toolLoginProviders";
@@ -14,7 +12,7 @@ import { startOpenRouterOAuth } from "@/lib/ai/openRouterOAuth";
 import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { getGenerationErrorState } from "@/lib/generationErrors";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
-import { isHostedRuntime } from "@/lib/runtimeMode";
+import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import { createProviderFromConfig } from "@/services/ai";
 import { useToast } from "@/hooks/useToast";
 import type { AIProvider } from "@/types";
@@ -23,16 +21,14 @@ interface OnboardingFlowProps {
   onComplete: () => Promise<void>;
 }
 
-type OnboardingStep = 1 | 2 | 3 | 4;
+type OnboardingStep = 1 | 2 | 3;
 
 export const OnboardingFlow = ({
   onComplete
 }: OnboardingFlowProps): JSX.Element => {
   const toast = useToast();
-  const { settings, updateSettings } = useSettings();
   const { saveProvider } = useAIProviders();
   const [step, setStep] = useState<OnboardingStep>(1);
-  const [name, setName] = useState(settings?.userName ?? "");
   const [selectedProvider, setSelectedProvider] = useState<AIProvider>("anthropic");
   const [isVerifying, setIsVerifying] = useState(false);
   const [isStartingToolLogin, setIsStartingToolLogin] = useState(false);
@@ -40,20 +36,17 @@ export const OnboardingFlow = ({
   const [showApiKey, setShowApiKey] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [validationAttempts, setValidationAttempts] = useState(0);
+  const hostedRuntime = isHostedRuntime();
+  const desktopRuntime = isDesktopRuntime();
   const apiKeyRef = useRef<HTMLInputElement>(null);
   const baseUrlRef = useRef<HTMLInputElement>(null);
   const modelRef = useRef<HTMLInputElement>(null);
   const dialogRef = useDialogAccessibility<HTMLDivElement>(true, () => undefined);
 
-  const handleContinueName = async (): Promise<void> => {
-    await updateSettings({ userName: name.trim() });
-    setStep(2);
-  };
-
   const handleSkipProvider = (): void => {
     setErrorMessage("");
     setValidationAttempts(0);
-    setStep(3);
+    setStep(2);
   };
 
   const handleVerifyProvider = async (): Promise<void> => {
@@ -70,7 +63,7 @@ export const OnboardingFlow = ({
         : apiKey;
 
     if (toolLoginProvider) {
-      if (isHostedRuntime()) {
+      if (hostedRuntime) {
         setErrorMessage(
           `${toolLoginProvider.label} is only available when Gameplan Turbo is running locally. Choose OpenRouter, an API-key provider, or skip for now in the hosted app.`
         );
@@ -90,7 +83,9 @@ export const OnboardingFlow = ({
 
         if (!status.loggedIn) {
           setErrorMessage(
-            `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\`, then click \`${toolLoginProvider.continueButtonLabel}\`. If the bridge is unavailable, relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
+            desktopRuntime
+              ? `${toolLoginProvider.label} is not logged in yet. Use \`${toolLoginProvider.openLoginButtonLabel}\`, finish sign-in in your browser, then click \`${toolLoginProvider.continueButtonLabel}\`.`
+              : `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\`, then click \`${toolLoginProvider.continueButtonLabel}\`. If the bridge is unavailable, relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
           );
           return;
         }
@@ -104,10 +99,12 @@ export const OnboardingFlow = ({
         });
         setValidationAttempts(0);
         toast.success(`${providerConfig.label} connected.`);
-        setStep(3);
+        setStep(2);
       } catch {
         setErrorMessage(
-          `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`, then try again.`
+          desktopRuntime
+            ? `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app and try again.`
+            : `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`, then try again.`
         );
       } finally {
         setIsVerifying(false);
@@ -152,7 +149,7 @@ export const OnboardingFlow = ({
       });
       setValidationAttempts(0);
       toast.success(`${providerConfig.label} verified.`);
-      setStep(3);
+      setStep(2);
     } catch (error) {
       const errorState = getGenerationErrorState(error);
       const attempts = validationAttempts + 1;
@@ -173,7 +170,7 @@ export const OnboardingFlow = ({
       return;
     }
 
-    if (isHostedRuntime()) {
+    if (hostedRuntime) {
       setErrorMessage(
         `${toolLoginProvider.label} needs local desktop mode because it uses a local bridge. Choose a hosted provider here, or run Gameplan Turbo locally to use ${toolLoginProvider.label}.`
       );
@@ -185,12 +182,18 @@ export const OnboardingFlow = ({
 
     try {
       await toolLoginProvider.openLoginFlow();
-      toast.success(`Opened the ${toolLoginProvider.label} login flow in Terminal.`);
+      toast.success(
+        desktopRuntime
+          ? `Opened the ${toolLoginProvider.label} sign-in flow. Finish it in your browser, then return here.`
+          : `Opened the ${toolLoginProvider.label} login flow in Terminal.`
+      );
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : `Could not open the ${toolLoginProvider.label} login flow. Run \`${toolLoginProvider.loginCommand}\` manually.`
+          : desktopRuntime
+            ? `Could not open the ${toolLoginProvider.label} login flow. Relaunch the desktop app and try again.`
+            : `Could not open the ${toolLoginProvider.label} login flow. Run \`${toolLoginProvider.loginCommand}\` manually.`
       );
     } finally {
       setIsStartingToolLogin(false);
@@ -226,7 +229,7 @@ export const OnboardingFlow = ({
       setValidationAttempts(0);
       toast.success("OpenRouter connected.");
       setSelectedProvider("openrouter");
-      setStep(3);
+      setStep(2);
     } catch (error) {
       const message =
         error instanceof Error
@@ -250,14 +253,6 @@ export const OnboardingFlow = ({
         <OnboardingProgress step={step} />
 
         {step === 1 ? (
-          <OnboardingNameStep
-            name={name}
-            onChangeName={setName}
-            onContinue={() => void handleContinueName()}
-          />
-        ) : null}
-
-        {step === 2 ? (
           <OnboardingProviderStep
             apiKeyRef={apiKeyRef}
             baseUrlRef={baseUrlRef}
@@ -277,11 +272,11 @@ export const OnboardingFlow = ({
           />
         ) : null}
 
-        {step === 3 ? (
-          <OnboardingTutorialStep onComplete={() => setStep(4)} />
+        {step === 2 ? (
+          <OnboardingTutorialStep onComplete={() => setStep(3)} />
         ) : null}
 
-        {step === 4 ? (
+        {step === 3 ? (
           <OnboardingCompleteStep onComplete={() => void onComplete()} />
         ) : null}
       </div>

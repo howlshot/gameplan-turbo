@@ -6,7 +6,8 @@ import {
   openCodexLoginFlow,
   type CodexBridgeStatus
 } from "@/lib/codexBridge";
-import { APP_NAME } from "@/lib/brand";
+import { APP_LATEST_DESKTOP_RELEASE_URL, APP_NAME } from "@/lib/brand";
+import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import { useToast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,8 @@ export const DiagnosticsCard = (): JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isOpeningLogin, setIsOpeningLogin] = useState(false);
+  const desktopRuntime = isDesktopRuntime();
+  const hostedRuntime = isHostedRuntime();
 
   const loadStatus = useCallback(async (): Promise<void> => {
     setIsLoading(true);
@@ -90,7 +93,11 @@ export const DiagnosticsCard = (): JSX.Element => {
 
     try {
       await openCodexLoginFlow();
-      toast.success("Opened the Codex login flow in Terminal.");
+      toast.success(
+        desktopRuntime
+          ? "Opened the Codex sign-in flow. Finish it in your browser, then refresh."
+          : "Opened the Codex login flow in Terminal."
+      );
     } catch (error) {
       const message =
         error instanceof Error
@@ -101,7 +108,7 @@ export const DiagnosticsCard = (): JSX.Element => {
     } finally {
       setIsOpeningLogin(false);
     }
-  }, [toast]);
+  }, [desktopRuntime, toast]);
 
   useEffect(() => {
     void loadStatus();
@@ -166,30 +173,79 @@ export const DiagnosticsCard = (): JSX.Element => {
           </div>
         </dl>
 
-        <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">
-          <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-outline">
-            Local Commands
-          </p>
-          <p className="text-sm text-on-surface-variant">
-            1. Login: <code>{getCodexLoginCommand()}</code>
-          </p>
-          <p className="text-sm text-on-surface-variant">
-            2. Start bridge: <code>{getCodexBridgeStartCommand()}</code>
-          </p>
-          <p className="text-sm text-on-surface-variant">
-            3. Keep that Terminal window open while using {APP_NAME}
-          </p>
-          <div className="pt-2">
-            <button
-              type="button"
-              onClick={() => void handleOpenLogin()}
-              disabled={isOpeningLogin}
-              className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
-            >
-              {isOpeningLogin ? "Opening..." : "Open ChatGPT Sign-In"}
-            </button>
+        {hostedRuntime ? (
+          <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-outline">
+              Desktop Required
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              Codex uses a local bridge, so diagnostics are available only in the desktop or local app.
+            </p>
+            <div className="pt-2">
+              <a
+                href={APP_LATEST_DESKTOP_RELEASE_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15"
+              >
+                Download Desktop
+              </a>
+            </div>
           </div>
-        </div>
+        ) : desktopRuntime ? (
+          <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-outline">
+              Desktop Workflow
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              The desktop app manages the Codex bridge automatically. You should not need Terminal for normal use.
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              1. Click <strong>Open ChatGPT Sign-In</strong>.
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              2. Finish the sign-in flow in your browser.
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              3. Click <strong>Refresh</strong> to confirm the bridge is ready.
+            </p>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => void handleOpenLogin()}
+                disabled={isOpeningLogin}
+                className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+              >
+                {isOpeningLogin ? "Opening..." : "Open ChatGPT Sign-In"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-outline">
+              Local Commands
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              1. Login: <code>{getCodexLoginCommand()}</code>
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              2. Start bridge: <code>{getCodexBridgeStartCommand()}</code>
+            </p>
+            <p className="text-sm text-on-surface-variant">
+              3. Keep that Terminal window open while using {APP_NAME}
+            </p>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => void handleOpenLogin()}
+                disabled={isOpeningLogin}
+                className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15 disabled:opacity-60"
+              >
+                {isOpeningLogin ? "Opening..." : "Open ChatGPT Sign-In"}
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-4">
           <p className="font-semibold text-on-surface">What success looks like</p>

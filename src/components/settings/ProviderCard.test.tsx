@@ -4,6 +4,7 @@ import { ProviderCard } from "@/components/settings/ProviderCard";
 
 const mocks = vi.hoisted(() => ({
   hostedRuntime: false,
+  desktopRuntime: false,
   toastError: vi.fn(),
   toastSuccess: vi.fn(),
   fetchStatus: vi.fn(),
@@ -18,6 +19,7 @@ vi.mock("@/hooks/useToast", () => ({
 }));
 
 vi.mock("@/lib/runtimeMode", () => ({
+  isDesktopRuntime: () => mocks.desktopRuntime,
   isHostedRuntime: () => mocks.hostedRuntime
 }));
 
@@ -50,6 +52,7 @@ describe("ProviderCard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.hostedRuntime = false;
+    mocks.desktopRuntime = false;
     mocks.fetchStatus.mockResolvedValue({
       ok: false,
       cliAvailable: false,
@@ -166,5 +169,36 @@ describe("ProviderCard", () => {
       screen.queryByRole("button", { name: /Open Claude Sign-In/i })
     ).not.toBeInTheDocument();
     expect(mocks.fetchStatus).not.toHaveBeenCalled();
+  });
+
+  it("shows desktop-managed instructions in desktop runtime", async () => {
+    mocks.desktopRuntime = true;
+    mocks.fetchStatus.mockResolvedValue({
+      ok: false,
+      cliAvailable: true,
+      loggedIn: false,
+      message: "not logged in"
+    });
+
+    render(
+      <ProviderCard
+        provider={{
+          provider: "claude-code",
+          model: "claude-code-default",
+          hasKey: false,
+          maskedKey: "",
+          isDefault: false
+        }}
+        onDisconnect={vi.fn()}
+        onSave={vi.fn()}
+        onSetDefault={vi.fn()}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/desktop app manages the local bridge/i)).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText(/Open Terminal/i)).not.toBeInTheDocument();
   });
 });

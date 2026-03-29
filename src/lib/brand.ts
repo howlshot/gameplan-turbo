@@ -8,6 +8,8 @@ export const APP_DESCRIPTION =
 export const APP_ICON_PATH = "/gameplan-turbo-icon.png";
 export const APP_FOLDER_PLACEHOLDER = "/path/to/gameplan-turbo";
 export const APP_REPOSITORY_URL = "https://github.com/howlshot/gameplan-turbo";
+export const APP_RELEASES_URL = `${APP_REPOSITORY_URL}/releases`;
+export const APP_LATEST_DESKTOP_RELEASE_URL = `${APP_RELEASES_URL}/latest`;
 
 export const APP_DATABASE_NAME = APP_SLUG;
 export const LEGACY_APP_DATABASE_NAME = "preflight-game-os";

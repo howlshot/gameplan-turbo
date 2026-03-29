@@ -16,7 +16,7 @@ import { clearAllAppData, exportAppData, getUsageLogs } from "@/lib/appData";
 import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { APP_EXPORT_FILE_NAME, APP_NAME } from "@/lib/brand";
-import { isHostedRuntime } from "@/lib/runtimeMode";
+import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import { getToolLoginProviderMeta } from "@/lib/toolLoginProviders";
 import { createProviderFromConfig } from "@/services/ai";
 import {
@@ -32,6 +32,8 @@ export const SettingsPage = (): JSX.Element => {
     useAIProviders();
   const { prompts, isLoading: isPromptsLoading, updatePrompt, resetToDefault } =
     useAgentPrompts();
+  const hostedRuntime = isHostedRuntime();
+  const desktopRuntime = isDesktopRuntime();
   const [isLogsOpen, setIsLogsOpen] = useState(false);
   const [usageLogs, setUsageLogs] = useState<UsageLogEntry[]>([]);
 
@@ -60,7 +62,7 @@ export const SettingsPage = (): JSX.Element => {
         : input.apiKey;
 
     if (toolLoginProvider) {
-      if (isHostedRuntime()) {
+      if (hostedRuntime) {
         toast.error(
           `${toolLoginProvider.label} is available only when Gameplan Turbo is running locally. Use OpenRouter or an API-key provider in the hosted app.`
         );
@@ -77,13 +79,17 @@ export const SettingsPage = (): JSX.Element => {
 
         if (!status.loggedIn) {
           toast.error(
-            `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` and retry.`
+            desktopRuntime
+              ? `${toolLoginProvider.label} is not logged in yet. Use ${toolLoginProvider.openLoginButtonLabel} on the provider card, finish sign-in in your browser, then retry.`
+              : `${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` and retry.`
           );
           return;
         }
       } catch {
         toast.error(
-          `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
+          desktopRuntime
+            ? `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app and try again.`
+            : `${toolLoginProvider.connectionLabel} is offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
         );
         return;
       }

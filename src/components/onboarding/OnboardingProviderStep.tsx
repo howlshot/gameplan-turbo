@@ -2,13 +2,14 @@ import type { RefObject } from "react";
 import { BrandMark } from "@/components/branding/BrandMark";
 import { CUSTOM_BASE_URL_PRESETS } from "@/lib/ai/customProviderUtils";
 import { getToolLoginProviderMeta } from "@/lib/toolLoginProviders";
-import { isHostedRuntime } from "@/lib/runtimeMode";
+import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import {
   PROVIDER_CATALOG,
   PROVIDER_ORDER,
   getProviderConnectionGroup
 } from "@/lib/ai/providerCatalog";
 import {
+  APP_LATEST_DESKTOP_RELEASE_URL,
   APP_FOLDER_PLACEHOLDER,
   APP_NAME
 } from "@/lib/brand";
@@ -56,6 +57,7 @@ export const OnboardingProviderStep = ({
     Boolean(toolLoginProvider) && isHostedRuntime();
   const supportsOAuthPkce = authMode === "oauth-pkce";
   const isCustomProvider = selectedProvider === "custom";
+  const desktopRuntime = isDesktopRuntime();
   const signInProviders = PROVIDER_ORDER.filter(
     (provider) => getProviderConnectionGroup(provider) === "sign-in"
   );
@@ -89,6 +91,16 @@ export const OnboardingProviderStep = ({
               OpenRouter and API-key providers work here. Codex and Claude Code
               need the local desktop version because they connect through local bridges.
             </p>
+            <div className="mt-4">
+              <a
+                href={APP_LATEST_DESKTOP_RELEASE_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15"
+              >
+                Download Desktop
+              </a>
+            </div>
           </div>
         ) : null}
       </div>
@@ -220,6 +232,16 @@ export const OnboardingProviderStep = ({
                       <strong> API key</strong> provider. If you want bridge-based sign-in,
                       run {APP_NAME} locally and reconnect {toolLoginProvider.label} there.
                     </p>
+                    <div className="mt-4">
+                      <a
+                        href={APP_LATEST_DESKTOP_RELEASE_URL}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15"
+                      >
+                        Download Desktop
+                      </a>
+                    </div>
                   </div>
                   <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3">
                     <p className="font-semibold text-on-surface">What works here</p>
@@ -251,24 +273,39 @@ export const OnboardingProviderStep = ({
                   </div>
                   <div className="space-y-2">
                     <p className="font-semibold text-on-surface">If the bridge did not start automatically</p>
-                    <p>1. Open Terminal.</p>
-                    <p>
-                      2. Run <code>{toolLoginProvider.loginCommand}</code>
-                    </p>
-                    <p>
-                      3. Finish the {toolLoginProvider.signInLabel} sign-in flow that opens in your browser.
-                    </p>
-                    <p>4. In Terminal, switch to your {APP_NAME} folder.</p>
-                    <p>
-                      If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
-                    </p>
-                    <p>
-                      5. Run <code>{toolLoginProvider.startCommand}</code>
-                    </p>
-                    <p>6. Leave that Terminal window open while you use the app.</p>
-                    <p>
-                      7. Come back here and click <strong>{toolLoginProvider.continueButtonLabel}</strong>.
-                    </p>
+                    {desktopRuntime ? (
+                      <>
+                        <p>1. Click <strong>{toolLoginProvider.openLoginButtonLabel}</strong>.</p>
+                        <p>
+                          2. Finish the {toolLoginProvider.signInLabel} sign-in flow that opens in your browser.
+                        </p>
+                        <p>3. Come back here and click <strong>Check Status</strong>.</p>
+                        <p>
+                          4. When the bridge is ready, click <strong>{toolLoginProvider.continueButtonLabel}</strong>.
+                        </p>
+                      </>
+                    ) : (
+                      <>
+                        <p>1. Open Terminal.</p>
+                        <p>
+                          2. Run <code>{toolLoginProvider.loginCommand}</code>
+                        </p>
+                        <p>
+                          3. Finish the {toolLoginProvider.signInLabel} sign-in flow that opens in your browser.
+                        </p>
+                        <p>4. In Terminal, switch to your {APP_NAME} folder.</p>
+                        <p>
+                          If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
+                        </p>
+                        <p>
+                          5. Run <code>{toolLoginProvider.startCommand}</code>
+                        </p>
+                        <p>6. Leave that Terminal window open while you use the app.</p>
+                        <p>
+                          7. Come back here and click <strong>{toolLoginProvider.continueButtonLabel}</strong>.
+                        </p>
+                      </>
+                    )}
                   </div>
                   <div className="rounded-xl border border-primary/15 bg-primary/5 px-4 py-3">
                     <p className="font-semibold text-on-surface">What the buttons mean</p>
@@ -291,14 +328,24 @@ export const OnboardingProviderStep = ({
                   <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3">
                     <p className="font-semibold text-on-surface">What success looks like</p>
                     <p className="mt-2">
-                      The bridge terminal should stay running, and Settings will show
-                      <strong> Bridge Ready</strong> once connected.
+                      {desktopRuntime
+                        ? (
+                            <>
+                              Settings will show <strong>Bridge Ready</strong> once the desktop-managed connection is live.
+                            </>
+                          )
+                        : (
+                            <>
+                              The bridge terminal should stay running, and Settings will show
+                              <strong> Bridge Ready</strong> once connected.
+                            </>
+                          )}
                     </p>
                   </div>
                   <p className="text-xs">
-                    If the sign-in button says it cannot reach the bridge, relaunch the
-                    desktop app first. If that still does not work, use the manual
-                    fallback steps above.
+                    {desktopRuntime
+                      ? "If the sign-in button cannot reach the bridge, relaunch the desktop app and try again."
+                      : "If the sign-in button says it cannot reach the bridge, relaunch the desktop app first. If that still does not work, use the manual fallback steps above."}
                   </p>
                 </>
               )}

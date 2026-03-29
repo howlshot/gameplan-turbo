@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
-import { APP_NAME, APP_REPOSITORY_URL } from "@/lib/brand";
+import {
+  APP_LATEST_DESKTOP_RELEASE_URL,
+  APP_NAME
+} from "@/lib/brand";
 import { isHostedRuntime } from "@/lib/runtimeMode";
 
 const HOSTED_MODE_NOTICE_STORAGE_KEY = "gameplan-turbo:hosted-mode-notice-dismissed";
@@ -98,12 +101,12 @@ export const HostedModeNotice = (): JSX.Element | null => {
             Continue in Browser
           </button>
           <a
-            href={`${APP_REPOSITORY_URL}#quick-start`}
+            href={APP_LATEST_DESKTOP_RELEASE_URL}
             target="_blank"
             rel="noreferrer"
             className="rounded-xl border border-outline-variant/15 bg-surface px-4 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high"
           >
-            Get Local Setup
+            Download Desktop
           </a>
         </div>
       </div>

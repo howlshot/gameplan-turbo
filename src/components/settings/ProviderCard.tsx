@@ -3,9 +3,13 @@ import {
   CUSTOM_BASE_URL_PRESETS
 } from "@/lib/ai/customProviderUtils";
 import { startOpenRouterOAuth } from "@/lib/ai/openRouterOAuth";
-import { APP_FOLDER_PLACEHOLDER, APP_NAME } from "@/lib/brand";
+import {
+  APP_FOLDER_PLACEHOLDER,
+  APP_LATEST_DESKTOP_RELEASE_URL,
+  APP_NAME
+} from "@/lib/brand";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
-import { isHostedRuntime } from "@/lib/runtimeMode";
+import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import { getToolLoginProviderMeta, type ToolLoginBridgeStatus } from "@/lib/toolLoginProviders";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/useToast";
@@ -56,6 +60,7 @@ export const ProviderCard = ({
   const [isBridgeReady, setIsBridgeReady] = useState<boolean | null>(null);
   const authMode = config.authMode ?? "api-key";
   const toolLoginProvider = getToolLoginProviderMeta(provider.provider);
+  const desktopRuntime = isDesktopRuntime();
   const isHostedBridgeUnavailable =
     Boolean(toolLoginProvider) && isHostedRuntime();
   const supportsOAuthPkce = authMode === "oauth-pkce";
@@ -77,7 +82,9 @@ export const ProviderCard = ({
       ? "Connected"
       : "Disconnected";
   const bridgeOfflineMessage = toolLoginProvider
-    ? `Bridge offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
+    ? desktopRuntime
+      ? "Bridge offline. Relaunch the desktop app and try again."
+      : `Bridge offline. Relaunch the desktop app or start it with \`${toolLoginProvider.startCommand}\`.`
     : "";
   const canDisconnect = Boolean(providerId);
 
@@ -131,7 +138,9 @@ export const ProviderCard = ({
       } else if (!status.loggedIn) {
         setIsBridgeReady(false);
         setBridgeStatusMessage(
-          `Bridge is online, but ${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` first.`
+          desktopRuntime
+            ? `Bridge is online, but ${toolLoginProvider.label} is not logged in yet. Use ${toolLoginProvider.openLoginButtonLabel}, finish the browser sign-in, then click Check Status.`
+            : `Bridge is online, but ${toolLoginProvider.label} is not logged in. Run \`${toolLoginProvider.loginCommand}\` first.`
         );
       } else {
         setIsBridgeReady(true);
@@ -150,7 +159,7 @@ export const ProviderCard = ({
     } finally {
       setIsCheckingBridge(false);
     }
-  }, [bridgeOfflineMessage, isHostedBridgeUnavailable, toolLoginProvider]);
+  }, [bridgeOfflineMessage, desktopRuntime, isHostedBridgeUnavailable, toolLoginProvider]);
 
   const handleToolLoginConnect = useCallback(async (): Promise<void> => {
     if (!toolLoginProvider) {
@@ -209,7 +218,9 @@ export const ProviderCard = ({
     try {
       await toolLoginProvider.openLoginFlow();
       setBridgeStatusMessage(
-        `${toolLoginProvider.label} login flow opened. Finish sign-in in the Terminal/browser window, then click Check Status.`
+        desktopRuntime
+          ? `${toolLoginProvider.label} login flow opened. Finish sign-in in the browser window, then click Check Status.`
+          : `${toolLoginProvider.label} login flow opened. Finish sign-in in the Terminal/browser window, then click Check Status.`
       );
       toast.success(`Opened the ${toolLoginProvider.label} login flow.`);
     } catch (error) {
@@ -222,7 +233,7 @@ export const ProviderCard = ({
     } finally {
       setIsStartingLogin(false);
     }
-  }, [isHostedBridgeUnavailable, toast, toolLoginProvider]);
+  }, [desktopRuntime, isHostedBridgeUnavailable, toast, toolLoginProvider]);
 
   const handleOpenRouterConnect = useCallback(async (): Promise<void> => {
     setIsStartingOAuth(true);
@@ -333,6 +344,16 @@ export const ProviderCard = ({
                     provider here, or run {APP_NAME} locally if you want to connect{" "}
                     {toolLoginProvider.label}.
                   </p>
+                  <div className="pt-2">
+                    <a
+                      href={APP_LATEST_DESKTOP_RELEASE_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15"
+                    >
+                      Download Desktop
+                    </a>
+                  </div>
                 </div>
               </>
             ) : (
@@ -342,26 +363,46 @@ export const ProviderCard = ({
                 </p>
                 <div className="space-y-2 rounded-xl border border-outline-variant/10 bg-surface px-4 py-4 text-sm leading-6 text-on-surface-variant">
                   <p className="font-semibold text-on-surface">First-time setup</p>
-                  {toolLoginProvider.launcherUsuallyStartsBridge ? (
-                    <p>
-                      If you launched {APP_NAME} from the desktop app, it will usually
-                      start this bridge for you. Use the steps below only if relaunching
-                      the app does not bring the bridge online.
-                    </p>
-                  ) : null}
-                  <p>1. Open Terminal.</p>
-                  <p>
-                    2. Run <code>{toolLoginProvider.loginCommand}</code>
-                  </p>
-                  <p>3. Finish the {toolLoginProvider.signInLabel} sign-in in your browser.</p>
-                  <p>4. Switch Terminal into your {APP_NAME} folder.</p>
-                  <p>
-                    If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
-                  </p>
-                  <p>
-                    5. Run <code>{toolLoginProvider.startCommand}</code>
-                  </p>
-                  <p>6. Leave that Terminal window open.</p>
+                  {desktopRuntime ? (
+                    <>
+                      <p>
+                        The desktop app manages the local bridge for you. You should
+                        not need Terminal for normal use.
+                      </p>
+                      <p>1. Click <strong>{toolLoginProvider.openLoginButtonLabel}</strong>.</p>
+                      <p>
+                        2. Finish the {toolLoginProvider.signInLabel} sign-in flow in your browser.
+                      </p>
+                      <p>3. Click <strong>Check Status</strong>.</p>
+                      <p>
+                        4. When the bridge is ready, click{" "}
+                        <strong>{toolLoginProvider.connectButtonLabel}</strong>.
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      {toolLoginProvider.launcherUsuallyStartsBridge ? (
+                        <p>
+                          If you launched {APP_NAME} from the desktop app, it will usually
+                          start this bridge for you. Use the steps below only if relaunching
+                          the app does not bring the bridge online.
+                        </p>
+                      ) : null}
+                      <p>1. Open Terminal.</p>
+                      <p>
+                        2. Run <code>{toolLoginProvider.loginCommand}</code>
+                      </p>
+                      <p>3. Finish the {toolLoginProvider.signInLabel} sign-in in your browser.</p>
+                      <p>4. Switch Terminal into your {APP_NAME} folder.</p>
+                      <p>
+                        If needed, run <code>cd {APP_FOLDER_PLACEHOLDER}</code>
+                      </p>
+                      <p>
+                        5. Run <code>{toolLoginProvider.startCommand}</code>
+                      </p>
+                      <p>6. Leave that Terminal window open.</p>
+                    </>
+                  )}
                 </div>
                 <div className="space-y-2 rounded-xl border border-primary/15 bg-primary/5 px-4 py-4 text-sm leading-6 text-on-surface-variant">
                   <p className="font-semibold text-on-surface">What each button does</p>
@@ -409,8 +450,14 @@ export const ProviderCard = ({
                   </button>
                 </div>
                 <p className="text-xs leading-5 text-on-surface-variant">
-                  Relaunch the desktop app first if the bridge is offline. If that does not
-                  work, start it manually with <code>{toolLoginProvider.startCommand}</code>.
+                  {desktopRuntime
+                    ? "If the bridge still looks offline, relaunch the desktop app and try again."
+                    : (
+                        <>
+                          Relaunch the desktop app first if the bridge is offline. If that does not
+                          work, start it manually with <code>{toolLoginProvider.startCommand}</code>.
+                        </>
+                      )}
                 </p>
               </>
             )}

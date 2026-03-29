@@ -27,9 +27,9 @@ describe("HostedModeNotice", () => {
       screen.getByRole("heading", { name: /You are using the browser-hosted version/i })
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Continue in Browser/i })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /Get Local Setup/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Download Desktop/i })).toHaveAttribute(
       "href",
-      expect.stringContaining("github.com/howlshot/gameplan-turbo")
+      expect.stringContaining("github.com/howlshot/gameplan-turbo/releases/latest")
     );
   });
 

@@ -1,6 +1,7 @@
 import { ProviderCard } from "@/components/settings/ProviderCard";
 import type { AIProviderSummary } from "@/hooks/useAIProviders";
 import { getProviderConnectionGroup } from "@/lib/ai/providerCatalog";
+import { APP_LATEST_DESKTOP_RELEASE_URL } from "@/lib/brand";
 import { isHostedRuntime } from "@/lib/runtimeMode";
 import type { AIProvider } from "@/types";
 
@@ -79,6 +80,16 @@ export const ProviderSettingsSection = ({
               and Claude Code use local bridges and are available when Gameplan Turbo
               is running locally.
             </p>
+            <div className="mt-4">
+              <a
+                href={APP_LATEST_DESKTOP_RELEASE_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-xl bg-primary/10 px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary transition hover:bg-primary/15"
+              >
+                Download Desktop
+              </a>
+            </div>
           </div>
         ) : null}
         <div>

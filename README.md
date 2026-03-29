@@ -34,6 +34,13 @@ AI is only required for model-generated outputs and planning-question assists.
 
 ## Quick start
 
+- Try instantly in browser: [gameplan-turbo.vercel.app](https://gameplan-turbo.vercel.app)
+- Download the macOS desktop alpha: [latest release](https://github.com/howlshot/gameplan-turbo/releases/latest)
+
+The desktop build is the easiest local path for bridge-based `Codex` and `Claude Code` integrations.
+
+## Contributor setup
+
 ```bash
 git clone https://github.com/howlshot/gameplan-turbo.git
 cd gameplan-turbo
@@ -43,7 +50,7 @@ corepack pnpm dev
 
 Open the local dev URL printed by Vite, usually [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
-If you deploy the app to Vercel or Netlify, the hosted version can be opened directly in the browser with no local install. Use local run when you want Codex or Claude Code bridge features.
+If you deploy the app to Vercel or Netlify, the hosted version can be opened directly in the browser with no local install. Use contributor local run when you are developing the app itself.
 
 ## Optional AI setup
 

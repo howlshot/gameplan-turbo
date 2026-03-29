@@ -2,18 +2,25 @@
 
 This guide covers the current open-source setup for Gameplan Turbo.
 
-## Prerequisites
+## Fastest ways to try it
+
+- Browser version: [gameplan-turbo.vercel.app](https://gameplan-turbo.vercel.app)
+- macOS desktop alpha: [latest release](https://github.com/howlshot/gameplan-turbo/releases/latest)
+
+Use the browser version if you want to evaluate the planning workflow quickly. Use the desktop build if you want local bridge integrations like `Codex` or `Claude Code`.
+
+## Contributor prerequisites
 
 - Node.js 20 or newer
 - `corepack` enabled so `pnpm` is available
 - Git
 
-Optional, only if you want login-based local-tool integrations:
+Optional, only if you want login-based local-tool integrations while developing locally:
 
 - `codex` CLI for Codex sign-in
 - `claude` CLI for Claude Code sign-in
 
-## Install and run
+## Contributor install and run
 
 ```bash
 git clone https://github.com/howlshot/gameplan-turbo.git
@@ -28,7 +35,7 @@ Open the local dev URL printed by Vite, usually [http://127.0.0.1:5173](http://1
 
 - **Browser-hosted mode** is ideal if you want to try the app quickly or share it with other people. Planning, roadmap generation, exports, OpenRouter, and API-key providers all work well there.
 - **Local desktop mode** is required for `Codex` and `Claude Code`, because those integrations use local bridges to talk to your installed CLI tools.
-- If you only want to evaluate the planning workflow first, the hosted app or a plain local dev run is enough.
+- If you only want to evaluate the planning workflow first, the hosted app is enough.
 
 ## What you can do before connecting AI
 
@@ -49,7 +56,7 @@ You only need AI when you want generated outputs or planning-question assists in
 
 ### 1. Sign in with local tools
 
-These integrations use a local bridge and do not store the tool's OAuth session in the browser app. They are available when Gameplan Turbo is running locally, not in the hosted web app.
+These integrations use a local bridge and do not store the tool's OAuth session in the browser app. They are available in the desktop build or in a contributor local run, not in the hosted web app.
 
 #### Codex
 
@@ -114,7 +121,7 @@ That means the feature you clicked is AI-backed and no default provider is conne
 
 ### A Codex or Claude bridge says it is offline
 
-If you launched the desktop app, reopen it first. If you are running the web app manually, start the bridge from the terminal:
+If you launched the desktop app, reopen it first. If you are running the contributor web app manually, start the bridge from the terminal:
 
 ```bash
 corepack pnpm codex:bridge

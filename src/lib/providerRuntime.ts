@@ -1,10 +1,10 @@
 import { isToolLoginProvider } from "@/lib/toolLoginProviders";
-import { isLocalRuntime } from "@/lib/runtimeMode";
+import { isLocalCapableRuntime } from "@/lib/runtimeMode";
 import type { AIProvider } from "@/types";
 
 export const isProviderAvailableInCurrentRuntime = (
   provider: AIProvider
-): boolean => !isToolLoginProvider(provider) || isLocalRuntime();
+): boolean => !isToolLoginProvider(provider) || isLocalCapableRuntime();
 
 export const getHostedRuntimeProviderMessage = (provider: AIProvider): string | null =>
   isToolLoginProvider(provider)
