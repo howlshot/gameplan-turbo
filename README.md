@@ -1,6 +1,6 @@
 # Gameplan Turbo
 
-Gameplan Turbo is a planning-first game development workspace for small teams and solo builders using AI tools. It helps you move from concept to design intent, build roadmap, and export-ready planning docs without turning the app into a game engine or code runner.
+Gameplan Turbo helps solo developers and small teams turn a rough game idea into a complete, usable production plan. Use it to shape the core loop, pressure-test mechanics, generate polished game-development prompts and briefs, and keep your roadmap, references, and outputs aligned as the project moves toward a playable build.
 
 ## What the app does
 
@@ -26,8 +26,26 @@ Without AI configured, you can:
 
 AI is only required for model-generated outputs and planning-question assists.
 
+## Try in browser or run locally
+
+- **Browser-hosted mode** is the fastest way to share or evaluate the app. It is great for planning, roadmap generation, exports, OpenRouter, and API-key providers.
+- **Local desktop mode** is what you want if you also need bridge-based sign-in with `Codex` or `Claude Code`.
+- Local bridge providers are intentionally not available from the hosted web app.
+
 ## Quick start
 
+- If you just want to use Gameplan Turbo, do not clone the repo. Start here:
+- Try instantly in browser: [gameplan-turbo.vercel.app](https://gameplan-turbo.vercel.app)
+- Download the macOS desktop app: [latest release](https://github.com/howlshot/gameplan-turbo/releases/latest)
+- The desktop package is the easiest path for `Codex` and `Claude Code` integrations.
+
+### Desktop package contents
+
+- `Gameplan Turbo-...dmg` for the normal macOS install flow
+- `Gameplan Turbo-...zip` as a fallback if the DMG gives you trouble
+- New desktop builds are published through GitHub Releases
+
+## Contributor setup
 ```bash
 git clone https://github.com/howlshot/gameplan-turbo.git
 cd gameplan-turbo
@@ -35,7 +53,7 @@ corepack pnpm install
 corepack pnpm dev
 ```
 
-Open [http://127.0.0.1:5173](http://127.0.0.1:5173).
+Open the local dev URL printed by Vite, usually [http://127.0.0.1:5173](http://127.0.0.1:5173).
 
 ## Optional AI setup
 
