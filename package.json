@@ -28,6 +28,9 @@
     "desktop:dev": "node scripts/desktop-dev.mjs",
     "desktop:build": "node scripts/desktop-builder.mjs --dir --mac --publish never",
     "desktop:dist": "node scripts/desktop-builder.mjs --mac dmg zip --publish never",
+    "desktop:dist:resume": "node scripts/desktop-resume-dist.mjs",
+    "desktop:notary:setup": "node scripts/setup-notary-profile.mjs",
+    "desktop:verify": "node scripts/verify-macos-release.mjs",
     "codex:bridge": "node scripts/codex-bridge.mjs",
     "claude:bridge": "node scripts/claude-bridge.mjs",
     "typecheck": "tsc -b --pretty false",
@@ -48,6 +51,7 @@
     "asarUnpack": ["scripts/*.mjs"],
     "files": ["dist/**/*", "electron-dist/**/*", "package.json", "node_modules/**/*"],
     "icon": "build-resources/gameplan-turbo.icns",
+    "afterSign": "scripts/notarize-macos-app.cjs",
     "extraResources": [
       {
         "from": "scripts",
@@ -63,6 +67,10 @@
     "mac": {
       "category": "public.app-category.developer-tools",
       "icon": "build-resources/gameplan-turbo.icns",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build-resources/entitlements.mac.plist",
+      "entitlementsInherit": "build-resources/entitlements.mac.inherit.plist",
       "target": ["dmg", "zip"]
     },
     "dmg": {

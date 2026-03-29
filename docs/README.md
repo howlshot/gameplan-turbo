@@ -7,6 +7,7 @@ This is the public docs starting point for the current Gameplan Turbo product.
 - [Getting started](getting-started/installation.md)
 - [Product overview](product-overview.md)
 - [Architecture overview](architecture-overview.md)
+- [Signing and notarization](signing-and-notarization.md)
 - [Using with Codex for game projects](using-with-codex-for-games.md)
 - [Migration from the upstream Preflight project](migration-from-preflight.md)
 
