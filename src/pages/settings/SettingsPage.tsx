@@ -16,6 +16,7 @@ import { clearAllAppData, exportAppData, getUsageLogs } from "@/lib/appData";
 import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { APP_EXPORT_FILE_NAME, APP_NAME } from "@/lib/brand";
+import type { ProviderStorageLocation } from "@/lib/providerStorage";
 import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import { getToolLoginProviderMeta } from "@/lib/toolLoginProviders";
 import { createProviderFromConfig } from "@/services/ai";
@@ -51,6 +52,7 @@ export const SettingsPage = (): JSX.Element => {
       model: string;
       baseUrl?: string;
       authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
+      rememberOnDevice?: boolean;
     }
   ): Promise<void> => {
     const existing = providers.find((item) => item.provider === input.provider);
@@ -126,6 +128,7 @@ export const SettingsPage = (): JSX.Element => {
         ? toolLoginProvider.sentinelApiKey
         : resolvedApiKey,
       authMethod: input.authMethod,
+      rememberOnDevice: input.rememberOnDevice,
       isDefault: existing?.isDefault ?? connectedCount === 0,
       model: input.model,
       baseUrl: input.baseUrl
@@ -183,13 +186,19 @@ export const SettingsPage = (): JSX.Element => {
           <ProviderSettingsSection
             connectedCount={connectedCount}
             isLoading={isProvidersLoading}
-            onDisconnectProvider={async (providerId) => {
-              await deleteProvider(providerId);
+            onDisconnectProvider={async (
+              providerId,
+              storageLocation: ProviderStorageLocation
+            ) => {
+              await deleteProvider(providerId, storageLocation);
               toast.success("Provider disconnected.");
             }}
             onSaveProvider={handleSaveProvider}
-            onSetDefault={async (providerId) => {
-              await setDefault(providerId);
+            onSetDefault={async (
+              providerId,
+              storageLocation: ProviderStorageLocation
+            ) => {
+              await setDefault(providerId, storageLocation);
               toast.success("Default provider updated.");
             }}
             providerCards={providerCards}

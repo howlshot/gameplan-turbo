@@ -8,6 +8,10 @@ import {
   APP_LATEST_DESKTOP_RELEASE_URL,
   APP_NAME
 } from "@/lib/brand";
+import {
+  isProviderStoredOnDevice,
+  type ProviderStorageLocation
+} from "@/lib/providerStorage";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
 import { getToolLoginProviderMeta, type ToolLoginBridgeStatus } from "@/lib/toolLoginProviders";
@@ -24,6 +28,7 @@ export interface ProviderCardValue {
   isDefault: boolean;
   hasKey: boolean;
   maskedKey: string;
+  storageLocation?: ProviderStorageLocation;
 }
 
 interface ProviderCardProps {
@@ -34,9 +39,16 @@ interface ProviderCardProps {
     model: string;
     baseUrl?: string;
     authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
+    rememberOnDevice?: boolean;
   }) => Promise<void>;
-  onDisconnect: (providerId: string) => Promise<void>;
-  onSetDefault: (providerId: string) => Promise<void>;
+  onDisconnect: (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ) => Promise<void>;
+  onSetDefault: (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ) => Promise<void>;
 }
 
 export const ProviderCard = ({
@@ -58,11 +70,15 @@ export const ProviderCard = ({
   const [bridgeStatusMessage, setBridgeStatusMessage] = useState("");
   const [isCheckingBridge, setIsCheckingBridge] = useState(false);
   const [isBridgeReady, setIsBridgeReady] = useState<boolean | null>(null);
+  const [rememberOnDevice, setRememberOnDevice] = useState(
+    provider.hasKey ? isProviderStoredOnDevice(provider.storageLocation ?? "device") : false
+  );
   const authMode = config.authMode ?? "api-key";
   const toolLoginProvider = getToolLoginProviderMeta(provider.provider);
   const desktopRuntime = isDesktopRuntime();
+  const hostedRuntime = isHostedRuntime();
   const isHostedBridgeUnavailable =
-    Boolean(toolLoginProvider) && isHostedRuntime();
+    Boolean(toolLoginProvider) && hostedRuntime;
   const supportsOAuthPkce = authMode === "oauth-pkce";
   const isCustomProvider = provider.provider === "custom";
   const isConnected = toolLoginProvider
@@ -88,6 +104,18 @@ export const ProviderCard = ({
     : "";
   const canDisconnect = Boolean(providerId);
 
+  useEffect(() => {
+    if (!hostedRuntime || toolLoginProvider) {
+      return;
+    }
+
+    setRememberOnDevice(
+      provider.hasKey
+        ? isProviderStoredOnDevice(provider.storageLocation ?? "device")
+        : false
+    );
+  }, [hostedRuntime, provider.hasKey, provider.storageLocation, toolLoginProvider]);
+
   const handleSave = async (): Promise<void> => {
     const value = inputRef.current?.value.trim() ?? "";
     const nextBaseUrl = baseUrlRef.current?.value.trim() ?? provider.baseUrl ?? "";
@@ -103,7 +131,8 @@ export const ProviderCard = ({
         apiKey: value,
         model: nextModel,
         baseUrl: isCustomProvider ? nextBaseUrl : undefined,
-        authMethod: "api-key"
+        authMethod: "api-key",
+        ...(hostedRuntime ? { rememberOnDevice } : {})
       });
       setIsEditing(false);
       if (inputRef.current) {
@@ -244,7 +273,8 @@ export const ProviderCard = ({
         provider: provider.provider,
         apiKey,
         model: provider.model,
-        authMethod: "oauth-pkce"
+        authMethod: "oauth-pkce",
+        ...(hostedRuntime ? { rememberOnDevice } : {})
       });
     } catch (error) {
       toast.error(
@@ -255,7 +285,15 @@ export const ProviderCard = ({
     } finally {
       setIsStartingOAuth(false);
     }
-  }, [config.label, onSave, provider.provider, toast]);
+  }, [
+    config.label,
+    hostedRuntime,
+    onSave,
+    provider.model,
+    provider.provider,
+    rememberOnDevice,
+    toast
+  ]);
 
   useEffect(() => {
     if (toolLoginProvider && !isHostedBridgeUnavailable) {
@@ -298,7 +336,10 @@ export const ProviderCard = ({
                 type="button"
                 onClick={() => {
                   if (providerId) {
-                    void onDisconnect(providerId);
+                    void onDisconnect(
+                      providerId,
+                      provider.storageLocation ?? "device"
+                    );
                   }
                 }}
                 className="rounded-full bg-surface px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] text-tertiary transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface-container-high hover:text-on-surface"
@@ -309,7 +350,12 @@ export const ProviderCard = ({
             {providerId ? (
               <button
                 type="button"
-                onClick={() => void onSetDefault(providerId)}
+                onClick={() =>
+                  void onSetDefault(
+                    providerId,
+                    provider.storageLocation ?? "device"
+                  )
+                }
                 className={cn(
                   "rounded-full px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.16em] transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
                   provider.isDefault
@@ -520,6 +566,25 @@ export const ProviderCard = ({
               placeholder={`Paste your ${config.keyLabel.toLowerCase()}`}
               className="w-full rounded-xl border border-outline-variant/15 bg-surface px-4 py-3 font-mono text-sm text-on-surface outline-none transition focus:border-primary/40"
             />
+            {hostedRuntime ? (
+              <label className="flex items-start gap-3 rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={rememberOnDevice}
+                  onChange={(event) => setRememberOnDevice(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-outline-variant/30 bg-surface-container-lowest text-primary focus:ring-primary/30"
+                />
+                <span>
+                  <span className="block font-semibold text-on-surface">
+                    Remember on this device
+                  </span>
+                  <span className="block">
+                    Leave this unchecked to keep the provider only for this browser
+                    session. It will clear when you close the hosted app.
+                  </span>
+                </span>
+              </label>
+            ) : null}
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -574,6 +639,25 @@ export const ProviderCard = ({
                 </a>
               </div>
             </div>
+            {hostedRuntime ? (
+              <label className="flex items-start gap-3 rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={rememberOnDevice}
+                  onChange={(event) => setRememberOnDevice(event.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-outline-variant/30 bg-surface-container-lowest text-primary focus:ring-primary/30"
+                />
+                <span>
+                  <span className="block font-semibold text-on-surface">
+                    Remember on this device
+                  </span>
+                  <span className="block">
+                    Leave this unchecked to keep the OpenRouter connection only for
+                    this browser session.
+                  </span>
+                </span>
+              </label>
+            ) : null}
 
             <div className="flex items-center justify-between gap-3">
               <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-on-surface-variant">
@@ -582,6 +666,7 @@ export const ProviderCard = ({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
+                aria-label={`Edit ${config.label} connection`}
                 className="rounded-full p-2 text-on-surface-variant transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface hover:text-primary"
               >
                 <span className="material-symbols-outlined text-base">vpn_key</span>
@@ -592,6 +677,13 @@ export const ProviderCard = ({
               on the card. If you already have an OpenRouter key, you can also paste it
               manually instead of using browser sign-in.
             </p>
+            {hostedRuntime && provider.hasKey ? (
+              <p className="text-xs leading-5 text-on-surface-variant">
+                {isProviderStoredOnDevice(provider.storageLocation ?? "device")
+                  ? "This provider is remembered on this device."
+                  : "This provider is active only for the current browser session."}
+              </p>
+            ) : null}
           </div>
         ) : (
           <div className="mt-4 space-y-3">
@@ -602,11 +694,19 @@ export const ProviderCard = ({
               <button
                 type="button"
                 onClick={() => setIsEditing(true)}
+                aria-label={`Edit ${config.label} connection`}
                 className="rounded-full p-2 text-on-surface-variant transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] hover:bg-surface hover:text-primary"
               >
                 <span className="material-symbols-outlined text-base">edit</span>
               </button>
             </div>
+            {hostedRuntime && provider.hasKey ? (
+              <p className="text-xs leading-5 text-on-surface-variant">
+                {isProviderStoredOnDevice(provider.storageLocation ?? "device")
+                  ? "Remembered on this device."
+                  : "Active only for this browser session."}
+              </p>
+            ) : null}
             {isCustomProvider ? (
               <div className="rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
                 <p className="font-semibold text-on-surface">OpenAI-compatible endpoint</p>

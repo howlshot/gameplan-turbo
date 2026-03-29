@@ -34,6 +34,7 @@ export const OnboardingFlow = ({
   const [isStartingToolLogin, setIsStartingToolLogin] = useState(false);
   const [isStartingOAuth, setIsStartingOAuth] = useState(false);
   const [showApiKey, setShowApiKey] = useState(false);
+  const [rememberOnDevice, setRememberOnDevice] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [validationAttempts, setValidationAttempts] = useState(0);
   const hostedRuntime = isHostedRuntime();
@@ -154,7 +155,8 @@ export const OnboardingFlow = ({
         baseUrl: selectedProvider === "custom" ? baseUrl : undefined,
         authMethod: "api-key",
         isDefault: true,
-        model
+        model,
+        ...(hostedRuntime ? { rememberOnDevice } : {})
       });
       setValidationAttempts(0);
       toast.success(`${providerConfig.label} verified.`);
@@ -233,7 +235,8 @@ export const OnboardingFlow = ({
         apiKey,
         authMethod: "oauth-pkce",
         isDefault: true,
-        model: providerConfig.defaultModel
+        model: providerConfig.defaultModel,
+        ...(hostedRuntime ? { rememberOnDevice } : {})
       });
       setValidationAttempts(0);
       toast.success("OpenRouter connected.");
@@ -274,8 +277,10 @@ export const OnboardingFlow = ({
             onStartOAuth={() => void handleStartOpenRouterOAuth()}
             onStartToolLogin={() => void handleStartToolLogin()}
             onSelectProvider={setSelectedProvider}
+            onSetRememberOnDevice={setRememberOnDevice}
             onToggleApiVisibility={() => setShowApiKey((current) => !current)}
             onVerify={() => void handleVerifyProvider()}
+            rememberOnDevice={rememberOnDevice}
             selectedProvider={selectedProvider}
             showApiKey={showApiKey}
           />

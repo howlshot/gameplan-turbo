@@ -1,7 +1,16 @@
+import { useEffect, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import db from "@/lib/db";
-import { DEFAULT_PLATFORM_LAUNCHERS } from "@/lib/db";
 import { isProviderAvailableInCurrentRuntime } from "@/lib/providerRuntime";
+import {
+  deleteStoredProviderConfig,
+  findStoredProviderConfig,
+  listStoredProviderConfigs,
+  setDefaultStoredProviderConfig,
+  subscribeToSessionProviderChanges,
+  type ProviderStorageLocation,
+  saveStoredProviderConfig
+} from "@/lib/providerStorage";
+import { isHostedRuntime } from "@/lib/runtimeMode";
 import type { AIProviderConfig } from "@/types";
 
 export interface AIProviderSummary {
@@ -14,6 +23,7 @@ export interface AIProviderSummary {
   hasKey: boolean;
   maskedKey: string;
   createdAt?: number;
+  storageLocation: ProviderStorageLocation;
 }
 
 interface SaveProviderInput {
@@ -24,6 +34,7 @@ interface SaveProviderInput {
   baseUrl?: string;
   authMethod?: AIProviderConfig["authMethod"];
   isDefault?: boolean;
+  rememberOnDevice?: boolean;
 }
 
 const maskApiKey = (apiKey: string): string => {
@@ -39,9 +50,19 @@ const maskApiKey = (apiKey: string): string => {
 };
 
 export const useAIProviders = () => {
+  const [sessionVersion, setSessionVersion] = useState(0);
+
+  useEffect(
+    () =>
+      subscribeToSessionProviderChanges(() => {
+        setSessionVersion((current) => current + 1);
+      }),
+    []
+  );
+
   const providersQuery = useLiveQuery(
     async (): Promise<AIProviderSummary[]> => {
-      const configs = await db.aiProviders.toArray();
+      const configs = await listStoredProviderConfigs();
 
       return configs.map((config) => ({
         id: config.id,
@@ -52,10 +73,11 @@ export const useAIProviders = () => {
         isDefault: config.isDefault,
         hasKey: Boolean(config.apiKey.trim()),
         maskedKey: maskApiKey(config.apiKey),
-        createdAt: config.createdAt
+        createdAt: config.createdAt,
+        storageLocation: config.storageLocation
       }));
     },
-    []
+    [sessionVersion]
   );
 
   const providers = providersQuery ?? [];
@@ -63,7 +85,13 @@ export const useAIProviders = () => {
     isProviderAvailableInCurrentRuntime(provider.provider)
   );
   const defaultProvider =
+    runtimeAvailableProviders.find(
+      (provider) => provider.isDefault && provider.storageLocation === "session"
+    ) ??
     runtimeAvailableProviders.find((provider) => provider.isDefault) ??
+    runtimeAvailableProviders.find(
+      (provider) => provider.hasKey && provider.storageLocation === "session"
+    ) ??
     runtimeAvailableProviders.find((provider) => provider.hasKey) ??
     null;
   const isLoading = providersQuery === undefined;
@@ -72,55 +100,26 @@ export const useAIProviders = () => {
     input: SaveProviderInput
   ): Promise<AIProviderConfig | null> => {
     try {
-      const existing = input.id ? await db.aiProviders.get(input.id) : null;
+      const existing = await findStoredProviderConfig({
+        id: input.id,
+        provider: input.provider
+      });
+      const storageLocation: ProviderStorageLocation =
+        isHostedRuntime() && input.rememberOnDevice !== true
+          ? "session"
+          : "device";
       const provider: AIProviderConfig = {
-        id: input.id ?? crypto.randomUUID(),
+        id: input.id ?? existing?.id ?? crypto.randomUUID(),
         provider: input.provider,
         apiKey: input.apiKey.trim() || existing?.apiKey || "",
         model: input.model,
-        isDefault: input.isDefault ?? false,
+        isDefault: input.isDefault ?? existing?.isDefault ?? false,
         baseUrl: input.baseUrl ?? existing?.baseUrl,
         authMethod: input.authMethod ?? existing?.authMethod,
         createdAt: existing?.createdAt ?? Date.now()
       };
 
-      await db.transaction("rw", db.aiProviders, db.appSettings, async () => {
-        if (provider.isDefault) {
-          // Clear existing defaults safely
-          const allProviders = await db.aiProviders.toArray();
-          for (const p of allProviders) {
-            if (p.isDefault) {
-              await db.aiProviders.update(p.id, { isDefault: false });
-            }
-          }
-        }
-
-        await db.aiProviders.put(provider);
-
-        // Update settings to track default provider
-        const settings = await db.appSettings.get("app-settings");
-        if (settings) {
-          await db.appSettings.put({
-            ...settings,
-            defaultProvider: provider.isDefault
-              ? provider.provider
-              : settings.defaultProvider,
-            updatedAt: Date.now()
-          });
-        } else {
-          // Create settings if they don't exist
-          await db.appSettings.put({
-            id: "app-settings",
-            theme: "dark",
-            defaultProvider: provider.isDefault ? provider.provider : null,
-            enabledPlatformLaunchers: DEFAULT_PLATFORM_LAUNCHERS,
-            streamingEnabled: true,
-            userName: "",
-            isOnboardingComplete: false,
-            updatedAt: Date.now()
-          });
-        }
-      });
+      await saveStoredProviderConfig(provider, storageLocation);
 
       return provider;
     } catch (error) {
@@ -129,55 +128,23 @@ export const useAIProviders = () => {
     }
   };
 
-  const deleteProvider = async (providerId: string): Promise<void> => {
+  const deleteProvider = async (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ): Promise<void> => {
     try {
-      const current = await db.aiProviders.get(providerId);
-      await db.aiProviders.delete(providerId);
-
-      if (current?.isDefault) {
-        const nextDefault = await db.aiProviders.toCollection().first();
-        if (nextDefault) {
-          await db.aiProviders.update(nextDefault.id, { isDefault: true });
-        }
-
-        const settings = await db.appSettings.get("app-settings");
-        if (settings) {
-          await db.appSettings.put({
-            ...settings,
-            defaultProvider: nextDefault?.provider ?? null,
-            updatedAt: Date.now()
-          });
-        }
-      }
+      await deleteStoredProviderConfig(providerId, storageLocation);
     } catch (error) {
       console.error("Failed to delete AI provider.", error);
     }
   };
 
-  const setDefault = async (providerId: string): Promise<void> => {
+  const setDefault = async (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ): Promise<void> => {
     try {
-      await db.transaction("rw", db.aiProviders, db.appSettings, async () => {
-        // Clear all existing defaults
-        const allProviders = await db.aiProviders.toArray();
-        for (const p of allProviders) {
-          if (p.isDefault) {
-            await db.aiProviders.update(p.id, { isDefault: false });
-          }
-        }
-
-        // Set new default
-        await db.aiProviders.update(providerId, { isDefault: true });
-
-        const provider = await db.aiProviders.get(providerId);
-        const settings = await db.appSettings.get("app-settings");
-        if (provider && settings) {
-          await db.appSettings.put({
-            ...settings,
-            defaultProvider: provider.provider,
-            updatedAt: Date.now()
-          });
-        }
-      });
+      await setDefaultStoredProviderConfig(providerId, storageLocation);
     } catch (error) {
       console.error("Failed to set default AI provider.", error);
     }

@@ -1,4 +1,5 @@
 import db from "@/lib/db";
+import { getDefaultStoredProviderConfig } from "@/lib/providerStorage";
 import { AIServiceError } from "@/services/ai/errors";
 import { executeWithRetry, sleep } from "@/services/ai/retry";
 import {
@@ -77,9 +78,7 @@ export const createProviderFromConfig = (
 };
 
 const getDefaultProviderConfig = async (): Promise<AIProviderConfig> => {
-  const provider =
-    (await db.aiProviders.filter((item) => item.isDefault).first()) ??
-    (await db.aiProviders.toCollection().first());
+  const provider = await getDefaultStoredProviderConfig();
 
   if (!provider?.apiKey.trim()) {
     throw new AIServiceError(

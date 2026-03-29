@@ -2,6 +2,7 @@ import { ProviderCard } from "@/components/settings/ProviderCard";
 import type { AIProviderSummary } from "@/hooks/useAIProviders";
 import { getProviderConnectionGroup } from "@/lib/ai/providerCatalog";
 import { APP_LATEST_DESKTOP_RELEASE_URL } from "@/lib/brand";
+import type { ProviderStorageLocation } from "@/lib/providerStorage";
 import { isHostedRuntime } from "@/lib/runtimeMode";
 import type { AIProvider } from "@/types";
 
@@ -9,15 +10,22 @@ interface ProviderSettingsSectionProps {
   connectedCount: number;
   isLoading: boolean;
   providerCards: AIProviderSummary[];
-  onDisconnectProvider: (providerId: string) => Promise<void>;
+  onDisconnectProvider: (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ) => Promise<void>;
   onSaveProvider: (input: {
     provider: AIProvider;
     apiKey: string;
     model: string;
     baseUrl?: string;
     authMethod?: "api-key" | "local-bridge" | "oauth-pkce" | "tool-login";
+    rememberOnDevice?: boolean;
   }) => Promise<void>;
-  onSetDefault: (providerId: string) => Promise<void>;
+  onSetDefault: (
+    providerId: string,
+    storageLocation: ProviderStorageLocation
+  ) => Promise<void>;
 }
 
 export const ProviderSettingsSection = ({
@@ -84,6 +92,11 @@ export const ProviderSettingsSection = ({
               Fastest browser setup: connect <strong>OpenRouter</strong> or paste an
               <strong> API key</strong>. If you specifically want Codex or Claude Code,
               download the desktop build first.
+            </p>
+            <p className="mt-2">
+              By default, hosted provider credentials stay only for the current browser
+              session. Check <strong>Remember on this device</strong> only if you want
+              the browser to keep them locally after you close the app.
             </p>
             <div className="mt-4">
               <a

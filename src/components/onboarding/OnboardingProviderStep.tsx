@@ -27,8 +27,10 @@ interface OnboardingProviderStepProps {
   onStartOAuth: () => void;
   onStartToolLogin: () => void;
   onSelectProvider: (provider: AIProvider) => void;
+  onSetRememberOnDevice: (remember: boolean) => void;
   onToggleApiVisibility: () => void;
   onVerify: () => void;
+  rememberOnDevice: boolean;
   selectedProvider: AIProvider;
   showApiKey: boolean;
 }
@@ -45,8 +47,10 @@ export const OnboardingProviderStep = ({
   onStartOAuth,
   onStartToolLogin,
   onSelectProvider,
+  onSetRememberOnDevice,
   onToggleApiVisibility,
   onVerify,
+  rememberOnDevice,
   selectedProvider,
   showApiKey
 }: OnboardingProviderStepProps): JSX.Element => {
@@ -65,6 +69,8 @@ export const OnboardingProviderStep = ({
     (provider) => getProviderConnectionGroup(provider) === "api-key"
   );
   const hostedRuntime = isHostedRuntime();
+  const shouldShowRememberPreference =
+    hostedRuntime && !toolLoginProvider;
 
   return (
     <div className="p-10">
@@ -95,14 +101,18 @@ export const OnboardingProviderStep = ({
         {hostedRuntime ? (
           <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-left">
             <p className="font-medium text-on-surface">Using the browser-hosted version?</p>
-            <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-              OpenRouter and API-key providers work here. Codex and Claude Code
-              need the desktop app because they connect through local bridges.
-            </p>
-            <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-              If your main goal is Codex or Claude Code sign-in, download the desktop
-              app first. Otherwise, stay here and choose a hosted provider or skip AI for now.
-            </p>
+              <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                OpenRouter and API-key providers work here. Codex and Claude Code
+                need the desktop app because they connect through local bridges.
+              </p>
+              <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                If your main goal is Codex or Claude Code sign-in, download the desktop
+                app first. Otherwise, stay here and choose a hosted provider or skip AI for now.
+              </p>
+              <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                Hosted providers stay only for this browser session unless you later
+                check <strong>Remember on this device</strong>.
+              </p>
             <div className="mt-4">
               <a
                 href={APP_LATEST_DESKTOP_RELEASE_URL}
@@ -514,6 +524,26 @@ export const OnboardingProviderStep = ({
             </div>
           )}
 
+          {shouldShowRememberPreference ? (
+            <label className="mt-4 flex items-start gap-3 rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
+              <input
+                type="checkbox"
+                checked={rememberOnDevice}
+                onChange={(event) => onSetRememberOnDevice(event.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-outline-variant/30 bg-surface-container-lowest text-primary focus:ring-primary/30"
+              />
+              <span>
+                <span className="block font-semibold text-on-surface">
+                  Remember on this device
+                </span>
+                <span className="block">
+                  Leave this unchecked to keep the provider only for this browser
+                  session. It will clear when you close the hosted app.
+                </span>
+              </span>
+            </label>
+          ) : null}
+
           {errorMessage ? (
             <div className="mt-4 rounded-xl border border-tertiary/20 bg-tertiary/10 px-4 py-3 text-sm text-tertiary">
               {errorMessage}
@@ -559,7 +589,11 @@ export const OnboardingProviderStep = ({
       </form>
 
       <div className="mt-6 flex flex-col gap-2 text-xs text-outline/80 md:flex-row md:items-center md:justify-between">
-        <p>Stored locally in your browser or desktop app.</p>
+        <p>
+          {hostedRuntime
+            ? "Hosted providers stay in this browser session unless you choose Remember on this device."
+            : "Stored locally in your browser or desktop app."}
+        </p>
         <p>Skip AI now and connect a provider later in Settings.</p>
       </div>
 

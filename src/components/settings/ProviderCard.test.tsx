@@ -140,7 +140,7 @@ describe("ProviderCard", () => {
     fireEvent.click(screen.getByRole("button", { name: /Disconnect/i }));
 
     await waitFor(() => {
-      expect(onDisconnect).toHaveBeenCalledWith("claude-provider");
+      expect(onDisconnect).toHaveBeenCalledWith("claude-provider", "device");
     });
   });
 
@@ -200,5 +200,51 @@ describe("ProviderCard", () => {
     });
 
     expect(screen.queryByText(/Open Terminal/i)).not.toBeInTheDocument();
+  });
+
+  it("defaults hosted API-key providers to session-only unless remember is checked", async () => {
+    mocks.hostedRuntime = true;
+    const onSave = vi.fn();
+
+    render(
+      <ProviderCard
+        provider={{
+          provider: "anthropic",
+          model: "claude-sonnet",
+          hasKey: false,
+          maskedKey: "",
+          isDefault: false,
+          storageLocation: "device"
+        }}
+        onDisconnect={vi.fn()}
+        onSave={onSave}
+        onSetDefault={vi.fn()}
+      />
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: /Edit Anthropic connection/i })
+    );
+    fireEvent.change(
+      screen.getByPlaceholderText(/Paste your .* api key/i),
+      { target: { value: "anthropic-test-key" } }
+    );
+
+    const rememberCheckbox = screen.getByRole("checkbox", {
+      name: /Remember on this device/i
+    });
+
+    expect(rememberCheckbox).not.toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: /Save/i }));
+
+    await waitFor(() => {
+      expect(onSave).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: "anthropic",
+          rememberOnDevice: false
+        })
+      );
+    });
   });
 });

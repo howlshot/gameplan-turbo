@@ -87,6 +87,10 @@ export const HostedModeNotice = (): JSX.Element | null => {
                 export planning files, or connect OpenRouter / API-key providers.
               </p>
               <p>
+                Hosted providers stay only for the current browser session unless you
+                explicitly choose <strong>Remember on this device</strong>.
+              </p>
+              <p>
                 <strong>Download Desktop</strong> if you want local bridge sign-in with Codex or Claude Code.
               </p>
               <p>

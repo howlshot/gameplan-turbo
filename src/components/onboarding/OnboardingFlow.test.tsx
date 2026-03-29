@@ -136,6 +136,32 @@ describe("OnboardingFlow", () => {
     expect(screen.getByText(/Quick Tour/i)).toBeInTheDocument();
   });
 
+  it("defaults hosted providers to session-only storage unless remember is checked", async () => {
+    mocks.hostedRuntime = true;
+    mocks.startOpenRouterOAuth.mockResolvedValue("openrouter-test-key");
+
+    render(<OnboardingFlow onComplete={mocks.onComplete} />);
+
+    fireEvent.click(screen.getByRole("button", { name: /OpenRouter/i }));
+
+    const rememberCheckbox = screen.getByRole("checkbox", {
+      name: /Remember on this device/i
+    });
+
+    expect(rememberCheckbox).not.toBeChecked();
+
+    fireEvent.click(screen.getByRole("button", { name: /Sign in with OpenRouter/i }));
+
+    await waitFor(() => {
+      expect(mocks.saveProvider).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: "openrouter",
+          rememberOnDevice: false
+        })
+      );
+    });
+  });
+
   it("lets the user connect Claude Code through the tool-login workflow", async () => {
     render(<OnboardingFlow onComplete={mocks.onComplete} />);
 
