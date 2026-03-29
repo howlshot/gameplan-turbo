@@ -10,7 +10,8 @@ export const PROJECT_LINKS = [
   { id: "technical-design", icon: "memory", label: "Technical Design" },
   { id: "vault", icon: "inventory_2", label: "Vault" },
   { id: "prompt-lab", icon: "auto_awesome", label: "Prompt Lab" },
-  { id: "output-library", icon: "folder_zip", label: "Output Library" }
+  { id: "output-library", icon: "folder_zip", label: "Output Library" },
+  { id: "visual-roadmap", icon: "timeline", label: "Visual Roadmap" }
 ] as const;
 
 export type ProjectLinkId = (typeof PROJECT_LINKS)[number]["id"];

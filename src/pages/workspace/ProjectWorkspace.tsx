@@ -68,6 +68,11 @@ const OutputLibraryPage = lazy(() =>
     default: module.OutputLibraryPage
   }))
 );
+const VisualRoadmapPage = lazy(() =>
+  import("@/pages/workspace/VisualRoadmapPage").then((module) => ({
+    default: module.VisualRoadmapPage
+  }))
+);
 
 const PageLoader = () => (
   <div className="flex h-full items-center justify-center">
@@ -92,7 +97,8 @@ const WORKSPACE_STAGES = [
   { id: "technical-design", label: "Tech" },
   { id: "vault", label: "Vault" },
   { id: "prompt-lab", label: "Prompt Lab" },
-  { id: "output-library", label: "Output Library" }
+  { id: "output-library", label: "Output Library" },
+  { id: "visual-roadmap", label: "Visual Roadmap" }
 ] as const;
 
 const STATUS_STAGE_INDEX: Record<string, number> = {
@@ -104,7 +110,7 @@ const STATUS_STAGE_INDEX: Record<string, number> = {
   production: 7,
   building: 7,
   playtesting: 8,
-  "release-prep": 9,
+  "release-prep": 10,
   shipped: 10
 };
 
@@ -227,6 +233,8 @@ export const ProjectWorkspace = (): JSX.Element => {
         <PromptLabPage />
       ) : resolvedTab === "output-library" ? (
         <OutputLibraryPage />
+      ) : resolvedTab === "visual-roadmap" ? (
+        <VisualRoadmapPage />
       ) : (
         <ConceptPage />
       )}

@@ -13,6 +13,18 @@ interface CreateBuildStageInput {
   status?: BuildStageStatus;
 }
 
+type UpdateBuildStageInput = Partial<
+  Pick<
+    BuildStage,
+    | "description"
+    | "name"
+    | "platform"
+    | "promptContent"
+    | "stageNumber"
+    | "status"
+  >
+>;
+
 const getFallbackStageKey = (stageNumber: number): BuildStageKey => {
   const defaultSequence = getBuildStageSequence("small");
   return (
@@ -74,13 +86,20 @@ export const useBuildStages = (projectId: string | undefined) => {
     stageId: string,
     status: BuildStageStatus
   ): Promise<void> => {
+    await updateStage(stageId, { status });
+  };
+
+  const updateStage = async (
+    stageId: string,
+    updates: UpdateBuildStageInput
+  ): Promise<void> => {
     try {
       await db.buildStages.update(stageId, {
-        status,
+        ...updates,
         updatedAt: Date.now()
       });
     } catch (error) {
-      console.error("Failed to update build stage status.", error);
+      console.error("Failed to update build stage.", error);
     }
   };
 
@@ -88,20 +107,56 @@ export const useBuildStages = (projectId: string | undefined) => {
     stageId: string,
     promptContent: string
   ): Promise<void> => {
-    try {
-      await db.buildStages.update(stageId, {
-        promptContent,
-        updatedAt: Date.now()
-      });
-    } catch (error) {
-      console.error("Failed to update build stage prompt.", error);
+    await updateStage(stageId, { promptContent });
+  };
+
+  const replaceStages = async (nextStages: BuildStage[]): Promise<BuildStage[]> => {
+    if (!projectId) {
+      return [];
     }
+
+    try {
+      await db.transaction("rw", db.buildStages, async () => {
+        await db.buildStages.where("projectId").equals(projectId).delete();
+        await db.buildStages.bulkPut(nextStages);
+      });
+
+      return nextStages;
+    } catch (error) {
+      console.error("Failed to replace build stages.", error);
+      return [];
+    }
+  };
+
+  const reorderStages = async (orderedStageIds: string[]): Promise<void> => {
+    if (!projectId) {
+      return;
+    }
+
+    const stageMap = new Map(stages.map((stage) => [stage.id, stage]));
+    const nextStages = orderedStageIds
+      .map((stageId) => stageMap.get(stageId))
+      .filter((stage): stage is BuildStage => Boolean(stage))
+      .map((stage, index) => ({
+        ...stage,
+        stageNumber: index + 1,
+        updatedAt: Date.now()
+      }));
+
+    if (nextStages.length !== stages.length) {
+      return;
+    }
+
+    await replaceStages(nextStages);
   };
 
   return {
     stages,
     isLoading,
     createStages,
+    replaceStages,
+    reorderStages,
+    updateStage,
     updateStageStatus,
     updateStagePrompt
   };

@@ -142,6 +142,10 @@ vi.mock("@/pages/workspace/OutputLibraryPage", () => ({
   OutputLibraryPage: () => <div>output-library-page</div>
 }));
 
+vi.mock("@/pages/workspace/VisualRoadmapPage", () => ({
+  VisualRoadmapPage: () => <div>visual-roadmap-page</div>
+}));
+
 describe("ProjectWorkspace", () => {
   it("redirects old prompt-lab library links to the output-library tab", async () => {
     locationSearch = "?tab=prompt-lab&view=library&output=risk_register";

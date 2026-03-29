@@ -56,6 +56,7 @@ export type AIProvider =
 
 export type AgentType =
   | "planning-questions"
+  | "roadmap-polish"
   | "game-pitch"
   | "mini-gdd"
   | "full-gdd"
