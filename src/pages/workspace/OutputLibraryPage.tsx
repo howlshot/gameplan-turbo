@@ -16,6 +16,7 @@ import { useProject } from "@/hooks/useProject";
 import { useToast } from "@/hooks/useToast";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
 import { getAiActionCopy } from "@/lib/ai/aiActionCopy";
+import { APP_LATEST_DESKTOP_RELEASE_URL } from "@/lib/brand";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
 import { exportPlanningPackage } from "@/lib/planningPackageExport";
 import { buildPlanningNotes } from "@/lib/planningQuestions";
@@ -222,12 +223,28 @@ export const OutputLibraryPage = (): JSX.Element => {
               Download individual files from each output panel here, or export the full planning package as a zip when you want the whole bundle together.
             </p>
             {!defaultProvider ? (
-              <p className="mt-3 rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-on-surface-variant">
-                Output generation here uses a connected AI provider. Downloads and planning-package export still work anytime, but generating a new output requires connecting a provider first.
-                {hostedRuntime
-                  ? " In the hosted app, OpenRouter and API-key providers are the fastest way to turn generation on."
-                  : ""}
-              </p>
+              <div className="mt-3 space-y-3">
+                <p className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                  Output generation here uses a connected AI provider. Downloads and planning-package export still work anytime, but generating a new output requires connecting a provider first.
+                  {hostedRuntime
+                    ? " In the hosted app, OpenRouter and API-key providers are the fastest way to turn generation on."
+                    : ""}
+                </p>
+                {hostedRuntime ? (
+                  <p className="rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                    If you want Codex or Claude Code, install the desktop build and reconnect there:{" "}
+                    <a
+                      href={APP_LATEST_DESKTOP_RELEASE_URL}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold text-primary underline decoration-primary/40 underline-offset-4"
+                    >
+                      latest desktop release
+                    </a>
+                    .
+                  </p>
+                ) : null}
+              </div>
             ) : (
               <p className="mt-3 rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-3 text-sm leading-6 text-on-surface-variant">
                 Output generation here uses your connected AI:{" "}

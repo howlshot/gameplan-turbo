@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/useToast";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
 import { getAiActionCopy } from "@/lib/ai/aiActionCopy";
 import { getPreferredAgentPlatformForProvider } from "@/lib/ai/providerCatalog";
+import { APP_LATEST_DESKTOP_RELEASE_URL } from "@/lib/brand";
 import { isLegacyLargeBuildPlan } from "@/lib/buildPlanUtils";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
 import { exportPlanningPackage } from "@/lib/planningPackageExport";
@@ -717,6 +718,20 @@ export const PromptLabPage = (): JSX.Element => {
                   ? " In the hosted app, OpenRouter and API-key providers are the fastest path."
                   : ""}
               </p>
+              {hostedRuntime ? (
+                <p className="rounded-2xl border border-primary/10 bg-primary/5 px-4 py-3 text-sm leading-6 text-on-surface-variant">
+                  Want Codex or Claude Code instead? Download the desktop app for local bridge sign-in:{" "}
+                  <a
+                    href={APP_LATEST_DESKTOP_RELEASE_URL}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-primary underline decoration-primary/40 underline-offset-4"
+                  >
+                    latest desktop release
+                  </a>
+                  .
+                </p>
+              ) : null}
             </div>
           ) : (
             <div className="mt-4 space-y-4">

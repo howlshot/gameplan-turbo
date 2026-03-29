@@ -80,7 +80,19 @@ export const HostedModeNotice = (): JSX.Element | null => {
             OpenRouter, and API-key providers.
           </p>
           <div className="rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4">
-            <p className="font-semibold text-on-surface">Need Codex or Claude Code sign-in?</p>
+            <p className="font-semibold text-on-surface">Choose the path that matches what you want to do</p>
+            <div className="mt-3 space-y-2">
+              <p>
+                <strong>Stay in browser</strong> if you want to map the game, generate the roadmap,
+                export planning files, or connect OpenRouter / API-key providers.
+              </p>
+              <p>
+                <strong>Download Desktop</strong> if you want local bridge sign-in with Codex or Claude Code.
+              </p>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+            <p className="font-semibold text-on-surface">Why desktop is separate</p>
             <p className="mt-2">
               Those local bridge sign-ins are available when you download or run the
               local desktop version of {APP_NAME}. The hosted app keeps those flows

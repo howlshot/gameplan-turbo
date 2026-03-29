@@ -80,6 +80,11 @@ export const ProviderSettingsSection = ({
               and Claude Code use local bridges and are available when Gameplan Turbo
               is running locally.
             </p>
+            <p className="mt-2">
+              Fastest browser setup: connect <strong>OpenRouter</strong> or paste an
+              <strong> API key</strong>. If you specifically want Codex or Claude Code,
+              download the desktop build first.
+            </p>
             <div className="mt-4">
               <a
                 href={APP_LATEST_DESKTOP_RELEASE_URL}

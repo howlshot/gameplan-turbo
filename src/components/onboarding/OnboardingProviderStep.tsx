@@ -83,6 +83,14 @@ export const OnboardingProviderStep = ({
             still work without AI. Connect a provider later when you want help
             generating prompts or polishing briefs.
           </p>
+          <div className="mt-4 rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
+            <p className="font-semibold text-on-surface">Best first path</p>
+            <p className="mt-2">
+              Use <strong>OpenRouter</strong> or an <strong>API key</strong> if you
+              want AI in the browser right away. Use <strong>Skip for now</strong> if
+              you just want to map the game and generate the roadmap first.
+            </p>
+          </div>
         </div>
         {hostedRuntime ? (
           <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-left">
@@ -90,6 +98,10 @@ export const OnboardingProviderStep = ({
             <p className="mt-2 text-sm leading-6 text-on-surface-variant">
               OpenRouter and API-key providers work here. Codex and Claude Code
               need the local desktop version because they connect through local bridges.
+            </p>
+            <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+              If your main goal is to use Codex or Claude Code sign-in, skip the browser
+              setup and install the desktop app first.
             </p>
             <div className="mt-4">
               <a
@@ -546,21 +558,9 @@ export const OnboardingProviderStep = ({
         </div>
       </form>
 
-      <div className="mt-6 flex flex-col gap-3 text-[10px] uppercase tracking-[0.22em] text-outline/60 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-sm">verified_user</span>
-          <span>Encrypted on-device</span>
-        </div>
-        <div className="flex gap-4">
-          <span>Privacy</span>
-          <span>Terms</span>
-        </div>
-      </div>
-
-      <div className="pointer-events-none absolute bottom-8 left-8 hidden font-mono text-[10px] uppercase tracking-[0.24em] text-primary/40 md:block">
-        <p>Latency: 24ms</p>
-        <p className="mt-1">Region: EU-WEST</p>
-        <p className="mt-1">Uptime: 99.98%</p>
+      <div className="mt-6 flex flex-col gap-2 text-xs text-outline/80 md:flex-row md:items-center md:justify-between">
+        <p>Stored locally in your browser or desktop app.</p>
+        <p>Skip AI now and connect a provider later in Settings.</p>
       </div>
 
       <div className="pointer-events-none absolute right-8 top-8 hidden text-right font-mono text-[10px] uppercase tracking-[0.24em] text-primary/40 md:block">
