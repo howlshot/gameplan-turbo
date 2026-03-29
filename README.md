@@ -4,7 +4,9 @@ Gameplan Turbo helps solo developers and small teams turn a rough game idea into
 
 ## Quick start
 
-- Try in browser: [gameplan-turbo.vercel.app](https://gameplan-turbo.vercel.app)
+If you just want to use Gameplan Turbo, do not clone the repo. Start here:
+
+- Try instantly in browser: [gameplan-turbo.vercel.app](https://gameplan-turbo.vercel.app)
 - Download the macOS desktop app: [latest release](https://github.com/howlshot/gameplan-turbo/releases/latest)
 - Contribute from source: see [Contributor setup](#contributor-setup)
 
