@@ -43,55 +43,95 @@ export const GameSectionLayout = ({
 
 interface GameFieldProps {
   children?: React.ReactNode;
+  density?: "default" | "compact";
   description?: string;
   label: string;
 }
 
 export const GameField = ({
   children,
+  density = "default",
   description,
   label
 }: GameFieldProps): JSX.Element => {
   return (
     <label className="block">
-      <span className="block text-[11px] font-semibold uppercase tracking-[0.22em] text-on-surface-variant">
+      <span
+        className={cn(
+          "block font-semibold uppercase text-on-surface-variant",
+          density === "compact"
+            ? "text-[10px] tracking-[0.2em]"
+            : "text-[11px] tracking-[0.22em]"
+        )}
+      >
         {label}
       </span>
       {description ? (
-        <span className="mt-2 block text-xs leading-5 text-outline">
+        <span
+          className={cn(
+            "block text-outline",
+            density === "compact"
+              ? "mt-1.5 text-[11px] leading-4"
+              : "mt-2 text-xs leading-5"
+          )}
+        >
           {description}
         </span>
       ) : null}
-      <div className="mt-3">{children}</div>
+      <div className={cn(density === "compact" ? "mt-2" : "mt-3")}>
+        {children}
+      </div>
     </label>
   );
 };
 
+type FieldDensity = "default" | "compact";
+
 const inputBase =
-  "w-full rounded-2xl border border-outline-variant/15 bg-surface px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary/40 focus:bg-surface-container-lowest";
+  "w-full rounded-2xl border border-outline-variant/15 bg-surface text-on-surface outline-none transition focus:border-primary/40 focus:bg-surface-container-lowest";
+
+const getInputDensityClasses = (density: FieldDensity): string =>
+  density === "compact" ? "px-3.5 py-2.5 text-sm" : "px-4 py-3 text-sm";
+
+interface DenseInputProps {
+  density?: FieldDensity;
+}
 
 export const GameTextInput = forwardRef(function GameTextInput(
   {
     className,
+    density = "default",
     ...props
-  }: InputHTMLAttributes<HTMLInputElement>,
+  }: InputHTMLAttributes<HTMLInputElement> & DenseInputProps,
   ref: ForwardedRef<HTMLInputElement>
 ): JSX.Element {
-  return <input ref={ref} {...props} className={cn(inputBase, className)} />;
+  return (
+    <input
+      ref={ref}
+      {...props}
+      className={cn(inputBase, getInputDensityClasses(density), className)}
+    />
+  );
 });
 
 export const GameTextarea = forwardRef(function GameTextarea(
   {
     className,
+    density = "default",
     ...props
-  }: TextareaHTMLAttributes<HTMLTextAreaElement>,
+  }: TextareaHTMLAttributes<HTMLTextAreaElement> & DenseInputProps,
   ref: ForwardedRef<HTMLTextAreaElement>
 ): JSX.Element {
   return (
     <textarea
       ref={ref}
       {...props}
-      className={cn(inputBase, "min-h-[140px] resize-y leading-6", className)}
+      className={cn(
+        inputBase,
+        getInputDensityClasses(density),
+        density === "compact" ? "min-h-[112px] resize-y leading-5" : "min-h-[140px] resize-y leading-6",
+        className
+      )}
     />
   );
 });
@@ -100,12 +140,17 @@ export const GameSelect = forwardRef(function GameSelect(
   {
     className,
     children,
+    density = "default",
     ...props
-  }: SelectHTMLAttributes<HTMLSelectElement>,
+  }: SelectHTMLAttributes<HTMLSelectElement> & DenseInputProps,
   ref: ForwardedRef<HTMLSelectElement>
 ): JSX.Element {
   return (
-    <select ref={ref} {...props} className={cn(inputBase, className)}>
+    <select
+      ref={ref}
+      {...props}
+      className={cn(inputBase, getInputDensityClasses(density), className)}
+    >
       {children}
     </select>
   );
@@ -117,12 +162,14 @@ interface OptionPill {
 }
 
 interface MultiSelectPillsProps {
+  density?: FieldDensity;
   onToggle: (value: string) => void;
   options: OptionPill[];
   selectedValues: string[];
 }
 
 export const MultiSelectPills = ({
+  density = "default",
   onToggle,
   options,
   selectedValues
@@ -137,7 +184,10 @@ export const MultiSelectPills = ({
             type="button"
             onClick={() => onToggle(option.value)}
             className={cn(
-              "rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] transition",
+              "rounded-full border font-semibold uppercase transition",
+              density === "compact"
+                ? "px-3 py-1.5 text-[10px] tracking-[0.16em]"
+                : "px-4 py-2 text-xs tracking-[0.18em]",
               isSelected
                 ? "border-primary/40 bg-primary/15 text-primary"
                 : "border-outline-variant/15 bg-surface text-on-surface-variant hover:border-primary/20 hover:text-on-surface"
@@ -162,7 +212,11 @@ interface ChoiceCard {
 
 interface SingleSelectCardsProps {
   cards: ChoiceCard[];
-  layoutVariant?: "default" | "modal-compact" | "starter-mode";
+  layoutVariant?:
+    | "default"
+    | "modal-compact"
+    | "mobile-compact"
+    | "starter-mode";
   onSelect: (value: string) => void;
   selectedValue: string;
 }
@@ -175,10 +229,13 @@ export const SingleSelectCards = ({
 }: SingleSelectCardsProps): JSX.Element => {
   return (
     <div
+      data-layout-variant={layoutVariant}
       className={cn(
         "grid gap-3",
         layoutVariant === "modal-compact"
           ? "grid-cols-1 md:grid-cols-2"
+          : layoutVariant === "mobile-compact"
+            ? "grid-cols-1"
           : layoutVariant === "starter-mode"
             ? "grid-cols-1 md:grid-cols-2"
           : "md:grid-cols-2 xl:grid-cols-4"
@@ -193,7 +250,10 @@ export const SingleSelectCards = ({
             type="button"
             onClick={() => onSelect(card.value)}
             className={cn(
-              "flex min-h-[168px] flex-col justify-start rounded-2xl border p-4 text-left transition",
+              "flex flex-col justify-start rounded-2xl border text-left transition",
+              layoutVariant === "mobile-compact"
+                ? "min-h-0 gap-1 px-4 py-3.5"
+                : "min-h-[168px] p-4",
               isSelected
                 ? isWarning
                   ? "border-amber-400/40 bg-amber-500/10 shadow-[0_10px_30px_rgba(0,0,0,0.18)]"
@@ -217,16 +277,32 @@ export const SingleSelectCards = ({
               className={cn(
                 "font-headline text-base font-semibold",
                 isWarning && isSelected ? "text-amber-50" : "text-on-surface",
-                card.eyebrow ? "mt-2" : ""
+                card.eyebrow
+                  ? layoutVariant === "mobile-compact"
+                    ? "mt-1"
+                    : "mt-2"
+                  : ""
               )}
             >
               {card.title}
             </p>
-            <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+            <p
+              className={cn(
+                "text-on-surface-variant",
+                layoutVariant === "mobile-compact"
+                  ? "mt-1 text-xs leading-5"
+                  : "mt-2 text-sm leading-6"
+              )}
+            >
               {card.description}
             </p>
             {card.meta && card.meta.length > 0 ? (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div
+                className={cn(
+                  "flex flex-wrap gap-2",
+                  layoutVariant === "mobile-compact" ? "mt-3" : "mt-4"
+                )}
+              >
                 {card.meta.map((meta) => (
                   <span
                     key={`${card.value}-${meta}`}

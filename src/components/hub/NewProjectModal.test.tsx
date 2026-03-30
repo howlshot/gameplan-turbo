@@ -9,7 +9,8 @@ const mocks = vi.hoisted(() => ({
   onOpenChange: vi.fn(),
   selectProject: vi.fn(),
   toastError: vi.fn(),
-  toastSuccess: vi.fn()
+  toastSuccess: vi.fn(),
+  webSurface: "desktop-web" as "desktop-web" | "mobile-web"
 }));
 
 vi.mock("react-router-dom", () => ({
@@ -35,6 +36,10 @@ vi.mock("@/hooks/useToast", () => ({
   })
 }));
 
+vi.mock("@/hooks/useWebSurface", () => ({
+  useWebSurface: () => mocks.webSurface
+}));
+
 vi.mock("@/stores/projectStore", () => ({
   useProjectStore: (
     selector: (state: { selectProject: typeof mocks.selectProject }) => unknown
@@ -48,6 +53,7 @@ describe("NewProjectModal", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.defaultProvider = null;
+    mocks.webSurface = "desktop-web";
     mocks.createProject.mockResolvedValue({
       id: "project-123"
     });
@@ -59,8 +65,12 @@ describe("NewProjectModal", () => {
   const getSubgenreSelect = (): HTMLElement =>
     screen.getByRole("combobox", { name: "Subgenre" });
 
-  it("starts on step one with title focus and preserves values when moving back", async () => {
+  const renderModal = (): void => {
     render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+  };
+
+  it("starts on step one with title focus and preserves values when moving back", async () => {
+    renderModal();
 
     const titleInput = screen.getByLabelText(/Game Title/i);
     const pitchInput = screen.getByLabelText(/One-Line Pitch/i);
@@ -93,7 +103,7 @@ describe("NewProjectModal", () => {
   });
 
   it("requires a title before continuing", () => {
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+    renderModal();
 
     fireEvent.click(
       screen.getByRole("button", { name: /Next: Production Setup/i })
@@ -106,7 +116,7 @@ describe("NewProjectModal", () => {
   });
 
   it("starts from a neutral blank baseline when no genre path is chosen", async () => {
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+    renderModal();
 
     expect(screen.getByText(/Neutral baseline/i)).toBeInTheDocument();
     expect(
@@ -137,7 +147,7 @@ describe("NewProjectModal", () => {
   });
 
   it("maps genre and subgenre selections to hidden profile recommendations", async () => {
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+    renderModal();
 
     fireEvent.change(screen.getByLabelText(/Game Title/i), {
       target: { value: "Station Nine" }
@@ -184,7 +194,7 @@ describe("NewProjectModal", () => {
   it("defaults to a single connected provider tool target when one maps cleanly", async () => {
     mocks.defaultProvider = { provider: "claude-code" };
 
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+    renderModal();
 
     fireEvent.change(screen.getByLabelText(/Game Title/i), {
       target: { value: "Station Nine" }
@@ -217,7 +227,7 @@ describe("NewProjectModal", () => {
   });
 
   it("surfaces the expanded genre families and maps new subgenres to hidden profiles", async () => {
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+    renderModal();
 
     fireEvent.change(screen.getByLabelText(/Game Title/i), {
       target: { value: "Wayfinder Drift" }
@@ -275,7 +285,7 @@ describe("NewProjectModal", () => {
   });
 
   it("maps FPS to the compact action recommendation profile", async () => {
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+    renderModal();
 
     fireEvent.change(screen.getByLabelText(/Game Title/i), {
       target: { value: "Mercury Line" }
@@ -313,7 +323,7 @@ describe("NewProjectModal", () => {
   });
 
   it("keeps manually edited production fields when the genre path changes and can reset them", async () => {
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+    renderModal();
 
     fireEvent.change(screen.getByLabelText(/Game Title/i), {
       target: { value: "Prototype Zero" }
@@ -366,7 +376,7 @@ describe("NewProjectModal", () => {
   });
 
   it("reveals the other path and submits guided custom seeds through the existing payload shape", async () => {
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+    renderModal();
 
     fireEvent.change(screen.getByLabelText(/Game Title/i), {
       target: { value: "Cipher Vault" }
@@ -431,7 +441,7 @@ describe("NewProjectModal", () => {
   });
 
   it("uses a guided engine dropdown and reveals custom input when needed", async () => {
-    render(<NewProjectModal isOpen onOpenChange={mocks.onOpenChange} />);
+    renderModal();
 
     fireEvent.change(screen.getByLabelText(/Game Title/i), {
       target: { value: "Engine Check" }
@@ -475,5 +485,80 @@ describe("NewProjectModal", () => {
         })
       );
     });
+  });
+
+  it("uses a compact progress header on mobile instead of the large step cards", () => {
+    mocks.webSurface = "mobile-web";
+
+    renderModal();
+
+    expect(screen.getByText(/Step 1 of 2/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /Core Identity/i })).toBeInTheDocument();
+    expect(screen.queryAllByText(/Step 1 of 2/i)).toHaveLength(1);
+    expect(screen.queryByText(/Title, pitch, genre\./i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Scope, platforms, tools\./i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Cancel$/i })).not.toBeInTheDocument();
+  });
+
+  it("keeps recommendation panels collapsed by default on mobile step one", () => {
+    mocks.webSurface = "mobile-web";
+
+    renderModal();
+
+    expect(
+      screen.getByRole("button", { name: /Recommendation Summary/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Recommendation Rules/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Recommended Setup/i)).not.toBeInTheDocument();
+  });
+
+  it("keeps custom genre details collapsed by default on mobile", () => {
+    mocks.webSurface = "mobile-web";
+
+    renderModal();
+
+    fireEvent.change(getGenreFamilySelect(), {
+      target: { value: "other" }
+    });
+
+    expect(screen.getByLabelText(/^Genre$/i)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Custom Details/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Subgenre$/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Player Fantasy/i)).not.toBeInTheDocument();
+  });
+
+  it("collapses the recommendation baseline and uses compact scope cards on mobile step two", () => {
+    mocks.webSurface = "mobile-web";
+
+    renderModal();
+
+    fireEvent.change(screen.getByLabelText(/Game Title/i), {
+      target: { value: "Pocket Build" }
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: /Next: Production Setup/i })
+    );
+
+    expect(
+      screen.getByRole("button", { name: /Recommendation Baseline/i })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Recommendation Profile/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/What This Workspace Optimizes For/i)).not.toBeInTheDocument();
+    expect(
+      screen
+        .getByText("Small")
+        .closest('[data-layout-variant="mobile-compact"]')
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Back$/i })).toBeInTheDocument();
+    expect(screen.getAllByText(/Step 2 of 2/i)).toHaveLength(1);
+  });
+
+  it("keeps the richer recommendation layout on desktop", () => {
+    renderModal();
+
+    expect(screen.getByText(/Recommended Setup/i)).toBeInTheDocument();
+    expect(screen.getByText(/Recommendation Rules/i)).toBeInTheDocument();
   });
 });
