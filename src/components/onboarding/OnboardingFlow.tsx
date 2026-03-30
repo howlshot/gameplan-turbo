@@ -13,6 +13,7 @@ import { getSanitizedCustomApiKey } from "@/lib/ai/customProviderUtils";
 import { getGenerationErrorState } from "@/lib/generationErrors";
 import { PROVIDER_CATALOG } from "@/lib/ai/providerCatalog";
 import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
+import { useWebSurface } from "@/hooks/useWebSurface";
 import { createProviderFromConfig } from "@/services/ai";
 import { useToast } from "@/hooks/useToast";
 import type { AIProvider } from "@/types";
@@ -39,6 +40,8 @@ export const OnboardingFlow = ({
   const [validationAttempts, setValidationAttempts] = useState(0);
   const hostedRuntime = isHostedRuntime();
   const desktopRuntime = isDesktopRuntime();
+  const surface = useWebSurface();
+  const isMobileSurface = surface === "mobile-web";
   const apiKeyRef = useRef<HTMLInputElement>(null);
   const baseUrlRef = useRef<HTMLInputElement>(null);
   const modelRef = useRef<HTMLInputElement>(null);
@@ -254,13 +257,21 @@ export const OnboardingFlow = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-surface-dim/80 px-4 backdrop-blur-sm">
+    <div
+      className={`fixed inset-0 z-[100] bg-surface-dim/80 backdrop-blur-sm ${
+        isMobileSurface ? "flex items-end px-0" : "flex items-center justify-center px-4"
+      }`}
+    >
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-label="Gameplan Turbo onboarding"
-        className="glass-panel noise-texture relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-outline-variant/15 bg-surface-container"
+        className={`glass-panel noise-texture relative w-full border border-outline-variant/15 bg-surface-container ${
+          isMobileSurface
+            ? "h-[100dvh] max-h-[100dvh] overflow-y-auto rounded-none"
+            : "max-h-[90vh] max-w-2xl overflow-y-auto rounded-2xl"
+        }`}
       >
         <OnboardingProgress step={step} />
 

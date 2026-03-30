@@ -11,6 +11,7 @@ import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
 import { useProjects } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/useToast";
+import { useWebSurface } from "@/hooks/useWebSurface";
 import {
   getProjectPhaseRecommendation,
   getProjectStatusLabel
@@ -127,6 +128,8 @@ export const ProjectWorkspace = (): JSX.Element => {
   const setActiveTab = useUIStore((state) => state.setActiveTab);
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
+  const surface = useWebSurface();
+  const isMobileSurface = surface === "mobile-web";
   const urlTab = getProjectTabFromSearch(location.search);
   const resolvedTab = urlTab ?? activeTab;
 
@@ -252,8 +255,8 @@ export const ProjectWorkspace = (): JSX.Element => {
   };
 
   return (
-    <section className="-mx-6 -my-8 flex min-h-[calc(100vh-3.5rem)] flex-col">
-      <div className="sticky top-0 z-30 border-b border-outline-variant/10 bg-surface/80 px-8 py-4 backdrop-blur-md">
+    <section className="-mx-4 -my-4 flex min-h-[calc(100vh-3.5rem)] flex-col sm:-mx-6 sm:-my-8">
+      <div className="sticky top-0 z-30 border-b border-outline-variant/10 bg-surface/80 px-4 py-4 backdrop-blur-md sm:px-8">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm text-on-surface-variant">
@@ -298,7 +301,7 @@ export const ProjectWorkspace = (): JSX.Element => {
               </div>
             ) : null}
 
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-4 hidden flex-wrap gap-2 sm:flex">
               {WORKSPACE_STAGES.map((stage, index) => {
                 const isCompleted = index < currentStageIndex;
                 const isCurrent = index === currentStageIndex;
@@ -322,12 +325,53 @@ export const ProjectWorkspace = (): JSX.Element => {
                 );
               })}
             </div>
+
+            <div className="mt-4 space-y-3 sm:hidden">
+              <div className="rounded-2xl border border-outline-variant/10 bg-surface-container/80 px-4 py-4">
+                <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary">
+                  Project section
+                </p>
+                <select
+                  value={resolvedTab}
+                  onChange={(event) =>
+                    navigateToStage(
+                      event.target.value as (typeof WORKSPACE_STAGES)[number]["id"]
+                    )
+                  }
+                  className="mt-3 w-full rounded-2xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm text-on-surface outline-none transition focus:border-primary/40"
+                >
+                  {WORKSPACE_STAGES.map((stage) => (
+                    <option key={stage.id} value={stage.id}>
+                      {stage.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => navigateToStage("prompt-lab")}
+                    className="rounded-2xl border border-outline-variant/10 bg-surface px-3 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high"
+                  >
+                    Roadmap
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => navigateToStage("output-library")}
+                    className="rounded-2xl border border-outline-variant/10 bg-surface px-3 py-3 text-sm font-semibold text-on-surface transition hover:bg-surface-container-high"
+                  >
+                    Outputs
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <button
             type="button"
             onClick={() => setIsSelectorOpen((current) => !current)}
-            className="rounded-xl border border-outline-variant/15 bg-surface-container px-4 py-3 text-sm text-on-surface transition hover:bg-surface-container-high"
+            className={`rounded-xl border border-outline-variant/15 bg-surface-container px-4 py-3 text-sm text-on-surface transition hover:bg-surface-container-high ${
+              isMobileSurface ? "w-full" : ""
+            }`}
           >
             Context Nodes
           </button>

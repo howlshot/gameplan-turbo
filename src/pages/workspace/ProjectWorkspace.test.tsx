@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ProjectWorkspace } from "@/pages/workspace/ProjectWorkspace";
 
 const navigate = vi.fn();
@@ -7,6 +7,7 @@ let locationSearch = "?tab=prompt-lab&view=library&output=risk_register";
 const updateProject = vi.fn();
 const successToast = vi.fn();
 let projectStatus = "concept";
+let webSurface = "desktop-web";
 
 vi.mock("react-router-dom", () => ({
   useLocation: () => ({ pathname: "/project/project-1", search: locationSearch }),
@@ -89,6 +90,10 @@ vi.mock("@/hooks/useToast", () => ({
   })
 }));
 
+vi.mock("@/hooks/useWebSurface", () => ({
+  useWebSurface: () => webSurface
+}));
+
 vi.mock("@/stores/uiStore", () => ({
   useUIStore: (selector: (state: unknown) => unknown) =>
     selector({
@@ -147,6 +152,10 @@ vi.mock("@/pages/workspace/VisualRoadmapPage", () => ({
 }));
 
 describe("ProjectWorkspace", () => {
+  beforeEach(() => {
+    webSurface = "desktop-web";
+  });
+
   it("redirects old prompt-lab library links to the output-library tab", async () => {
     locationSearch = "?tab=prompt-lab&view=library&output=risk_register";
     render(<ProjectWorkspace />);
@@ -173,5 +182,16 @@ describe("ProjectWorkspace", () => {
         status: "production"
       });
     });
+  });
+
+  it("shows a compact project-section picker on the mobile surface", () => {
+    locationSearch = "?tab=output-library";
+    webSurface = "mobile-web";
+
+    render(<ProjectWorkspace />);
+
+    expect(screen.getByText("Project section")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Roadmap" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Outputs" })).toBeInTheDocument();
   });
 });

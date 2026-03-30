@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
+import { useWebSurface } from "@/hooks/useWebSurface";
 import {
   APP_LATEST_DESKTOP_RELEASE_URL,
   APP_NAME
@@ -17,6 +18,8 @@ const dismissHostedNotice = (): void => {
 
 export const HostedModeNotice = (): JSX.Element | null => {
   const [isOpen, setIsOpen] = useState(false);
+  const surface = useWebSurface();
+  const isMobileSurface = surface === "mobile-web";
   const dialogRef = useDialogAccessibility<HTMLDivElement>(isOpen, () => {
     dismissHostedNotice();
     setIsOpen(false);
@@ -36,7 +39,9 @@ export const HostedModeNotice = (): JSX.Element | null => {
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-surface-dim/80 px-4 backdrop-blur-sm"
+      className={`fixed inset-0 z-[110] bg-surface-dim/80 backdrop-blur-sm ${
+        isMobileSurface ? "flex items-end px-0" : "flex items-center justify-center px-4"
+      }`}
       onClick={() => {
         dismissHostedNotice();
         setIsOpen(false);
@@ -47,7 +52,11 @@ export const HostedModeNotice = (): JSX.Element | null => {
         role="dialog"
         aria-modal="true"
         aria-labelledby="hosted-mode-title"
-        className="glass-panel w-full max-w-2xl rounded-2xl border border-outline-variant/15 bg-surface-container p-6"
+        className={`glass-panel w-full border border-outline-variant/15 bg-surface-container ${
+          isMobileSurface
+            ? "max-h-[92vh] overflow-y-auto rounded-t-[28px] px-4 pb-6 pt-5"
+            : "max-w-2xl rounded-2xl p-6"
+        }`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4">
@@ -57,7 +66,9 @@ export const HostedModeNotice = (): JSX.Element | null => {
             </p>
             <h2
               id="hosted-mode-title"
-              className="mt-2 font-headline text-2xl font-semibold text-on-surface"
+              className={`mt-2 font-headline font-semibold text-on-surface ${
+                isMobileSurface ? "text-xl" : "text-2xl"
+              }`}
             >
               You are using the browser-hosted version
             </h2>
@@ -74,7 +85,7 @@ export const HostedModeNotice = (): JSX.Element | null => {
           </button>
         </div>
 
-        <div className="mt-6 space-y-4 text-sm leading-6 text-on-surface-variant">
+        <div className="mt-5 space-y-4 text-sm leading-6 text-on-surface-variant">
           <p>
             This version is great for planning, roadmap generation, exports,
             OpenRouter, and API-key providers.
@@ -108,7 +119,7 @@ export const HostedModeNotice = (): JSX.Element | null => {
           </div>
         </div>
 
-        <div className="mt-6 flex flex-wrap items-center gap-3">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <button
             type="button"
             onClick={() => {

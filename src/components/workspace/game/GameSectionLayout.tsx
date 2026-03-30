@@ -22,13 +22,13 @@ export const GameSectionLayout = ({
   title
 }: GameSectionLayoutProps): JSX.Element => {
   return (
-    <section className="mx-auto max-w-6xl px-6 py-8">
-      <div className="rounded-[28px] border border-outline-variant/10 bg-surface-container p-6 shadow-[0_20px_80px_rgba(0,0,0,0.25)]">
+    <section className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-8">
+      <div className="rounded-[24px] border border-outline-variant/10 bg-surface-container p-4 shadow-[0_20px_80px_rgba(0,0,0,0.25)] sm:rounded-[28px] sm:p-6">
         <div className="max-w-3xl">
           <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-primary">
             {eyebrow}
           </p>
-          <h1 className="mt-3 font-headline text-4xl font-bold tracking-tight text-on-surface">
+          <h1 className="mt-3 font-headline text-3xl font-bold tracking-tight text-on-surface sm:text-4xl">
             {title}
           </h1>
           <p className="mt-3 text-sm leading-6 text-on-surface-variant">

@@ -15,6 +15,7 @@ import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
 import { useToast } from "@/hooks/useToast";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
+import { useWebSurface } from "@/hooks/useWebSurface";
 import { getAiActionCopy } from "@/lib/ai/aiActionCopy";
 import { APP_LATEST_DESKTOP_RELEASE_URL } from "@/lib/brand";
 import { getAgentPlatformLabel } from "@/lib/gameProjectUtils";
@@ -51,6 +52,7 @@ export const OutputLibraryPage = (): JSX.Element => {
   const { files } = useVaultFiles(projectId);
   const { artifacts, createArtifact, getLatestByType } = useArtifacts(projectId);
   const { defaultProvider } = useAIProviders();
+  const surface = useWebSurface();
   const promptLabSession = usePromptLabSessionStore((state) =>
     projectId ? state.sessions[projectId] : undefined
   );
@@ -78,6 +80,7 @@ export const OutputLibraryPage = (): JSX.Element => {
   );
   const activeOutput = getActiveOutputFromSearch(location.search);
   const hostedRuntime = isHostedRuntime();
+  const isMobileSurface = surface === "mobile-web";
   const [streamingByType, setStreamingByType] = useState<
     Partial<Record<ArtifactType, string>>
   >({});
@@ -210,6 +213,20 @@ export const OutputLibraryPage = (): JSX.Element => {
       title="Output Library"
       description="Generate the individual planning documents, prompts, and export bundles that support the roadmap."
     >
+      {isMobileSurface ? (
+        <section className="mb-6 rounded-3xl border border-outline-variant/10 bg-surface p-5">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">
+            Mobile Output Flow
+          </p>
+          <h2 className="mt-2 font-headline text-2xl font-semibold text-on-surface">
+            Open one output at a time
+          </h2>
+          <p className="mt-3 text-sm leading-6 text-on-surface-variant">
+            Pick a single document, generate it when needed, then download or export the full planning package when you are ready.
+          </p>
+        </section>
+      ) : null}
+
       <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]">
         <div className="space-y-4">
           <div className="rounded-3xl border border-outline-variant/10 bg-surface p-4">

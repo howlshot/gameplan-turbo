@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getProjectTabPath } from "@/components/layout/sidebarConfig";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
 import { useAIProviders } from "@/hooks/useAIProviders";
+import { useWebSurface } from "@/hooks/useWebSurface";
 import { useProjects } from "@/hooks/useProjects";
 import { useToast } from "@/hooks/useToast";
 import { useProjectStore } from "@/stores/projectStore";
@@ -139,6 +140,8 @@ export const NewProjectModal = ({
   const navigate = useNavigate();
   const { createProject } = useProjects();
   const { defaultProvider } = useAIProviders();
+  const surface = useWebSurface();
+  const isMobileSurface = surface === "mobile-web";
   const toast = useToast();
   const selectProject = useProjectStore((state) => state.selectProject);
 
@@ -572,7 +575,11 @@ export const NewProjectModal = ({
 
   const modal = (
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center overscroll-contain bg-surface-dim/80 px-4 py-6 backdrop-blur-sm"
+      className={`fixed inset-0 z-[80] overscroll-contain bg-surface-dim/80 backdrop-blur-sm ${
+        isMobileSurface
+          ? "flex items-end justify-center px-0 py-0"
+          : "flex items-center justify-center px-4 py-6"
+      }`}
       onClick={closeModal}
     >
       <div
@@ -580,10 +587,14 @@ export const NewProjectModal = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="new-project-title"
-        className="glass-panel flex max-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col overflow-hidden overscroll-contain rounded-3xl border border-outline-variant/15 bg-surface-container shadow-2xl"
+        className={`glass-panel flex w-full flex-col overflow-hidden overscroll-contain border border-outline-variant/15 bg-surface-container shadow-2xl ${
+          isMobileSurface
+            ? "h-[100dvh] max-h-[100dvh] rounded-none"
+            : "max-h-[calc(100vh-3rem)] max-w-6xl rounded-3xl"
+        }`}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="border-b border-outline-variant/10 bg-surface-container px-6 py-3">
+        <div className="border-b border-outline-variant/10 bg-surface-container px-4 py-3 sm:px-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0 max-w-3xl flex-1">
               <p className="font-mono text-xs uppercase tracking-[0.22em] text-primary">
@@ -591,7 +602,7 @@ export const NewProjectModal = ({
               </p>
               <h2
                 id="new-project-title"
-                className="mt-2 font-headline text-2xl font-bold tracking-tight text-on-surface"
+                className="mt-2 font-headline text-xl font-bold tracking-tight text-on-surface sm:text-2xl"
               >
                 Start a new game design workspace
               </h2>
@@ -637,7 +648,7 @@ export const NewProjectModal = ({
           </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
           {step === 1 ? (
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
               <div className="space-y-4">
@@ -1086,7 +1097,7 @@ export const NewProjectModal = ({
           )}
         </div>
 
-        <div className="border-t border-outline-variant/10 bg-surface-container px-6 py-3.5">
+        <div className="sticky bottom-0 border-t border-outline-variant/10 bg-surface-container/95 px-4 py-3.5 backdrop-blur-xl sm:px-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">

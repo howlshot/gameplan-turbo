@@ -6,11 +6,11 @@ export const ProjectHubEmptyState = ({
   onCreateProject
 }: ProjectHubEmptyStateProps): JSX.Element => {
   return (
-    <div className="py-24 text-center">
+    <div className="py-16 text-center sm:py-24">
       <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/10 text-primary/40">
         <span className="material-symbols-outlined text-5xl">stadia_controller</span>
       </div>
-      <h2 className="mt-6 font-headline text-[28px] font-bold text-on-surface">
+      <h2 className="mt-6 font-headline text-2xl font-bold text-on-surface sm:text-[28px]">
         No game projects yet.
       </h2>
       <p className="mt-3 text-outline">
@@ -24,7 +24,7 @@ export const ProjectHubEmptyState = ({
         Create your first game project
       </button>
 
-      <div className="mt-12 grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="mt-10 grid grid-cols-1 gap-4 md:mt-12 md:grid-cols-3">
         {[
           ["Concept to GDD", "Turn a vague idea into a pitch, mini GDD, or full GDD."],
           ["Stage-by-Stage Build", "Generate a sane order of work for first playable, content slice, and polish."],

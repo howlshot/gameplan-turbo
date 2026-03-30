@@ -83,7 +83,7 @@ const OutputPanelComponent = ({
         </div>
 
         {hasContent && !isStreaming ? (
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             {platforms.length > 0 ? <PlatformLaunchers platforms={platforms} /> : null}
             <CopyButton text={resolvedContent} size="sm" />
             <button
