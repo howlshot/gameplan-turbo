@@ -118,14 +118,14 @@ export const ProjectHub = (): JSX.Element => {
 
   return (
     <>
-      <section className="mx-auto w-full max-w-7xl px-8 py-10">
-        <div className="rounded-[32px] border border-outline-variant/10 bg-surface-container px-8 py-8 shadow-[0_24px_80px_rgba(0,0,0,0.25)]">
+      <section className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-8 sm:py-10">
+        <div className="rounded-[28px] border border-outline-variant/10 bg-surface-container px-4 py-5 shadow-[0_24px_80px_rgba(0,0,0,0.25)] sm:rounded-[32px] sm:px-8 sm:py-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
               <p className="font-mono text-xs uppercase tracking-[0.24em] text-primary">
                 Game Hub
               </p>
-              <h1 className="mt-3 font-headline text-5xl font-bold tracking-tighter text-on-surface">
+              <h1 className="mt-3 font-headline text-3xl font-bold tracking-tighter text-on-surface sm:text-5xl">
                 {settings?.userName?.trim()
                   ? `${settings.userName.trim()}, build the game before the scope drifts.`
                   : "Build the game before the scope drifts."}
@@ -136,7 +136,7 @@ export const ProjectHub = (): JSX.Element => {
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="grid w-full gap-3 sm:flex sm:flex-wrap lg:w-auto">
               {isBatchMode ? (
                 <>
                   <button

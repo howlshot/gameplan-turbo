@@ -4,6 +4,7 @@ import {
   PROJECT_LINKS,
   type ProjectLinkId
 } from "@/components/layout/sidebarConfig";
+import { useWebSurface } from "@/hooks/useWebSurface";
 import { useUIStore } from "@/stores/uiStore";
 
 interface WorkspacePageNavigationProps {
@@ -16,6 +17,7 @@ export const WorkspacePageNavigation = ({
   const navigate = useNavigate();
   const { projectId } = useParams();
   const setActiveTab = useUIStore((state) => state.setActiveTab);
+  const surface = useWebSurface();
 
   const currentIndex = PROJECT_LINKS.findIndex((link) => link.id === currentTabId);
   const previousLink =
@@ -41,7 +43,10 @@ export const WorkspacePageNavigation = ({
           Saved automatically
         </p>
         <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-          Continue when you are ready. You can still jump anywhere from the sidebar.
+          Continue when you are ready.{" "}
+          {surface === "mobile-web"
+            ? "Use the project section picker or bottom navigation to jump around."
+            : "You can still jump anywhere from the sidebar."}
         </p>
       </div>
 

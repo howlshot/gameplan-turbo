@@ -25,7 +25,7 @@ export const ProjectHubControls = ({
 }: ProjectHubControlsProps): JSX.Element => {
   return (
     <div className="mt-10 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex flex-wrap gap-2">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {FILTER_OPTIONS.map((option) => {
           const isActive = filter === option.value;
 
@@ -35,7 +35,7 @@ export const ProjectHubControls = ({
               type="button"
               onClick={() => onChangeFilter(option.value)}
               className={cn(
-                "rounded-full border px-4 py-2 text-xs font-medium transition",
+                "shrink-0 rounded-full border px-4 py-2 text-xs font-medium transition",
                 isActive
                   ? "border-primary/30 bg-primary/15 text-primary"
                   : "border-transparent bg-surface-container text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"

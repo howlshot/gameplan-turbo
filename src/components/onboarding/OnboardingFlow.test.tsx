@@ -5,6 +5,7 @@ import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
 const mocks = vi.hoisted(() => ({
   hostedRuntime: false,
   desktopRuntime: false,
+  webSurface: "desktop-web" as "desktop-web" | "mobile-web",
   onComplete: vi.fn(),
   saveProvider: vi.fn(),
   toastError: vi.fn(),
@@ -50,6 +51,10 @@ vi.mock("@/lib/runtimeMode", () => ({
   isHostedRuntime: () => mocks.hostedRuntime
 }));
 
+vi.mock("@/hooks/useWebSurface", () => ({
+  useWebSurface: () => mocks.webSurface
+}));
+
 vi.mock("@/services/ai", () => ({
   createProviderFromConfig: vi.fn(async () => ({
     validateKey: mocks.validateKey
@@ -79,6 +84,7 @@ describe("OnboardingFlow", () => {
     vi.clearAllMocks();
     mocks.hostedRuntime = false;
     mocks.desktopRuntime = false;
+    mocks.webSurface = "desktop-web";
     mocks.updateSettings.mockResolvedValue(null);
     mocks.validateKey.mockResolvedValue(true);
     mocks.fetchCodexBridgeStatus.mockResolvedValue({
@@ -186,6 +192,31 @@ describe("OnboardingFlow", () => {
     });
 
     expect(screen.getByText(/Quick Tour/i)).toBeInTheDocument();
+  });
+
+  it("uses the mobile provider path selector on the mobile web surface", async () => {
+    mocks.webSurface = "mobile-web";
+
+    render(<OnboardingFlow onComplete={mocks.onComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Stay in browser/i })).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("button", { name: /Anthropic/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Codex \(ChatGPT login\)/i })
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Use desktop sign-in/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Codex \(ChatGPT login\)/i })
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.queryByRole("button", { name: /Anthropic/i })).not.toBeInTheDocument();
   });
 
   it("marks Claude Code as local-only in the hosted app", async () => {

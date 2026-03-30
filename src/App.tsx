@@ -109,7 +109,7 @@ const App = (): JSX.Element => {
     <ToastProvider>
       <ErrorBoundary>
         {appRoutes}
-        <HostedModeNotice />
+        {phase !== "onboarding" ? <HostedModeNotice /> : null}
         {phase === "onboarding" ? (
           <OnboardingFlow
             onComplete={async () => {

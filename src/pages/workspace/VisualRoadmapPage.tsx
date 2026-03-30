@@ -128,7 +128,7 @@ export const VisualRoadmapPage = (): JSX.Element => {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <button
               type="button"
               onClick={() =>

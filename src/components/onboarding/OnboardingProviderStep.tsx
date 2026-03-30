@@ -1,8 +1,9 @@
-import type { RefObject } from "react";
+import { useEffect, useState, type RefObject } from "react";
 import { BrandMark } from "@/components/branding/BrandMark";
 import { CUSTOM_BASE_URL_PRESETS } from "@/lib/ai/customProviderUtils";
 import { getToolLoginProviderMeta } from "@/lib/toolLoginProviders";
 import { isDesktopRuntime, isHostedRuntime } from "@/lib/runtimeMode";
+import { useWebSurface } from "@/hooks/useWebSurface";
 import {
   PROVIDER_CATALOG,
   PROVIDER_ORDER,
@@ -13,6 +14,7 @@ import {
   APP_FOLDER_PLACEHOLDER,
   APP_NAME
 } from "@/lib/brand";
+import { cn } from "@/lib/utils";
 import type { AIProvider } from "@/types";
 
 interface OnboardingProviderStepProps {
@@ -57,6 +59,8 @@ export const OnboardingProviderStep = ({
   const providerConfig = PROVIDER_CATALOG[selectedProvider];
   const authMode = providerConfig.authMode ?? "api-key";
   const toolLoginProvider = getToolLoginProviderMeta(selectedProvider);
+  const surface = useWebSurface();
+  const isMobileSurface = surface === "mobile-web";
   const isHostedBridgeUnavailable =
     Boolean(toolLoginProvider) && isHostedRuntime();
   const supportsOAuthPkce = authMode === "oauth-pkce";
@@ -71,18 +75,25 @@ export const OnboardingProviderStep = ({
   const hostedRuntime = isHostedRuntime();
   const shouldShowRememberPreference =
     hostedRuntime && !toolLoginProvider;
+  const [mobileConnectionGroup, setMobileConnectionGroup] = useState<
+    "api-key" | "sign-in"
+  >(getProviderConnectionGroup(selectedProvider));
+
+  useEffect(() => {
+    setMobileConnectionGroup(getProviderConnectionGroup(selectedProvider));
+  }, [selectedProvider]);
 
   return (
-    <div className="p-10">
+    <div className="relative px-4 py-6 sm:p-10">
       <div className="text-center">
-        <h1 className="font-headline text-4xl font-bold tracking-tight text-on-surface">
+        <h1 className="font-headline text-3xl font-bold tracking-tight text-on-surface sm:text-4xl">
           Connect your AI provider
         </h1>
         <p className="mt-3 text-on-surface-variant">
           AI setup is optional. You can explore {APP_NAME}, generate the build
           roadmap, and come back to connect AI later in Settings.
         </p>
-        <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-primary/15 bg-primary/5 px-5 py-4 text-left">
+        <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 text-left sm:px-5">
           <p className="font-medium text-on-surface">Just exploring first?</p>
           <p className="mt-2 text-sm leading-6 text-on-surface-variant">
             Skip this step for now. Planning, roadmap generation, and tracking
@@ -99,7 +110,7 @@ export const OnboardingProviderStep = ({
           </div>
         </div>
         {hostedRuntime ? (
-          <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-5 py-4 text-left">
+          <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-4 text-left sm:px-5">
             <p className="font-medium text-on-surface">Using the browser-hosted version?</p>
               <p className="mt-2 text-sm leading-6 text-on-surface-variant">
                 OpenRouter and API-key providers work here. Codex and Claude Code
@@ -128,7 +139,7 @@ export const OnboardingProviderStep = ({
       </div>
 
       <form
-        className="mt-10"
+        className="mt-8 sm:mt-10"
         onSubmit={(event) => {
           event.preventDefault();
           onVerify();
@@ -137,12 +148,58 @@ export const OnboardingProviderStep = ({
         <label className="mb-4 block font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
           Select Provider
         </label>
+        {isMobileSurface ? (
+          <div className="mb-6 rounded-2xl border border-outline-variant/10 bg-surface px-4 py-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-primary">
+              Choose path
+            </p>
+            <div className="mt-4 grid gap-3">
+              <button
+                type="button"
+                onClick={() => setMobileConnectionGroup("api-key")}
+                className={cn(
+                  "rounded-2xl border px-4 py-4 text-left transition",
+                  mobileConnectionGroup === "api-key"
+                    ? "border-primary/30 bg-primary/10"
+                    : "border-outline-variant/10 bg-surface-container-lowest"
+                )}
+              >
+                <p className="font-semibold text-on-surface">Stay in browser</p>
+                <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                  Use OpenRouter or an API-key provider for the fastest mobile setup.
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileConnectionGroup("sign-in")}
+                className={cn(
+                  "rounded-2xl border px-4 py-4 text-left transition",
+                  mobileConnectionGroup === "sign-in"
+                    ? "border-primary/30 bg-primary/10"
+                    : "border-outline-variant/10 bg-surface-container-lowest"
+                )}
+              >
+                <p className="font-semibold text-on-surface">Use desktop sign-in</p>
+                <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                  Choose this only if you want Codex or Claude Code and are ready to switch to the desktop app.
+                </p>
+              </button>
+            </div>
+          </div>
+        ) : null}
+
         <div className="space-y-6">
-          <div>
+          {!isMobileSurface || mobileConnectionGroup === "sign-in" ? (
+            <div>
             <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
               Sign in
             </p>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <div
+              className={cn(
+                "grid gap-3",
+                isMobileSurface ? "grid-cols-1" : "grid-cols-2 md:grid-cols-3"
+              )}
+            >
               {signInProviders.map((provider) => {
                 const item = PROVIDER_CATALOG[provider];
                 const isSelected = provider === selectedProvider;
@@ -152,11 +209,13 @@ export const OnboardingProviderStep = ({
                     key={provider}
                     type="button"
                     onClick={() => onSelectProvider(provider)}
-                    className={`rounded-xl border p-4 text-center transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                    className={cn(
+                      "rounded-xl border p-4 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                      isMobileSurface ? "flex items-center gap-4 text-left" : "text-center",
                       isSelected
                         ? "border-primary bg-primary/10 text-on-surface"
                         : "border-outline-variant/20 bg-surface-container-lowest text-on-surface-variant"
-                    }`}
+                    )}
                   >
                     <span
                       className={`material-symbols-outlined text-3xl ${
@@ -165,18 +224,27 @@ export const OnboardingProviderStep = ({
                     >
                       {item.icon}
                     </span>
-                    <p className="mt-3 font-headline text-sm font-semibold">{item.label}</p>
+                    <p className={cn("font-headline text-sm font-semibold", isMobileSurface ? "" : "mt-3")}>
+                      {item.label}
+                    </p>
                   </button>
                 );
               })}
             </div>
           </div>
+          ) : null}
 
-          <div>
+          {!isMobileSurface || mobileConnectionGroup === "api-key" ? (
+            <div>
             <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
               API key
             </p>
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+            <div
+              className={cn(
+                "grid gap-3",
+                isMobileSurface ? "grid-cols-1" : "grid-cols-2 md:grid-cols-3"
+              )}
+            >
               {apiKeyProviders.map((provider) => {
                 const item = PROVIDER_CATALOG[provider];
                 const isSelected = provider === selectedProvider;
@@ -186,11 +254,13 @@ export const OnboardingProviderStep = ({
                     key={provider}
                     type="button"
                     onClick={() => onSelectProvider(provider)}
-                    className={`rounded-xl border p-4 text-center transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] ${
+                    className={cn(
+                      "rounded-xl border p-4 transition-all duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                      isMobileSurface ? "flex items-center gap-4 text-left" : "text-center",
                       isSelected
                         ? "border-primary bg-primary/10 text-on-surface"
                         : "border-outline-variant/20 bg-surface-container-lowest text-on-surface-variant"
-                    }`}
+                    )}
                   >
                     <span
                       className={`material-symbols-outlined text-3xl ${
@@ -199,15 +269,18 @@ export const OnboardingProviderStep = ({
                     >
                       {item.icon}
                     </span>
-                    <p className="mt-3 font-headline text-sm font-semibold">{item.label}</p>
+                    <p className={cn("font-headline text-sm font-semibold", isMobileSurface ? "" : "mt-3")}>
+                      {item.label}
+                    </p>
                   </button>
                 );
               })}
             </div>
           </div>
+          ) : null}
         </div>
 
-        <div className="mt-10">
+        <div className="mt-8 sm:mt-10">
           <div className="mb-2 flex items-center justify-between gap-3">
             <label className="font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
             {toolLoginProvider
@@ -551,7 +624,7 @@ export const OnboardingProviderStep = ({
           ) : null}
         </div>
 
-        <div className="mt-10 grid gap-3 sm:grid-cols-2">
+        <div className="mt-8 grid gap-3 sm:mt-10 sm:grid-cols-2">
           <button
             type="button"
             onClick={onSkip}

@@ -105,7 +105,7 @@ const BuildStageCardComponent = ({
     <article
       data-build-stage-id={stage.id}
       className={cn(
-        "relative rounded-xl border border-outline-variant/10 bg-surface-container p-5 transition-all",
+        "relative rounded-xl border border-outline-variant/10 bg-surface-container p-4 transition-all sm:p-5",
         stage.status === "in-progress" ? "border-l-[3px] border-l-primary" : "",
         stage.status === "complete" ? "opacity-80" : "",
         isActionSpotlighted
@@ -114,10 +114,10 @@ const BuildStageCardComponent = ({
         isLocked ? "opacity-40" : ""
       )}
     >
-      <div className="flex items-start gap-4">
+      <div className="flex items-start gap-3 sm:gap-4">
         <div
           className={cn(
-            "flex h-10 w-10 items-center justify-center rounded-lg font-mono text-sm font-bold",
+            "flex h-9 w-9 items-center justify-center rounded-lg font-mono text-sm font-bold sm:h-10 sm:w-10",
             stageTone
           )}
         >
@@ -147,7 +147,7 @@ const BuildStageCardComponent = ({
             </span>
           </div>
 
-          <div className="mt-4 flex items-center gap-2 text-xs text-on-surface-variant">
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-on-surface-variant">
             <span className="rounded-full bg-surface px-3 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">
               Recommended tool: {platformLabel}
             </span>
@@ -194,7 +194,7 @@ const BuildStageCardComponent = ({
           ) : null}
 
           <div className="mt-4 rounded-xl bg-surface-container-lowest">
-            <div className="flex items-center justify-between border-b border-outline-variant/10 px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-outline-variant/10 px-4 py-3">
               <span className="rounded-full bg-surface px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.18em] text-on-surface-variant">
                 {stage.name.replace(/\s+/g, "-").toUpperCase()}.txt
               </span>
@@ -276,7 +276,7 @@ const BuildStageCardComponent = ({
             </div>
           ) : null}
 
-          <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
             {onPlanningAssist ? (
               <button
                 type="button"
@@ -299,7 +299,7 @@ const BuildStageCardComponent = ({
                   }
                 }}
                 className={cn(
-                  "rounded-xl px-4 py-2 text-sm font-semibold transition disabled:opacity-50",
+                  "w-full rounded-xl px-4 py-3 text-sm font-semibold transition disabled:opacity-50 sm:w-auto sm:py-2",
                   highlightPrimaryAction
                     ? "gradient-cta glow-primary text-on-primary ring-2 ring-primary/30"
                     : "border border-primary/25 bg-primary/10 text-primary hover:border-primary/35 hover:bg-primary/15"
@@ -315,7 +315,7 @@ const BuildStageCardComponent = ({
                 data-build-stage-primary-action="true"
                 onClick={onConnectToAI}
                 className={cn(
-                  "rounded-xl px-4 py-2 text-sm font-semibold transition",
+                  "w-full rounded-xl px-4 py-3 text-sm font-semibold transition sm:w-auto sm:py-2",
                   highlightPrimaryAction
                     ? "gradient-cta glow-primary text-on-primary ring-2 ring-primary/30"
                     : "border border-primary/25 bg-primary/10 text-primary hover:border-primary/35 hover:bg-primary/15"
@@ -332,7 +332,7 @@ const BuildStageCardComponent = ({
               disabled={isLocked}
               onClick={() => onStatusChange(stage)}
               className={cn(
-                "rounded-xl px-4 py-2 text-sm font-semibold disabled:opacity-50",
+                "w-full rounded-xl px-4 py-3 text-sm font-semibold disabled:opacity-50 sm:w-auto sm:py-2",
                 onPlanningAssist || showsConnectAiAction
                   ? "border border-outline-variant/15 bg-surface-container text-on-surface hover:bg-surface-container-high"
                   : highlightPrimaryAction

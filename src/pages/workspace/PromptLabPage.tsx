@@ -15,6 +15,7 @@ import { useGameDesignDoc } from "@/hooks/useGameDesignDoc";
 import { useProject } from "@/hooks/useProject";
 import { useToast } from "@/hooks/useToast";
 import { useVaultFiles } from "@/hooks/useVaultFiles";
+import { useWebSurface } from "@/hooks/useWebSurface";
 import { getAiActionCopy } from "@/lib/ai/aiActionCopy";
 import { getPreferredAgentPlatformForProvider } from "@/lib/ai/providerCatalog";
 import { APP_LATEST_DESKTOP_RELEASE_URL } from "@/lib/brand";
@@ -182,6 +183,7 @@ export const PromptLabPage = (): JSX.Element => {
   const { files } = useVaultFiles(projectId);
   const { artifacts } = useArtifacts(projectId);
   const { defaultProvider } = useAIProviders();
+  const surface = useWebSurface();
   const promptLabSession = usePromptLabSessionStore((state) =>
     projectId ? state.sessions[projectId] : undefined
   );
@@ -203,6 +205,7 @@ export const PromptLabPage = (): JSX.Element => {
     [files]
   );
   const hostedRuntime = isHostedRuntime();
+  const isMobileSurface = surface === "mobile-web";
   const [isGeneratingRoadmap, setIsGeneratingRoadmap] = useState(false);
   const [isExportingPlanningPackage, setIsExportingPlanningPackage] =
     useState(false);
@@ -568,6 +571,39 @@ export const PromptLabPage = (): JSX.Element => {
             </p>
           ) : null}
         </div>
+      ) : null}
+
+      {isMobileSurface ? (
+        <section className="rounded-3xl border border-outline-variant/10 bg-surface p-5">
+          <p className="font-mono text-[11px] uppercase tracking-[0.22em] text-primary">
+            Mobile Planning Flow
+          </p>
+          <h2 className="mt-2 font-headline text-2xl font-semibold text-on-surface">
+            Focus on the next planning move
+          </h2>
+          <div className="mt-4 grid gap-3">
+            <div className="rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-4">
+              <p className="font-semibold text-on-surface">
+                {stages.length > 0 ? "Roadmap already generated" : "Roadmap not generated yet"}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                {stages.length > 0
+                  ? `You have ${stages.length} stage${stages.length === 1 ? "" : "s"} ready. Review the next action below or jump into the visual roadmap.`
+                  : "Use the build-roadmap section below when you are ready to create the first staged plan."}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-outline-variant/10 bg-surface-container px-4 py-4">
+              <p className="font-semibold text-on-surface">
+                {defaultProvider ? "AI is connected" : "AI is optional"}
+              </p>
+              <p className="mt-2 text-sm leading-6 text-on-surface-variant">
+                {defaultProvider
+                  ? `${aiActionCopy.connectedToolLabel} can help with clarifying questions and roadmap polish.`
+                  : "You can skip AI, generate the roadmap locally, and connect a provider later if you want planning help."}
+              </p>
+            </div>
+          </div>
+        </section>
       ) : null}
 
       <div className="grid gap-4 rounded-3xl border border-outline-variant/10 bg-surface p-5 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-end">
@@ -1133,6 +1169,14 @@ export const PromptLabPage = (): JSX.Element => {
             <p className="mt-3 text-sm text-on-surface-variant">
               Generate the first roadmap after you have enough concept, design, and context to guide the stage order.
             </p>
+            <button
+              type="button"
+              onClick={() => void handleGenerateRoadmap()}
+              disabled={needsClarifyingRound || isGeneratingRoadmap}
+              className="gradient-cta glow-primary mt-6 rounded-2xl px-5 py-3 text-sm font-semibold text-on-primary disabled:opacity-50"
+            >
+              {isGeneratingRoadmap ? "Generating roadmap…" : "Generate Build Roadmap"}
+            </button>
           </div>
         )}
       </div>
