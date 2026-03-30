@@ -4,14 +4,28 @@ export type WebSurface = "desktop-web" | "mobile-web";
 
 export const MOBILE_WEB_MAX_WIDTH = 767;
 
+const MOBILE_USER_AGENT_PATTERN =
+  /Android.+Mobile|iPhone|iPod|IEMobile|Opera Mini|Windows Phone|webOS/i;
+
 export const resolveWebSurface = ({
-  viewportWidth
+  viewportWidth,
+  maxTouchPoints = 0,
+  prefersCoarsePointer = false,
+  isMobileUserAgent
 }: {
   viewportWidth: number;
+  maxTouchPoints?: number;
+  prefersCoarsePointer?: boolean;
+  isMobileUserAgent?: boolean;
 }): WebSurface => {
-  return viewportWidth <= MOBILE_WEB_MAX_WIDTH
-    ? "mobile-web"
-    : "desktop-web";
+  if (viewportWidth > MOBILE_WEB_MAX_WIDTH) {
+    return "desktop-web";
+  }
+
+  const mobileLikeDevice =
+    maxTouchPoints > 0 || prefersCoarsePointer || Boolean(isMobileUserAgent);
+
+  return mobileLikeDevice ? "mobile-web" : "desktop-web";
 };
 
 const getCurrentSurface = (): WebSurface => {
@@ -19,8 +33,18 @@ const getCurrentSurface = (): WebSurface => {
     return "desktop-web";
   }
 
+  const isMobileUserAgent = MOBILE_USER_AGENT_PATTERN.test(
+    navigator.userAgent ?? ""
+  );
+
   return resolveWebSurface({
-    viewportWidth: window.innerWidth
+    viewportWidth: window.innerWidth,
+    maxTouchPoints: navigator.maxTouchPoints,
+    prefersCoarsePointer:
+      window.matchMedia?.("(pointer: coarse)").matches ??
+      window.matchMedia?.("(any-pointer: coarse)").matches ??
+      false,
+    isMobileUserAgent
   });
 };
 

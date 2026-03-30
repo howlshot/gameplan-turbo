@@ -17,6 +17,7 @@ export const MobileBottomNav = (): JSX.Element => {
   const navigate = useNavigate();
   const selectedProjectId = useProjectStore((state) => state.selectedProjectId);
   const activeProjectTab = getProjectTabFromSearch(location.search);
+  const hasSelectedProject = Boolean(selectedProjectId);
 
   const resolvePath = (itemId: MobileNavItemId): string => {
     switch (itemId) {
@@ -64,17 +65,28 @@ export const MobileBottomNav = (): JSX.Element => {
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-outline-variant/10 bg-[var(--surface-container-lowest)]/95 px-2 pb-[calc(env(safe-area-inset-bottom,0px)+0.5rem)] pt-2 backdrop-blur-2xl md:hidden">
       <div className="grid grid-cols-4 gap-1">
         {MOBILE_NAV_ITEMS.map((item) => {
-          const isActive = getIsActive(item.id);
+          const isDisabled =
+            !hasSelectedProject &&
+            (item.id === "roadmap" || item.id === "outputs");
+          const isActive = !isDisabled && getIsActive(item.id);
 
           return (
             <button
               key={item.id}
               type="button"
-              onClick={() => navigate(resolvePath(item.id))}
+              onClick={() => {
+                if (!isDisabled) {
+                  navigate(resolvePath(item.id));
+                }
+              }}
+              disabled={isDisabled}
+              aria-disabled={isDisabled}
               className={cn(
                 "flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-[11px] font-semibold transition",
                 isActive
                   ? "bg-primary/12 text-primary"
+                  : isDisabled
+                    ? "cursor-not-allowed text-on-surface-variant/40"
                   : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
               )}
             >
