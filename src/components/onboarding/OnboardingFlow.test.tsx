@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { OnboardingFlow } from "@/components/onboarding/OnboardingFlow";
+import { HOSTED_MODE_NOTICE_STORAGE_KEY } from "@/components/shared/HostedModeNotice";
 
 const mocks = vi.hoisted(() => ({
   hostedRuntime: false,
@@ -82,6 +83,7 @@ vi.mock("@/lib/ai/openRouterOAuth", () => ({
 describe("OnboardingFlow", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     mocks.hostedRuntime = false;
     mocks.desktopRuntime = false;
     mocks.webSurface = "desktop-web";
@@ -114,6 +116,21 @@ describe("OnboardingFlow", () => {
 
     expect(screen.getByText(/Quick Tour/i)).toBeInTheDocument();
     expect(mocks.saveProvider).not.toHaveBeenCalled();
+  });
+
+  it("dismisses the hosted notice after the user skips AI in onboarding", async () => {
+    mocks.hostedRuntime = true;
+
+    render(<OnboardingFlow onComplete={mocks.onComplete} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: /Skip for now/i })).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Skip for now/i }));
+
+    expect(screen.getByText(/Quick Tour/i)).toBeInTheDocument();
+    expect(localStorage.getItem(HOSTED_MODE_NOTICE_STORAGE_KEY)).toBe("true");
   });
 
   it("lets the user connect OpenRouter with sign-in during onboarding", async () => {

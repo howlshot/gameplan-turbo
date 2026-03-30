@@ -3,6 +3,7 @@ import { OnboardingCompleteStep } from "@/components/onboarding/OnboardingComple
 import { OnboardingProgress } from "@/components/onboarding/OnboardingProgress";
 import { OnboardingProviderStep } from "@/components/onboarding/OnboardingProviderStep";
 import { OnboardingTutorialStep } from "@/components/onboarding/OnboardingTutorialStep";
+import { dismissHostedNotice } from "@/components/shared/HostedModeNotice";
 import { useAIProviders } from "@/hooks/useAIProviders";
 import { useDialogAccessibility } from "@/hooks/useDialogAccessibility";
 import {
@@ -56,10 +57,18 @@ export const OnboardingFlow = ({
     container.scrollTop = 0;
   }, [dialogRef, step]);
 
-  const handleSkipProvider = (): void => {
+  const advancePastProviderStep = (): void => {
+    if (hostedRuntime) {
+      dismissHostedNotice();
+    }
+
     setErrorMessage("");
     setValidationAttempts(0);
     setStep(2);
+  };
+
+  const handleSkipProvider = (): void => {
+    advancePastProviderStep();
   };
 
   const handleVerifyProvider = async (): Promise<void> => {
@@ -110,9 +119,8 @@ export const OnboardingFlow = ({
           isDefault: true,
           model: providerConfig.defaultModel
         });
-        setValidationAttempts(0);
         toast.success(`${providerConfig.label} connected.`);
-        setStep(2);
+        advancePastProviderStep();
       } catch {
         setErrorMessage(
           desktopRuntime
@@ -161,9 +169,8 @@ export const OnboardingFlow = ({
         model,
         ...(hostedRuntime ? { rememberOnDevice } : {})
       });
-      setValidationAttempts(0);
       toast.success(`${providerConfig.label} verified.`);
-      setStep(2);
+      advancePastProviderStep();
     } catch (error) {
       const errorState = getGenerationErrorState(error);
       const attempts = validationAttempts + 1;
@@ -241,10 +248,9 @@ export const OnboardingFlow = ({
         model: providerConfig.defaultModel,
         ...(hostedRuntime ? { rememberOnDevice } : {})
       });
-      setValidationAttempts(0);
       toast.success("OpenRouter connected.");
       setSelectedProvider("openrouter");
-      setStep(2);
+      advancePastProviderStep();
     } catch (error) {
       const message =
         error instanceof Error

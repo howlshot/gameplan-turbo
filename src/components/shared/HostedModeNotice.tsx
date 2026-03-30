@@ -7,12 +7,13 @@ import {
 } from "@/lib/brand";
 import { isHostedRuntime } from "@/lib/runtimeMode";
 
-const HOSTED_MODE_NOTICE_STORAGE_KEY = "gameplan-turbo:hosted-mode-notice-dismissed";
+export const HOSTED_MODE_NOTICE_STORAGE_KEY =
+  "gameplan-turbo:hosted-mode-notice-dismissed";
 
-const getHasDismissedHostedNotice = (): boolean =>
+export const getHasDismissedHostedNotice = (): boolean =>
   localStorage.getItem(HOSTED_MODE_NOTICE_STORAGE_KEY) === "true";
 
-const dismissHostedNotice = (): void => {
+export const dismissHostedNotice = (): void => {
   localStorage.setItem(HOSTED_MODE_NOTICE_STORAGE_KEY, "true");
 };
 
