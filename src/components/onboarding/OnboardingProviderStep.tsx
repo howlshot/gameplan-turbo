@@ -119,24 +119,17 @@ export const OnboardingProviderStep = ({
           Connect your AI provider
         </h1>
         <p className="mt-3 text-on-surface-variant">
-          AI setup is optional. You can explore {APP_NAME}, generate the build
-          roadmap, and come back to connect AI later in Settings.
+          Choose a provider if you want AI help generating prompts and
+          polishing briefs.
         </p>
         <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-primary/15 bg-primary/5 px-4 py-4 text-left sm:px-5">
-          <p className="font-medium text-on-surface">Just exploring first?</p>
+          <p className="font-medium text-on-surface">AI is optional</p>
           <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-            Skip this step for now. Planning, roadmap generation, and tracking
-            still work without AI. Connect a provider later when you want help
-            generating prompts or polishing briefs.
+            Use <strong>Skip for now</strong> if you want to create the project
+            and generate the roadmap first. Use <strong>OpenRouter</strong> or
+            an <strong>API key</strong> if you want AI right away. You can
+            always connect a provider later in Settings.
           </p>
-          <div className="mt-4 rounded-xl border border-outline-variant/10 bg-surface px-4 py-3 text-sm leading-6 text-on-surface-variant">
-            <p className="font-semibold text-on-surface">Best first path</p>
-            <p className="mt-2">
-              Use <strong>OpenRouter</strong> or an <strong>API key</strong> if you
-              want AI right away. Use <strong>Skip for now</strong> if you want to
-              create the project and generate the roadmap first.
-            </p>
-          </div>
         </div>
         {hostedRuntime ? (
           <div className="mx-auto mt-4 max-w-2xl rounded-2xl border border-outline-variant/15 bg-surface-container-lowest px-4 py-4 text-left sm:px-5">
@@ -701,7 +694,7 @@ export const OnboardingProviderStep = ({
             ? "Hosted providers stay in this browser session unless you choose Remember on this device."
             : "Stored locally in your browser or desktop app."}
         </p>
-        <p>Skip AI now and connect a provider later in Settings.</p>
+        <p>You can always connect a provider later in Settings.</p>
       </div>
 
       <div className="pointer-events-none absolute right-8 top-8 hidden text-right font-mono text-[10px] uppercase tracking-[0.24em] text-primary/40 md:block">
