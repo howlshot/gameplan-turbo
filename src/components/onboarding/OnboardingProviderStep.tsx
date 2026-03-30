@@ -37,6 +37,16 @@ interface OnboardingProviderStepProps {
   showApiKey: boolean;
 }
 
+type MobileProviderPath = "browser" | "desktop-sign-in";
+
+const MOBILE_DESKTOP_SIGN_IN_PROVIDERS: AIProvider[] = ["codex", "claude-code"];
+
+const isDesktopSignInProvider = (provider: AIProvider): boolean =>
+  MOBILE_DESKTOP_SIGN_IN_PROVIDERS.includes(provider);
+
+const getMobileProviderPath = (provider: AIProvider): MobileProviderPath =>
+  isDesktopSignInProvider(provider) ? "desktop-sign-in" : "browser";
+
 export const OnboardingProviderStep = ({
   apiKeyRef,
   baseUrlRef,
@@ -72,16 +82,35 @@ export const OnboardingProviderStep = ({
   const apiKeyProviders = PROVIDER_ORDER.filter(
     (provider) => getProviderConnectionGroup(provider) === "api-key"
   );
+  const browserProviders = [
+    "openrouter",
+    ...apiKeyProviders
+  ] as AIProvider[];
+  const desktopSignInProviders = MOBILE_DESKTOP_SIGN_IN_PROVIDERS;
   const hostedRuntime = isHostedRuntime();
   const shouldShowRememberPreference =
     hostedRuntime && !toolLoginProvider;
-  const [mobileConnectionGroup, setMobileConnectionGroup] = useState<
-    "api-key" | "sign-in"
-  >(getProviderConnectionGroup(selectedProvider));
+  const [mobileProviderPath, setMobileProviderPath] =
+    useState<MobileProviderPath>(getMobileProviderPath(selectedProvider));
 
   useEffect(() => {
-    setMobileConnectionGroup(getProviderConnectionGroup(selectedProvider));
+    setMobileProviderPath(getMobileProviderPath(selectedProvider));
   }, [selectedProvider]);
+
+  const handleSelectMobileProviderPath = (path: MobileProviderPath): void => {
+    setMobileProviderPath(path);
+
+    if (path === "browser") {
+      if (!browserProviders.includes(selectedProvider)) {
+        onSelectProvider("openrouter");
+      }
+      return;
+    }
+
+    if (!desktopSignInProviders.includes(selectedProvider)) {
+      onSelectProvider("codex");
+    }
+  };
 
   return (
     <div className="relative px-4 py-6 sm:p-10">
@@ -156,10 +185,10 @@ export const OnboardingProviderStep = ({
             <div className="mt-4 grid gap-3">
               <button
                 type="button"
-                onClick={() => setMobileConnectionGroup("api-key")}
+                onClick={() => handleSelectMobileProviderPath("browser")}
                 className={cn(
                   "rounded-2xl border px-4 py-4 text-left transition",
-                  mobileConnectionGroup === "api-key"
+                  mobileProviderPath === "browser"
                     ? "border-primary/30 bg-primary/10"
                     : "border-outline-variant/10 bg-surface-container-lowest"
                 )}
@@ -171,10 +200,12 @@ export const OnboardingProviderStep = ({
               </button>
               <button
                 type="button"
-                onClick={() => setMobileConnectionGroup("sign-in")}
+                onClick={() =>
+                  handleSelectMobileProviderPath("desktop-sign-in")
+                }
                 className={cn(
                   "rounded-2xl border px-4 py-4 text-left transition",
-                  mobileConnectionGroup === "sign-in"
+                  mobileProviderPath === "desktop-sign-in"
                     ? "border-primary/30 bg-primary/10"
                     : "border-outline-variant/10 bg-surface-container-lowest"
                 )}
@@ -189,7 +220,7 @@ export const OnboardingProviderStep = ({
         ) : null}
 
         <div className="space-y-6">
-          {!isMobileSurface || mobileConnectionGroup === "sign-in" ? (
+          {!isMobileSurface || mobileProviderPath === "desktop-sign-in" ? (
             <div>
             <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
               Sign in
@@ -200,7 +231,10 @@ export const OnboardingProviderStep = ({
                 isMobileSurface ? "grid-cols-1" : "grid-cols-2 md:grid-cols-3"
               )}
             >
-              {signInProviders.map((provider) => {
+              {(isMobileSurface
+                ? desktopSignInProviders
+                : signInProviders
+              ).map((provider) => {
                 const item = PROVIDER_CATALOG[provider];
                 const isSelected = provider === selectedProvider;
 
@@ -234,10 +268,10 @@ export const OnboardingProviderStep = ({
           </div>
           ) : null}
 
-          {!isMobileSurface || mobileConnectionGroup === "api-key" ? (
+          {!isMobileSurface || mobileProviderPath === "browser" ? (
             <div>
             <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-on-surface-variant">
-              API key
+              {isMobileSurface ? "Browser-ready" : "API key"}
             </p>
             <div
               className={cn(
@@ -245,7 +279,7 @@ export const OnboardingProviderStep = ({
                 isMobileSurface ? "grid-cols-1" : "grid-cols-2 md:grid-cols-3"
               )}
             >
-              {apiKeyProviders.map((provider) => {
+              {(isMobileSurface ? browserProviders : apiKeyProviders).map((provider) => {
                 const item = PROVIDER_CATALOG[provider];
                 const isSelected = provider === selectedProvider;
 

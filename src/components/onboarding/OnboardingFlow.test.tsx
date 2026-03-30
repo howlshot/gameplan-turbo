@@ -203,6 +203,7 @@ describe("OnboardingFlow", () => {
       expect(screen.getByRole("button", { name: /Stay in browser/i })).toBeInTheDocument();
     });
 
+    expect(screen.getByRole("button", { name: /OpenRouter$/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Anthropic/i })).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Codex \(ChatGPT login\)/i })
@@ -217,6 +218,21 @@ describe("OnboardingFlow", () => {
     });
 
     expect(screen.queryByRole("button", { name: /Anthropic/i })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Stay in browser/i }));
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: /Sign in with OpenRouter/i })
+      ).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByRole("button", { name: /Sign in with OpenRouter/i })
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/Continue with Claude Code/i)
+    ).not.toBeInTheDocument();
   });
 
   it("marks Claude Code as local-only in the hosted app", async () => {

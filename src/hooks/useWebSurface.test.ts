@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import { resolveWebSurface } from "@/hooks/useWebSurface";
 
 describe("resolveWebSurface", () => {
-  it("returns mobile-web for phone-width layouts", () => {
+  it("returns mobile-web for phone-width layouts on mobile-like devices", () => {
     expect(
       resolveWebSurface({
-        viewportWidth: 390
+        viewportWidth: 390,
+        maxTouchPoints: 5,
+        prefersCoarsePointer: true,
+        isMobileUserAgent: true
       })
     ).toBe("mobile-web");
   });
@@ -13,16 +16,22 @@ describe("resolveWebSurface", () => {
   it("returns desktop-web for tablet-width layouts", () => {
     expect(
       resolveWebSurface({
-        viewportWidth: 1024
+        viewportWidth: 1024,
+        maxTouchPoints: 5,
+        prefersCoarsePointer: true,
+        isMobileUserAgent: true
       })
     ).toBe("desktop-web");
   });
 
-  it("returns mobile-web for narrow desktop browser windows too", () => {
+  it("returns desktop-web for narrow desktop browser windows without mobile hints", () => {
     expect(
       resolveWebSurface({
-        viewportWidth: 640
+        viewportWidth: 640,
+        maxTouchPoints: 0,
+        prefersCoarsePointer: false,
+        isMobileUserAgent: false
       })
-    ).toBe("mobile-web");
+    ).toBe("desktop-web");
   });
 });
